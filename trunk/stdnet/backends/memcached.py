@@ -144,5 +144,4 @@ class CacheClass(BaseCache):
     
     def sinter(self,key):
         skey,emembers = self.__setmembers(key)
-        for m in emembers:
-            yield m
+        return emembers
