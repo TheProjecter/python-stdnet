@@ -3,7 +3,7 @@ Synchronization primitives:
 
     - reader-writer lock (preference to writers)
 
-(Contributed to Django by eugene@lazutkin.com)
+Tacken from Django
 """
 
 try:
