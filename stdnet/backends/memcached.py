@@ -120,7 +120,6 @@ class CacheClass(BaseCache):
     
     def __setmembers(self, key):
         '''Mimic a set in memcached'''
-        #skey    = '__std::set:%s' % smart_str(key)
         skey    = smart_str(key)
         members = self.get(skey)
         if members:

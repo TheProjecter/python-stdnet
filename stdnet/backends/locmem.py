@@ -8,8 +8,8 @@ try:
 except ImportError:
     import pickle
 
-from jflow.core.cache.backends.base import BaseCache
-from jflow.core.cache.utils import RWLock
+from stdnet.backends.base import BaseCache
+from stdnet.utils import RWLock
 
 class CacheClass(BaseCache):
     
@@ -139,3 +139,20 @@ class CacheClass(BaseCache):
     def clear(self):
         self._cache.clear()
         self._expire_info.clear()
+        
+    # Sets            
+        
+    def sadd(self, key, members):
+        sset = self.get(key)
+        if sset is None:
+            sset = set()
+        if not hasattr(members,'__iter__'):
+            members = [members]
+        for member in members:
+            sset.add(member)
+        self.set(key,sset)
+        return len(sset)
+    
+    def sinter(self,key):
+        return self.get(key)
+    
