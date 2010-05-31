@@ -2,3 +2,12 @@ Python StdNet
 ===================
 
 A networked standard template library for python.
+
+
+Backends
+====================
+
+ * local memory
+ * memcached
+ * redis
+ 
