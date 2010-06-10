@@ -1,5 +1,4 @@
-'''
-Thread-safe in-memory cache backend.
+'''Thread-safe in-memory cache backend.
 '''
 
 import time
@@ -8,13 +7,30 @@ try:
 except ImportError:
     import pickle
 
-from stdnet.backends.base import BaseCache
-from stdnet.utils import RWLock
+from siro.core.cache.backends.base import BaseCache
+from siro.core.cache.utils import RWLock
+
+
+class dummyPickle():
+    
+    def loads(self, data):
+        return data
+
+    def dumps(self, obj):
+        return obj
 
 class CacheClass(BaseCache):
     
     def __init__(self, _, params):
         super(CacheClass,self).__init__(params)
+        try:
+            dopickle = int(params.get('pickle', 1))
+        except:
+            dopickle = 1
+        if dopickle:
+            self.pickle = pickle
+        else:
+            self.pickle = dummyPickle()
         self._cache = {}
         self._expire_info = {}
         max_entries = params.get('max_entries', 300)
@@ -37,14 +53,13 @@ class CacheClass(BaseCache):
             exp = self._expire_info.get(key)
             if exp is None or exp <= time.time():
                 try:
-                    self._set(key, pickle.dumps(value), timeout)
+                    self._set(key, self.pickle.dumps(value), timeout)
                     return True
                 except pickle.PickleError:
                     pass
             return False
         finally:
             self._lock.writer_leaves()
-            
 
     def get(self, key, default=None):
         self._lock.reader_enters()
@@ -52,9 +67,9 @@ class CacheClass(BaseCache):
             exp = self._expire_info.get(key)
             if exp is None:
                 return default
-            elif exp > time.time():
+            elif exp == 0 or exp > time.time():
                 try:
-                    return pickle.loads(self._cache[key])
+                    return self.pickle.loads(self._cache[key])
                 except pickle.PickleError:
                     return default
         finally:
@@ -76,14 +91,17 @@ class CacheClass(BaseCache):
         if timeout is None:
             timeout = self.default_timeout
         self._cache[key] = value
-        self._expire_info[key] = time.time() + timeout
+        if not timeout:
+            self._expire_info[key] = 0
+        else:
+            self._expire_info[key] = time.time() + timeout
 
     def set(self, key, value, timeout=None):
         self._lock.writer_enters()
         # Python 2.3 and 2.4 don't allow combined try-except-finally blocks.
         try:
             try:
-                self._set(key, pickle.dumps(value), timeout)
+                self._set(key, self.pickle.dumps(value), timeout)
             except pickle.PickleError:
                 pass
         finally:
