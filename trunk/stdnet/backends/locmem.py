@@ -7,9 +7,8 @@ try:
 except ImportError:
     import pickle
 
-from siro.core.cache.backends.base import BaseCache
-from siro.core.cache.utils import RWLock
-
+from stdnet.backends.base import BaseCache
+from stdnet.utils import RWLock
 
 class dummyPickle():
     
@@ -18,6 +17,19 @@ class dummyPickle():
 
     def dumps(self, obj):
         return obj
+    
+class cache(object):
+    
+    def __init__(self):
+        self.cache = {}
+        self.expire_info = {}
+    
+    def clear(self):
+        self.cache.clear()
+        self.expire_info.clear()
+
+_cache = cache()
+    
 
 class CacheClass(BaseCache):
     
@@ -31,9 +43,9 @@ class CacheClass(BaseCache):
             self.pickle = pickle
         else:
             self.pickle = dummyPickle()
-        self._cache = {}
-        self._expire_info = {}
         max_entries = params.get('max_entries', 300)
+        self._cache       = _cache.cache
+        self._expire_info = _cache.expire_info
         try:
             self._max_entries = int(max_entries)
         except (ValueError, TypeError):
@@ -47,6 +59,15 @@ class CacheClass(BaseCache):
 
         self._lock = RWLock()
 
+    def incr(self, key, delta=1):
+        self._lock.writer_enters()
+        try:
+            val = self._cache.get(key,0) + delta
+            self._cache[key] = val
+            return val
+        finally:
+            self._lock.writer_leaves()
+            
     def add(self, key, value, timeout=None):
         self._lock.writer_enters()
         try:
@@ -98,12 +119,9 @@ class CacheClass(BaseCache):
 
     def set(self, key, value, timeout=None):
         self._lock.writer_enters()
-        # Python 2.3 and 2.4 don't allow combined try-except-finally blocks.
         try:
-            try:
-                self._set(key, self.pickle.dumps(value), timeout)
-            except pickle.PickleError:
-                pass
+            self._set(key, self.pickle.dumps(value), timeout)
+            #except pickle.PickleError:
         finally:
             self._lock.writer_leaves()
 
@@ -155,8 +173,8 @@ class CacheClass(BaseCache):
             self._lock.writer_leaves()
 
     def clear(self):
-        self._cache.clear()
-        self._expire_info.clear()
+        global _cache
+        _cache.clear()
         
     # Sets            
         
