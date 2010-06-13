@@ -1,7 +1,7 @@
 Python StdNet
 ===================
 
-A networked standard template library for python.
+A networked standard template library for python. It includes a lightweight ORM.
 
 
 Backends
@@ -10,4 +10,30 @@ Backends
  * local memory
  * memcached
  * redis
+ 
+ 
+ Installing and Running
+ ================================
+ To install::
+ 
+ 	python setup.py install
+ 	pip install python-stdnet
+ 	easy_install python-stdnet
+ 
+ Object-relational mapping
+ ================================
+ The module ``orm`` is a lightweight ORM with the any of the backends.
+ For example::
+ 
+ 	from stdnet import orm
+ 	
+ 	
+ 	class Group(orm.StdModel):
+ 		name = orm.AtomField(unique=True)
+ 		
+ 		
+ 	class User(orm.StdModel):
+ 		username = orm.AtomField(unique=True)
+ 		password = orm.AtomField()
+ 		group	 = orm.ForeignKey(Group)
  

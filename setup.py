@@ -89,7 +89,7 @@ setup(
         author_email = 'luca.sbardella@gmail.com',
         url          = 'http://code.google.com/p/python-stdnet/',
         license      = 'BSD',
-        description  = 'Currency information and calculation',
+        description  = 'A networked standard template library and ORM for python',
         long_description = read('README'),
         packages     = packages,
         cmdclass     = cmdclasses,
@@ -98,11 +98,9 @@ setup(
             'Development Status :: 2 - Pre-Alpha',
             'Environment :: Plugins',
             'Intended Audience :: Developers',
-            'Intended Audience :: Financial and Insurance Industry',
             'License :: OSI Approved :: BSD License',
             'Operating System :: OS Independent',
             'Programming Language :: Python',
-            'Topic :: Office/Business :: Financial',
             'Topic :: Utilities'
         ],
     )
