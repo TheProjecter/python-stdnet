@@ -142,6 +142,8 @@ class CacheClass(BaseCache):
         self.set(skey,json.dumps(emembers))
         return len(emembers)
     
-    def sinter(self,key):
+    def smembers(self,key):
         skey,emembers = self.__setmembers(key)
         return emembers
+    
+        
