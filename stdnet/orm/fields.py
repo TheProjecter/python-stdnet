@@ -6,7 +6,6 @@ __all__ = ['Field',
            'AtomField',
            'DateField',
            'ForeignKey',
-           'TimeSerieField',
            '_novalue']
 
 class NoValue(object):
@@ -34,11 +33,17 @@ class Field(object):
         self.value    = None
         self.obj      = None
         self.meta     = None
-        self.name     = None
+        self.name     = None       
     
     def set_model_value(self, name, obj, value = _novalue):
+        self.obj  = obj
+        self.name = name
+        self.meta = obj._meta
         if value is not _novalue:
             self.value = value
+        return self.value
+    
+    def model_get_arg(self):
         return self.value
     
     def get_model_value(self, name, obj, value = _novalue):
@@ -125,6 +130,7 @@ class ForeignKey(Field):
             return self.value
     
     def set_model_value(self, name, obj, value = _novalue):
+        value = super(ForeignKey,self).set_model_value(name, obj, value)
         if value is not _novalue:
             if isinstance(value,self.model):
                 self.value = value.id
@@ -134,6 +140,9 @@ class ForeignKey(Field):
         else:
             value = self.value
         return value
+    
+    def model_get_arg(self):
+        return self.value
         
     def get_model_value(self, name, obj, value = _novalue):
         if value == _novalue:

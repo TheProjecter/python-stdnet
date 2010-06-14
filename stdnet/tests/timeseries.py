@@ -17,13 +17,13 @@ class TimeSerie(orm.StdModel):
     '''A timeserie model'''
     ticker  = orm.ForeignKey(Ticker)
     field   = orm.ForeignKey(Field)
-    data    = orm.TimeSerieField()
+    data    = orm.StdMap()
     
         
 
-orm.register(Ticker)
-orm.register(Field)
-orm.register(TimeSerie)
+orm.register(Ticker,settings_test.redis)
+orm.register(Field,settings_test.redis)
+orm.register(TimeSerie,settings_test.redis)
 
 
 class TestTimeSerie(unittest.TestCase):
@@ -41,3 +41,4 @@ class TestTimeSerie(unittest.TestCase):
         values = populate('float',100, start = 10, end = 400)
         for d,v in izip(dates,values):
             t.data.add(d,v)
+        self.assertAlmostEqual

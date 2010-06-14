@@ -10,7 +10,7 @@ class TestOrderedSet(unittest.TestCase):
     def setUp(self):
         self.data = populate(datatype = 'date', size = 100)
     
-    def testSetItem(self):
+    def _testSetItem(self):
         s = OrderedSet()
         for v in self.data:
             s.add(v)
@@ -28,7 +28,7 @@ class TestOrderedDict(unittest.TestCase):
         vals = populate(datatype = 'string', size = 100)
         self.data = izip(keys,vals)
     
-    def testSetItem(self):
+    def _testSetItem(self):
         d = OrderedDict()
         for k,v in self.data:
             d[k] = v
@@ -38,7 +38,7 @@ class TestOrderedDict(unittest.TestCase):
                 self.assertTrue(k > kp)
             kp = k
         
-    def testInit(self):
+    def _testInit(self):
         d = OrderedDict(self.data)
         kp = None
         for k in d:

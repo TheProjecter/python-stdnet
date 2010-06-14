@@ -47,9 +47,9 @@ class testLocMem(unittest.TestCase):
     def testOrdered(self):
         cache = self.cache
         key   = self.keyordered
-        cache.zadd(key,'bla')
-        cache.zadd(key,'bla')
-        self.assertEqual(cache.zlen(key),1)
+        cache.zadd(key,'Luca Sbardella',38)
+        cache.zadd(key,'bla bla',32)
+        self.assertEqual(cache.zlen(key),2)
         
     def testOrdered2(self):
         cache = self.cache
@@ -73,8 +73,7 @@ class testLocMem(unittest.TestCase):
 
 cache_memcached = get_cache(settings_test.memcached)
 
-if available(cache_memcached):
-        
+if available(cache_memcached) and False:    
     class testMemcached(testLocMem):
         cache = cache_memcached
         

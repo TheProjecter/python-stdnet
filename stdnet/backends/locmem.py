@@ -192,16 +192,18 @@ class CacheClass(BaseCache):
         return self._cache.get(key,None)
     
     # Ordered sets
-    def zadd(self, key, member):
+    def zadd(self, key, value, score = novalue):
         self._lock.writer_enters()
         try:
+            if score == novalue:
+                score = value
             sset = self._cache.get(key,None)
             if sset is None:
                 sset = OrderedSet()
                 self._cache[key] = sset
                 
             N = len(sset)
-            sset.add(member)
+            sset.add(value,score)
             return len(sset) > N
         finally:
             self._lock.writer_leaves()
@@ -228,3 +230,18 @@ class CacheClass(BaseCache):
         finally:
             self._lock.reader_leaves()
         
+    # Hashes
+    
+    def hset(self, key, field, value):
+        self._lock.writer_enters()
+        try:
+            sset = self._cache.get(key,None)
+            if sset is None:
+                sset = {}
+                self._cache[key] = sset
+                
+            N = len(sset)
+            sset[field] = value
+            return len(sset) > N
+        finally:
+            self._lock.writer_leaves()
