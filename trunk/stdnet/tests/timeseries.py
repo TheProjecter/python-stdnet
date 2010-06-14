@@ -1,3 +1,4 @@
+import time
 from itertools import izip
 from datetime import date
 import unittest
@@ -19,6 +20,9 @@ class TimeSerie(orm.StdModel):
     field   = orm.ForeignKey(Field)
     data    = orm.StdMap()
     
+    def add(self, dte, v):
+        dt = time.mktime(dte.timetuple())
+        self.data.add(dt,v)
         
 
 orm.register(Ticker,settings_test.redis)
@@ -40,5 +44,4 @@ class TestTimeSerie(unittest.TestCase):
         dates  = populate('date',100)
         values = populate('float',100, start = 10, end = 400)
         for d,v in izip(dates,values):
-            t.data.add(d,v)
-        self.assertAlmostEqual
+            t.add(d,v)
