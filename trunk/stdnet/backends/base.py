@@ -129,7 +129,7 @@ class BaseCache(object):
         raise NotImplementedError
 
     
-    def zadd(self, key, score, value):
+    def zadd(self, key, value, score = novalue):
         raise NotImplementedError
     
     def zlen(self, key):

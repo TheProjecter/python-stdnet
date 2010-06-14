@@ -86,9 +86,6 @@ class StdModel(object):
         meta = copy.deepcopy(self.__class__._meta)
         self.__dict__['_meta'] = meta
         for name,field in meta.fields.items():
-            field.obj  = self
-            field.name = name
-            field.meta = meta
             value = kwargs.pop(name,_novalue)
             self.setfield(name, field, value)
             
@@ -123,7 +120,11 @@ class StdModel(object):
         odict = self.__dict__.copy()
         meta = odict.pop('_meta')
         for name,field in meta.fields.items():
-            odict[name] = field.set_model_value(name,self)
+            val = field.model_get_arg()
+            if val:
+                odict[name] = val
+            else:
+                odict.pop(name)
         return odict
     
     def __setstate__(self,dict):

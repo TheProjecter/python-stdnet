@@ -1,5 +1,5 @@
 
-from stdnet.backends.base import BaseCache, ImproperlyConfigured
+from stdnet.backends.base import BaseCache, ImproperlyConfigured, novalue
 
 try:
     import redis
@@ -23,15 +23,13 @@ class CacheClass(BaseCache):
         self.set    = cache.set
         self.get    = cache.get
         self.delete = cache.delete
+        self.incr      = cache.incr
         self.sismember = cache.sismember
         self.smembers  = cache.smembers
         self.zlen      = cache.zcard
+        self.hset      = cache.hset
     
     def sadd(self, key, member):
-        '''Add the specified member to the set value stored at key.
-        If member is already a member of the set no operation is performed.
-        If key does not exist a new set with the specified member as sole member is created.
-        If the key exists but does not hold a set value an error is returned. '''
         sadd = self._cache.sadd
         if hasattr(member,'__iter__'):
             for m in member:
@@ -40,8 +38,10 @@ class CacheClass(BaseCache):
         else:
             return sadd(key,member)
     
-    def zadd(self, key, value):
-        return self._cache.format_bulk('ZADD', key, value, value)
+    def zadd(self, key, value, score = novalue):
+        if score == novalue:
+            score = value
+        return self._cache.execute_command('ZADD', key, score, value)
         
     def zrange(self, key, start, end, withscores = True):
         res = self._cache.zrangebyscore(key,start,end,withscores=withscores)

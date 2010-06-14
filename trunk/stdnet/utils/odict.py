@@ -12,7 +12,7 @@ class OrderedSet(object):
             self._set      = copy(init_val._set)
         else:
             self._sequence = []
-            self._set      = set()
+            self._set      = {}
             if init_val:
                 for v in init_val:
                     self.add(v)
@@ -21,13 +21,16 @@ class OrderedSet(object):
         return self._sequence.__iter__()
     
     def __len__(self):
-        return len(self._sequence)
+        return len(self._set)
         
-    def add(self, val):
-        if val in self._set:
-            return
-        insort(self._sequence, val)
-        self._set.add(val)    
+    def add(self, value, score):
+        sc = self._set.get(value,_novalue)
+        if sc == _novalue:
+            self._set[value] = score
+        if value in self._set:
+            pass
+        #insort(self._sequence, score)
+        #self._set.add(val)    
     
     def range(self, start, end):
         s = self._sequence

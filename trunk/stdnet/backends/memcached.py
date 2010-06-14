@@ -63,8 +63,8 @@ class CacheClass(BaseCache):
     def set(self, key, value, timeout=None):
         self._cache.set(smart_str(key), value, self._get_memcache_timeout(timeout))
 
-    def delete(self, key):
-        self._cache.delete(smart_str(key))
+    def delete(self, *keys):
+        self._cache.delete_multi(map(smart_str, keys))
 
     def get_many(self, keys):
         return self._cache.get_multi(map(smart_str,keys))
@@ -109,9 +109,6 @@ class CacheClass(BaseCache):
                 value = value.encode('utf-8')
             safe_data[smart_str(key)] = value
         self._cache.set_multi(safe_data, self._get_memcache_timeout(timeout))
-
-    def delete_many(self, keys):
-        self._cache.delete_multi(map(smart_str, keys))
 
     def clear(self):
         self._cache.flush_all()
