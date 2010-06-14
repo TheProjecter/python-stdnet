@@ -7,8 +7,8 @@ try:
 except ImportError:
     import pickle
 
-from stdnet.backends.base import BaseCache
-from stdnet.utils import RWLock
+from stdnet.backends.base import BaseCache, novalue
+from stdnet.utils import RWLock, OrderedSet
 
 class dummyPickle():
     
@@ -155,20 +155,12 @@ class CacheClass(BaseCache):
             for k in doomed:
                 self._delete(k)
 
-    def _delete(self, key):
-        try:
-            del self._cache[key]
-        except KeyError:
-            pass
-        try:
-            del self._expire_info[key]
-        except KeyError:
-            pass
-
-    def delete(self, key):
+    def delete(self, *keys):
         self._lock.writer_enters()
         try:
-            self._delete(key)
+            for key in keys:
+                self._cache.pop(key,None)
+                self._expire_info.pop(key,None)
         finally:
             self._lock.writer_leaves()
 
@@ -179,16 +171,60 @@ class CacheClass(BaseCache):
     # Sets            
         
     def sadd(self, key, members):
-        sset = self.get(key)
-        if sset is None:
-            sset = set()
-        if not hasattr(members,'__iter__'):
-            members = [members]
-        for member in members:
+        self._lock.writer_enters()
+        try:
+            sset = self._cache.get(key,None)
+            if sset is None:
+                sset = set()
+                self._cache[key] = sset
+                
+            N = len(sset)
+            if hasattr(members,'__iter__'):
+                for member in members:
+                    sset.add(member)
+            else:
+                sset.add(members)
+            return len(sset) > N
+        finally:
+            self._lock.writer_leaves()
+    
+    def smembers(self,key):
+        return self._cache.get(key,None)
+    
+    # Ordered sets
+    def zadd(self, key, member):
+        self._lock.writer_enters()
+        try:
+            sset = self._cache.get(key,None)
+            if sset is None:
+                sset = OrderedSet()
+                self._cache[key] = sset
+                
+            N = len(sset)
             sset.add(member)
-        self.set(key,sset)
-        return len(sset)
+            return len(sset) > N
+        finally:
+            self._lock.writer_leaves()
     
-    def sinter(self,key):
-        return self.get(key)
+    def zrange(self, key, start, end):
+        self._lock.reader_enters()
+        try:
+            sset = self._cache.get(key,None)
+            if sset:
+                return sset.range(start,end)
+            else:
+                return None
+        finally:
+            self._lock.reader_leaves()
     
+    def zlen(self, key):
+        self._lock.reader_enters()
+        try:
+            sset = self._cache.get(key,None)
+            if sset:
+                return len(sset)
+            else:
+                return 0
+        finally:
+            self._lock.reader_leaves()
+        

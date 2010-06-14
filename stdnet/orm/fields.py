@@ -6,6 +6,7 @@ __all__ = ['Field',
            'AtomField',
            'DateField',
            'ForeignKey',
+           'TimeSerieField',
            '_novalue']
 
 class NoValue(object):
@@ -15,16 +16,25 @@ _novalue = NoValue()
 
 class Field(object):
     
-    def __init__(self, unique = False, ordered = False, primary_key = False, required = True):
+    def __init__(self, unique = False, ordered = False, primary_key = False,
+                 required = True, index = True):
         self.primary_key = primary_key
         if primary_key:
             self.unique   = True
             self.required = True
+            self.index    = True
         else:
             self.unique = unique
+            if unique:
+                self.index = True
+            else:
+                self.index = index
         self.required = required
         self.ordered  = ordered
         self.value    = None
+        self.obj      = None
+        self.meta     = None
+        self.name     = None
     
     def set_model_value(self, name, obj, value = _novalue):
         if value is not _novalue:
@@ -70,6 +80,8 @@ class Field(object):
     def savevalue(self, value):
         pass
     
+    def add(self, *args, **kwargs):
+        raise NotImplementedError("Cannot add to field")
     
     
 class AutoField(Field):
@@ -135,3 +147,18 @@ class ForeignKey(Field):
             key     = meta.basekey('id',value)
             value   = cache.get(key)
         return value
+    
+    
+class OrderedDictionaryField(Field):
+    
+    def __init__(self):
+        super(TimeSerieField,self).__init__(ordered = True, required = False)
+    
+    def set_model_value(self, name, obj, value = _novalue):
+        if value == _novalue:
+            value = self
+        return value
+    
+    def add(self, key, value):
+        pass
+        

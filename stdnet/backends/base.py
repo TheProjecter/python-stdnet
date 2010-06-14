@@ -3,6 +3,8 @@ Base class for jflow cache
 '''
 from stdnet.exceptions import ImproperlyConfigured, BadCacheDataStructure
 
+novalue = object()
+
 class BaseCache(object):
     
     def __init__(self, params):
@@ -32,7 +34,6 @@ class BaseCache(object):
         If the key exists but does not hold a set value an error is returned.
         """
         raise NotImplementedError
-
 
     def get(self, key, default=None):
         """
@@ -126,3 +127,11 @@ class BaseCache(object):
     def clear(self):
         """Remove *all* values from the cache at once."""
         raise NotImplementedError
+
+    
+    def zadd(self, key, score, value):
+        raise NotImplementedError
+    
+    def zlen(self, key):
+        raise NotImplementedError
+    

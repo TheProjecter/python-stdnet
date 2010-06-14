@@ -86,7 +86,10 @@ class StdModel(object):
         meta = copy.deepcopy(self.__class__._meta)
         self.__dict__['_meta'] = meta
         for name,field in meta.fields.items():
-            value = kwargs.pop(name,None)
+            field.obj  = self
+            field.name = name
+            field.meta = meta
+            value = kwargs.pop(name,_novalue)
             self.setfield(name, field, value)
             
         for name,value in kwargs.items():
