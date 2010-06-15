@@ -22,8 +22,6 @@ def available(cache):
     return avail
 
 class testLocMem(unittest.TestCase):
-    cachename = 'locmem'
-    cache     = get_cache('locmem://?timeout=300')
     keyset1   = 'stdnet-test-set'
     keyset2   = 'stdnet-test-set2'
     keymap    = 'stdnet-maptest2'
@@ -60,48 +58,44 @@ class testLocMem(unittest.TestCase):
         cache  = self.cache
         id     = self.keymap
         
-        for typ in self.map_types:
-            d      = OrderedDict()
-            added  = 0
-            map    = cache.map(id, typ)
-            if len(self.map_types) > 1:
-                print("\nTesting %s map of type %s" % (self.cachename,typ))
-            else:
-                print("\nTesting %s map" % (self.cachename))
+        d      = OrderedDict()
+        added  = 0
+        map    = cache.map(id, typ)
+        print("\nTesting map")
+        
+        t1 = timer()
+        for ts,v in izip(test_keys,test_values):
+            added += map.add(ts,v)
+        dt = timer() - t1
+        print("Added %s items in %s seconds" % (SIZEMAP,dt))
+        
+        for ts,v in izip(test_keys,test_values):
+            d[ts] = v
             
-            t1 = timer()
-            for ts,v in izip(test_keys,test_values):
-                added += map.add(ts,v)
-            dt = timer() - t1
-            print("Added %s items in %s seconds" % (SIZEMAP,dt))
-            
-            for ts,v in izip(test_keys,test_values):
-                d[ts] = v
-                
-            self.assertTrue(len(map)>0)
-            self.assertEqual(len(map),added)
-            self.assertEqual(len(map),len(d))
-            
-            t1 = timer()
-            mkeys = map.keys()
-            dt = timer() - t1
-            print("Got %s keys in %s seconds" % (len(mkeys),dt))
-            
-            t1 = timer()
-            mkeys = list(map.values())
-            dt = timer() - t1
-            print("Got %s values in %s seconds" % (len(mkeys),dt))
-            
-            kp = None
-            for k,v in map.items():
-                k = int(k)
-                v = float(v)
-                if kp is not None:
-                    self.assertTrue(k>kp)
-                vd = d[k]
-                self.assertAlmostEqual(v,vd)
-                kp = k
-            cache.delete(id)
+        self.assertTrue(len(map)>0)
+        self.assertEqual(len(map),added)
+        self.assertEqual(len(map),len(d))
+        
+        t1 = timer()
+        mkeys = map.keys()
+        dt = timer() - t1
+        print("Got %s keys in %s seconds" % (len(mkeys),dt))
+        
+        t1 = timer()
+        mkeys = list(map.values())
+        dt = timer() - t1
+        print("Got %s values in %s seconds" % (len(mkeys),dt))
+        
+        kp = None
+        for k,v in map.items():
+            k = int(k)
+            v = float(v)
+            if kp is not None:
+                self.assertTrue(k>kp)
+            vd = d[k]
+            self.assertAlmostEqual(v,vd)
+            kp = k
+        cache.delete(id)
         
     def tearDown(self):
         cache = self.cache

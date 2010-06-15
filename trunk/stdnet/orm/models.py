@@ -32,7 +32,8 @@ class Metaclass(object):
                     self.pk = field
                 else:
                     raise FieldError("Primary key must be named id, not %s" % name)
-        
+            field.register_with_model(model)
+            
         if not self.pk:
             self.pk = AutoField(primary_key = True)
             self.fields['id'] = self.pk
@@ -52,7 +53,7 @@ class Metaclass(object):
                 field.save()
     
     def delete(self, obj):
-        
+        pass
             
     def __deepcopy__(self, memodict):
         # We don't have to deepcopy very much here, since most things are not
@@ -117,6 +118,7 @@ class StdModel(object):
     
     def save(self):
         meta  = self._meta.save(self)
+        return self
         
     def __getstate__(self):
         odict = self.__dict__.copy()
@@ -126,7 +128,10 @@ class StdModel(object):
             if val:
                 odict[name] = val
             else:
-                odict.pop(name)
+                if field.required:
+                    raise ValueError("Field %s is required" % name)
+                else:
+                    odict.pop(name,None)
         return odict
     
     def __setstate__(self,dict):
