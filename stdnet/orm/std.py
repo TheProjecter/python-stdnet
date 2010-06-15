@@ -41,5 +41,5 @@ class StdMap(StdField):
     def add(self, key, value):
         id = self.id()
         c  = self.meta.cache
-        c.zadd('%s:set' % id,key)
-        c.hset('%s:hash' % id, key, value)
+        c.madd(id, key, value)
+        
