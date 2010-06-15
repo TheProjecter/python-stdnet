@@ -23,12 +23,9 @@ class TimeSerie(orm.StdModel):
         self.data.add(date2timestamp(dte),v)
         
 
-orm.register(Ticker,settings_test.redis)
-orm.register(Field,settings_test.redis)
-orm.register(TimeSerie,settings_test.redis)
-#orm.register(Ticker)
-#orm.register(Field)
-#orm.register(TimeSerie)
+orm.register(Ticker)
+orm.register(Field)
+orm.register(TimeSerie)
 
 
 class TestTimeSerie(unittest.TestCase):

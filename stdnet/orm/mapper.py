@@ -2,15 +2,37 @@ from stdnet.main import get_cache
 from stdnet.conf import settings
 
 
-class Manager(object):
+class QuerySet(object):
     
-    def filter(self, **kwargs):
-        pass
+    def __init__(self, meta, kwargs):
+        self._meta  = meta
+        self.kwargs = kwargs
+        
+    def filter(self,**kwargs):
+        self.kwargs.update(kwargs)
+        
+    def __iter__(self):
+        skeys = []
+        meta  = self._meta
+        for v in self.kwargs.items():
+            skeys.append(meta.basekey(*v))
+        ids = meta.cache.sinter(skeys)
+        for id in ids:
+            key = meta.basekey('id',id)
+            yield meta.cache.get(key)
+    
+
+
+class Manager(object):
     
     def getid(self, id):
         '''retrive object form id'''
         key = self._meta.basekey('id',id)
         return self.cache.get(key)
+    
+    def filter(self, **kwargs):
+        return QuerySet(self._meta, kwargs)           
+         
         
 
 

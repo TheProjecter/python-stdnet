@@ -4,6 +4,22 @@ ordered associative container
 from stdnet.interfaces import iMap
 
 
+class RedisStructure(object):
+    
+    def __init__(self, redis, id):
+        self.id      = id
+        self.redis   = redis
+    
+    
+
+
+class UnorderedSet(RedisStructure):
+    
+    def size(self):
+        '''Size of map'''
+        return self.redis.zcard(self.id)
+
+
 class RedisMap(iMap):
     
     def __init__(self, redis, id):

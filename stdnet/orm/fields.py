@@ -33,7 +33,10 @@ class Field(object):
         self.value    = None
         self.obj      = None
         self.meta     = None
-        self.name     = None       
+        self.name     = None   
+        
+    def register_with_model(self, model):
+        pass    
     
     def set_model_value(self, name, obj, value = _novalue):
         self.obj  = obj
@@ -75,7 +78,7 @@ class Field(object):
         key     = '%s:%s' % (basekey,value)
         if self.primary_key:
             setattr(obj,name,value)
-            cache.set(key,obj)            
+            cache.set(key,obj)
         elif self.unique:
             cache.set(key,obj.id)
         elif self.ordered:
@@ -113,11 +116,23 @@ class DateField(Field):
             return int(time.mktime(dte.timetuple()))
 
 
+
+class RelatedManager(object):
+    
+    def __init__(self, related):
+        self.related = related
+
+
 class ForeignKey(Field):
     
-    def __init__(self, model, **kwargs):
+    def __init__(self, model, related_name = None, **kwargs):
         self.model = model
+        self.related_name = related_name
         super(ForeignKey,self).__init__(**kwargs)
+        
+    def register_with_model(self, model):
+        name = self.related_name or '%s_set' % model._meta.name
+        setattr(self.model,name,RelatedManager(model))
     
     def getkey(self,obj,value):
         pass
@@ -160,16 +175,4 @@ class ForeignKey(Field):
         return value
     
     
-class OrderedDictionaryField(Field):
-    
-    def __init__(self):
-        super(TimeSerieField,self).__init__(ordered = True, required = False)
-    
-    def set_model_value(self, name, obj, value = _novalue):
-        if value == _novalue:
-            value = self
-        return value
-    
-    def add(self, key, value):
-        pass
         
