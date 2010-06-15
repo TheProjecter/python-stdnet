@@ -45,24 +45,33 @@ class OrderedDict(dict):
         self._sequence = []
         self.update(init_val)
     
+    def keys(self):
+        return self._sequence
+        
     def __iter__(self):
         return self._sequence.__iter__()
     
     def items(self):
         for key in self:
-            yield (key, self.get(key))
+            yield key, self.get(key)
     
     def values(self):
         for key in self:
             yield self.get(key)
     
+    def add(self, key, value):
+        added = 0
+        if not self.has_key(key):
+            added = 1
+            insort(self._sequence, key)
+        self._set(key,value)
+        return added
+    
     def _set(self, key, val):
         super(OrderedDict,self).__setitem__(key,val)
         
     def __setitem__(self, key, val):
-        if not self.has_key(key):
-            insort(self._sequence, key)
-        self._set(key,val)
+        self.add(key,val)
     
     def pop(self, key, default = None):
         if super(OrderedDict,self).pop(key,_novalue) == _novalue:

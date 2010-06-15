@@ -135,3 +135,5 @@ class BaseCache(object):
     def zlen(self, key):
         raise NotImplementedError
     
+    def map(self, key):
+        raise NotImplementedError

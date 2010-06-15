@@ -1,26 +1,38 @@
 import unittest
 from itertools import izip
+from timeit import default_timer as timer
 
 from stdnet.main import get_cache
 from stdnet.utils import populate, date2timestamp, OrderedDict
 from stdnet import settings_test
 
+
+SIZEMAP = 100
+
+test_keys   = populate('date',SIZEMAP,converter=date2timestamp)
+test_values = populate('float',SIZEMAP)
+
+
 def available(cache):
+    if not cache:
+        return False
     cache.set("stdnet-test",1)
     avail = cache.get("stdnet-test") or False
     cache.delete("stdnet-test")
     return avail
 
 class testLocMem(unittest.TestCase):
-    cache        = get_cache('locmem://?timeout=300')
-    keyset1      = 'stdnet-test-set'
-    keyset2      = 'stdnet-test-set2'
-    keyordered   = 'stdnet-test-ordered'
+    cachename = 'locmem'
+    cache     = get_cache('locmem://?timeout=300')
+    keyset1   = 'stdnet-test-set'
+    keyset2   = 'stdnet-test-set2'
+    keymap    = 'stdnet-maptest2'
+    map_types = [1]
     
     def setUp(self):
         pass
     
-    def testSet(self):
+    def _testSet(self):
         cache = self.cache
         key   = self.keyset1
         self.assertTrue(cache.sadd(key,'first-entry'))
@@ -30,7 +42,7 @@ class testLocMem(unittest.TestCase):
         self.assertEqual(len(data),3)
         self.assertFalse(cache.sadd(key,'first-entry'))
         
-    def testDelete(self):
+    def _testDelete(self):
         cache = self.cache
         key   = self.keyset1
         self.assertTrue(cache.sadd(key,'first-entry'))
@@ -46,37 +58,62 @@ class testLocMem(unittest.TestCase):
          
     def testMap(self):
         cache  = self.cache
-        id     = self.keyordered
-        keys   = populate('date',100)
-        values = populate('float',100)
-        d      = OrderedDict()
-        for k,v in izip(keys,values):
-            ts = date2timestamp(k)
-            d[ts] = v
-            cache.madd(id,ts,v)
+        id     = self.keymap
         
-        self.assertTrue(cache.mlen(id)>0)
-        self.assertEqual(cache.mlen(id),len(d))
-        kp = None
-        for k,v in cache.mrange(id):
-            k = int(k)
-            v = float(v)
-            if kp is not None:
-                self.assertTrue(k>kp)
-            vd = d[k]
-            self.assertAlmostEqual(v,vd)
-            kp = k
-        
+        for typ in self.map_types:
+            d      = OrderedDict()
+            added  = 0
+            map    = cache.map(id, typ)
+            if len(self.map_types) > 1:
+                print("\nTesting %s map of type %s" % (self.cachename,typ))
+            else:
+                print("\nTesting %s map" % (self.cachename))
+            
+            t1 = timer()
+            for ts,v in izip(test_keys,test_values):
+                added += map.add(ts,v)
+            dt = timer() - t1
+            print("Added %s items in %s seconds" % (SIZEMAP,dt))
+            
+            for ts,v in izip(test_keys,test_values):
+                d[ts] = v
+                
+            self.assertTrue(len(map)>0)
+            self.assertEqual(len(map),added)
+            self.assertEqual(len(map),len(d))
+            
+            t1 = timer()
+            mkeys = map.keys()
+            dt = timer() - t1
+            print("Got %s keys in %s seconds" % (len(mkeys),dt))
+            
+            t1 = timer()
+            mkeys = list(map.values())
+            dt = timer() - t1
+            print("Got %s values in %s seconds" % (len(mkeys),dt))
+            
+            kp = None
+            for k,v in map.items():
+                k = int(k)
+                v = float(v)
+                if kp is not None:
+                    self.assertTrue(k>kp)
+                vd = d[k]
+                self.assertAlmostEqual(v,vd)
+                kp = k
+            cache.delete(id)
         
     def tearDown(self):
         cache = self.cache
-        cache.delete(self.keyset1,self.keyset2,self.keyordered)
+        cache.delete(self.keymap)
+        #cache.delete(self.keyset1,self.keyset2,self.keymap)
 
 
 cache_memcached = get_cache(settings_test.memcached)
 
-if available(cache_memcached) and False:    
+if available(cache_memcached):    
     class testMemcached(testLocMem):
+        cachename = 'Memcached'
         cache = cache_memcached
         
 
@@ -85,6 +122,8 @@ cache_redis = get_cache(settings_test.redis)
 if available(cache_redis):
     
     class testRedis(testLocMem):
+        cachename = 'Redis'
         cache = cache_redis
+        map_types = [1,2]
     
     

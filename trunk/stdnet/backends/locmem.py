@@ -249,28 +249,14 @@ class CacheClass(BaseCache):
             self._lock.writer_leaves()
             
     # Map
-    def madd(self, id, key, value):
-        '''Add new key-value element to a map with id *id*'''
+    def map(self, id, typ = None):
         self._lock.writer_enters()
         try:
             mmap = self._cache.get(id,None)
             if mmap is None:
                 mmap = OrderedDict()
                 self._cache[id] = mmap
-                
-            N = len(mmap)
-            mmap[key] = value
-            return len(mmap) > N
+            return mmap
         finally:
             self._lock.writer_leaves()
     
-    def mlen(self, id):
-        return self._len(id)
-    
-    def mrange(self, id, start = None, end = None):
-        sset = self._cache.get(id,None)
-        if sset:
-            return sset.range(start,end)
-        else:
-            return None
-        

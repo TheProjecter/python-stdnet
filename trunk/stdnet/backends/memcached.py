@@ -23,8 +23,77 @@ except ImportError:
 
 
 setmemkey = lambda k,n: '%s:%s' % (k,n)    
-    
 
+
+
+class MemcachedMap(object):
+    '''Simulate a std::map in memcached.
+    Keys are integer values'''
+    def __init__(self, id):
+        self.id      = id
+        self.minkey  = '%s:min' % id
+        self.maxkey  = '%s:max' % id
+        self.lenkey  = '%s:len' % id
+        self.keyskey = id
+    
+    def keyid(self, key):
+        return '%s:key:%s' % (self.id,key)
+    
+    def len(self, cache):
+        return cache.get(self.lenkey)
+    
+    def ids(self, cache):
+        keys = self.keys(cache,False)
+        return tuple(keys)+(self.id,self.lenkey,self.keyskey,self.minkey,self.maxkey)
+    
+    def min(self, cache):
+        return cache.get(self.minkey)
+    
+    def max(self, cache):
+        return cache.get(self.maxkey)
+        
+    def keys(self, cache, so = True):
+        try:
+            ks = cache.get(self.keyskey)
+            ks = ks.split(':')
+            if so:
+                ks.sort()
+            return ks
+        except:
+            return []
+          
+    def add(self, cache, key, value):
+        keyid  = self.keyid(key)
+        mkey   = self.max(cache)
+        added  = 1
+        if mkey is None:
+            cache.set(self.minkey,key)
+            cache.set(self.maxkey,key)
+            cache.set(self.lenkey,1)
+            cache.set(self.keyskey,str(key))
+        elif key > mkey:
+            cache.set(self.maxkey,key)
+            cache.incr(self.lenkey)
+            cache.append(self.keyskey,':%s' % key)
+        elif key < self.min(cache):
+            cache.set(self.minkey,key)
+            cache.incr(self.lenkey)
+            cache.append(self.keyskey,':%s' % key)
+        else:
+            if cache.get(keyid) is None:
+                cache.incr(self.lenkey)
+                cache.append(self.keyskey,':%s' % key)
+            else:
+                added = 0
+        cache.set(keyid,value)
+        return added
+                
+    def range(self, cache, start = 0, end = -1, desc = False):
+        keys = self.keys(cache)
+        kid  = self.keyid
+        for key in keys:
+            yield int(key),cache.get(kid(key))
+            
 
 class CacheClass(BaseCache):
     
@@ -62,9 +131,16 @@ class CacheClass(BaseCache):
 
     def set(self, key, value, timeout=None):
         self._cache.set(smart_str(key), value, self._get_memcache_timeout(timeout))
+        
+    def append(self, key, value, timeout=None):
+        self._cache.append(smart_str(key), value, self._get_memcache_timeout(timeout))
 
     def delete(self, *keys):
-        self._cache.delete_multi(map(smart_str, keys))
+        km = []
+        for key in keys:
+            km.extend(MemcachedMap(key).ids(self))
+        return self._cache.delete_multi(km)
+        #return self._cache.delete_multi(map(smart_str, keys))
 
     def get_many(self, keys):
         return self._cache.get_multi(map(smart_str,keys))
@@ -115,7 +191,6 @@ class CacheClass(BaseCache):
         
     
     # Operations on SETS
-    
     def __setmembers(self, key):
         '''Mimic a set in memcached'''
         skey    = smart_str(key)
@@ -143,7 +218,13 @@ class CacheClass(BaseCache):
         skey,emembers = self.__setmembers(key)
         return emembers
     
-    
-    # Map
+    # Map    
     def madd(self, id, key, value):
-        pass
+        return MemcachedMap(id).add(self,key,value)
+    
+    def mlen(self, id):
+        return MemcachedMap(id).len(self._cache)
+    
+    def mrange(self, id, start = 0, end = -1, desc = False):
+        return MemcachedMap(id).range(self._cache, start, end, desc = desc)
+    

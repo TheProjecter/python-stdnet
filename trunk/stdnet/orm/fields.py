@@ -62,9 +62,11 @@ class Field(object):
         keyname = self.getkey(obj,value)
         raise NotImplementedError('Cannot set the field')
     
-    def save(self,name,obj):
+    def save(self):
         '''Save the field and the index for object *obj*'''
-        meta    = obj._meta
+        name    = self.name
+        obj     = self.obj
+        meta    = self.meta
         cache   = meta.cache
         basekey = meta.basekey(name)
         value   = self._cleanvalue(basekey,obj,cache)
