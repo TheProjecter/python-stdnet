@@ -39,6 +39,8 @@ def parse_backend_uri(backend_uri):
 
 
 def get_cache(backend_uri):
+    if not backend_uri:
+        return None
     scheme, host, params = parse_backend_uri(backend_uri)
     if scheme in BACKENDS:
         name = 'stdnet.backends.%s' % BACKENDS[scheme]

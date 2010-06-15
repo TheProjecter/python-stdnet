@@ -9,7 +9,6 @@ from odict import *
 from populate import populate
 
 
-
 def date2timestamp(dte):
     return int(time.mktime(dte.timetuple()))
 

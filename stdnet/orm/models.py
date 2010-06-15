@@ -46,11 +46,13 @@ class Metaclass(object):
         return key
     
     def save(self, obj):
-        pk    = self.pk
-        pk.save('id',obj)
+        self.pk.save()
         for name,field in self.fields.items():
             if name is not 'id':
-                field.save(name,obj)
+                field.save()
+    
+    def delete(self, obj):
+        
             
     def __deepcopy__(self, memodict):
         # We don't have to deepcopy very much here, since most things are not
@@ -136,6 +138,8 @@ class StdModel(object):
         else:
             return False
         
+    def delete(self):
+        meta  = self._meta.delete(self)
     
         
     
