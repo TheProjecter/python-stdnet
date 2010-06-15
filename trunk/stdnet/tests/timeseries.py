@@ -1,11 +1,10 @@
-import time
 from itertools import izip
 from datetime import date
 import unittest
 
 from stdnet import orm
 from stdnet import settings_test
-from stdnet.utils import populate
+from stdnet.utils import populate, date2timestamp
 
 
 class Ticker(orm.StdModel):
@@ -21,8 +20,7 @@ class TimeSerie(orm.StdModel):
     data    = orm.StdMap()
     
     def add(self, dte, v):
-        dt = time.mktime(dte.timetuple())
-        self.data.add(dt,v)
+        self.data.add(date2timestamp(dte),v)
         
 
 orm.register(Ticker,settings_test.redis)

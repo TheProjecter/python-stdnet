@@ -143,4 +143,7 @@ class CacheClass(BaseCache):
         skey,emembers = self.__setmembers(key)
         return emembers
     
-        
+    
+    # Map
+    def madd(self, id, key, value):
+        pass

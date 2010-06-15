@@ -8,7 +8,7 @@ except ImportError:
     import pickle
 
 from stdnet.backends.base import BaseCache, novalue
-from stdnet.utils import RWLock, OrderedSet
+from stdnet.utils import RWLock, OrderedDict
 
 class dummyPickle():
     
@@ -59,6 +59,17 @@ class CacheClass(BaseCache):
 
         self._lock = RWLock()
 
+    def _len(self, id):
+        self._lock.reader_enters()
+        try:
+            sset = self._cache.get(id,None)
+            if sset:
+                return len(sset)
+            else:
+                return 0
+        finally:
+            self._lock.reader_leaves()
+            
     def incr(self, key, delta=1):
         self._lock.writer_enters()
         try:
@@ -219,19 +230,10 @@ class CacheClass(BaseCache):
         finally:
             self._lock.reader_leaves()
     
-    def zlen(self, key):
-        self._lock.reader_enters()
-        try:
-            sset = self._cache.get(key,None)
-            if sset:
-                return len(sset)
-            else:
-                return 0
-        finally:
-            self._lock.reader_leaves()
+    def zlen(self, id):
+        return self._len(id)
         
     # Hashes
-    
     def hset(self, key, field, value):
         self._lock.writer_enters()
         try:
@@ -245,3 +247,30 @@ class CacheClass(BaseCache):
             return len(sset) > N
         finally:
             self._lock.writer_leaves()
+            
+    # Map
+    def madd(self, id, key, value):
+        '''Add new key-value element to a map with id *id*'''
+        self._lock.writer_enters()
+        try:
+            mmap = self._cache.get(id,None)
+            if mmap is None:
+                mmap = OrderedDict()
+                self._cache[id] = mmap
+                
+            N = len(mmap)
+            mmap[key] = value
+            return len(mmap) > N
+        finally:
+            self._lock.writer_leaves()
+    
+    def mlen(self, id):
+        return self._len(id)
+    
+    def mrange(self, id, start = None, end = None):
+        sset = self._cache.get(id,None)
+        if sset:
+            return sset.range(start,end)
+        else:
+            return None
+        

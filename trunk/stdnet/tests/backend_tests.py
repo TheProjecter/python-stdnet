@@ -2,7 +2,7 @@ import unittest
 from itertools import izip
 
 from stdnet.main import get_cache
-from stdnet.utils import populate
+from stdnet.utils import populate, date2timestamp, OrderedDict
 from stdnet import settings_test
 
 def available(cache):
@@ -43,27 +43,29 @@ class testLocMem(unittest.TestCase):
         key   = self.keyset2
         self.assertTrue(cache.add(key,'bla'))
         cache.sadd(key,'bla2')
-            
-    def testOrdered(self):
-        cache = self.cache
-        key   = self.keyordered
-        cache.zadd(key,'Luca Sbardella',38)
-        cache.zadd(key,'bla bla',32)
-        self.assertEqual(cache.zlen(key),2)
+         
+    def testMap(self):
+        cache  = self.cache
+        id     = self.keyordered
+        keys   = populate('date',100)
+        values = populate('float',100)
+        d      = OrderedDict()
+        for k,v in izip(keys,values):
+            ts = date2timestamp(k)
+            d[ts] = v
+            cache.madd(id,ts,v)
         
-    def testOrdered2(self):
-        cache = self.cache
-        key   = self.keyordered
-        keys  = populate('integer',100,0,10000)
-        for k in populate('integer',100,0,10000):
-            cache.zadd(key,k)
-        
-        elems = cache.zrange(key,1000,6000)
-        p = 0
-        for k in elems:
-            if p:
-                self.assertTrue(k>p)
-            p = k
+        self.assertTrue(cache.mlen(id)>0)
+        self.assertEqual(cache.mlen(id),len(d))
+        kp = None
+        for k,v in cache.mrange(id):
+            k = int(k)
+            v = float(v)
+            if kp is not None:
+                self.assertTrue(k>kp)
+            vd = d[k]
+            self.assertAlmostEqual(v,vd)
+            kp = k
         
         
     def tearDown(self):
