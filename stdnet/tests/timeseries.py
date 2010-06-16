@@ -44,7 +44,7 @@ class TestTimeSerie(unittest.TestCase):
             t.add(d,v)
         t.save()
         obj = TimeSerie.objects.get(id = t.id)
-        data = obj.data.all()
+        data = obj.data.items()
         data = list(data)
         self.assertTrue(len(data)>0)
         d = None

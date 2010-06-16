@@ -72,7 +72,7 @@ class Field(object):
         obj     = self.obj
         meta    = self.meta
         value   = self._cleanvalue()
-        if self.required and not value:
+        if self.required and value is None:
             raise FieldError('Field %s for %s has no value' % (name,obj))
         
         if self.primary_key:
