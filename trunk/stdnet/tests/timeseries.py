@@ -17,7 +17,7 @@ class TimeSerie(orm.StdModel):
     '''A timeserie model'''
     ticker  = orm.ForeignKey(Ticker)
     field   = orm.ForeignKey(Field)
-    data    = orm.StdMap()
+    data    = orm.MapField()
     
     def add(self, dte, v):
         self.data.add(date2timestamp(dte),v)
@@ -43,7 +43,7 @@ class TestTimeSerie(unittest.TestCase):
         for d,v in izip(dates,values):
             t.add(d,v)
         t.save()
-        obj = TimeSerie.objects.getid(id = t.id)
+        obj = TimeSerie.objects.get(id = t.id)
         data = obj.data.all()
         data = list(data)
         self.assertTrue(len(data)>0)

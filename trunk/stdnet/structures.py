@@ -29,6 +29,9 @@ class HashTable(Structure):
     def get(self, key):
         raise NotImplementedError
     
+    def mget(self, keys):
+        raise NotImplementedError
+    
     def keys(self, desc = False):
         raise NotImplementedError
     

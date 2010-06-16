@@ -10,6 +10,13 @@ class Manager(object):
         qs = self.filter(**kwargs)
         return qs.get()
     
+    def get_or_create(self, **kwargs):
+        res = self.get(**kwargs)
+        if not res:
+            res = self.model(**kwargs)
+            res.save()
+        return res
+    
     def filter(self, **kwargs):
         return QuerySet(self._meta, kwargs)
 
