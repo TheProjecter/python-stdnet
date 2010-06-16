@@ -7,7 +7,9 @@ def_converter = lambda x : x
 
 def populate(datatype = 'string', size  = 10,
              start = None, end = None, 
-             converter = None, **kwargs):
+             converter = None, 
+             choice_from = None,
+             **kwargs):
     data = []
     converter = converter or def_converter
     if datatype == 'string':
@@ -29,6 +31,9 @@ def populate(datatype = 'string', size  = 10,
         end = end or 10
         for s in range(size):
             data.append(converter(uniform(start,end)))
+    elif datatype == 'chioce':
+        for s in range(size):
+            data.append(choice(choice_from))
     else:
         for s in range(size):
             data.append(converter(random_string(**kwargs)))
