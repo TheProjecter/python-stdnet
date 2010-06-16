@@ -34,8 +34,9 @@ orm.register(Fund)
 orm.register(Position)
 
 TYPELEN = 10
-names = populate('string',1000, min_len = 5, max_len = 20)
-types = populate('integer',1000, start=0, end=TYPELEN-1)
+LEN     = 100
+names = populate('string',LEN, min_len = 5, max_len = 20)
+types = populate('integer',LEN, start=0, end=TYPELEN-1)
 
 class TestORM(unittest.TestCase):
     
@@ -65,9 +66,9 @@ class TestORM(unittest.TestCase):
         all = Instrument.objects.all()
         self.assertEqual(c,len(all))
     
-    def _testForeignKey(self):
-        p = Instrument.objects.get(id = self.p.id)
-        f = Fund(name='myfund', ccy='EUR').save()
+    def testForeignKey(self):
+        p = Instrument.objects.get(id = 1)
+        f = Fund(name='myfund', ccy='EUR', type = 1).save()
         t = Position(instrument = p, dt = datetime.date.today(), fund = f)
         t.save()
         obj = Position.objects.get(id = t.id)
