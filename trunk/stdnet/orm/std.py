@@ -40,11 +40,16 @@ class HashField(StdField):
     def cacheobj(self):
         return self.meta.cache.hash(self._id())
     
-    def all(self):
+    def items(self):
         self.save()
         obj = self.cacheobj()
-        return obj.items() 
-            
+        return obj.items()
+    
+    def keys(self):
+        self.save()
+        obj = self.cacheobj()
+        return obj.keys()
+        
     def save(self, commit = True):
         if self._cache and commit:
             obj = self.cacheobj()
