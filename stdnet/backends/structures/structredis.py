@@ -23,6 +23,8 @@ class HashTable(structures.HashTable):
         return self.cursor.hget(self.id,key)
     
     def mget(self, keys):
+        if not keys:
+            raise StopIteration
         objs = self.cursor.execute_command('HMGET', self.id, *keys)
         loads = self.cursor._res_to_val
         for obj in objs:

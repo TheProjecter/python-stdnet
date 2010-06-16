@@ -35,14 +35,17 @@ orm.register(Position)
 
 TYPELEN = 10
 LEN     = 100
+choice_from = ['EUR','GBP','USD','JPY']
 names = populate('string',LEN, min_len = 5, max_len = 20)
 types = populate('integer',LEN, start=0, end=TYPELEN-1)
+ccys  = populate('choice',LEN, choice_from = choice_from)
 
 class TestORM(unittest.TestCase):
     
     def setUp(self):
-        for name,typ in izip(names,types):
+        for name,typ,ccy in izip(names,types,ccys):
             Instrument(name = name, type = typ).save()
+            Fund(name = name, type = typ, ccy = ccy).save()
         
     def testIds(self):
         objs = Instrument.objects.all()
@@ -66,7 +69,19 @@ class TestORM(unittest.TestCase):
         all = Instrument.objects.all()
         self.assertEqual(c,len(all))
     
-    def testForeignKey(self):
+    def testFilter2(self):
+        tot = 0
+        for t in range(TYPELEN):
+            for c in choice_from:
+                objs = Fund.objects.filter(type = t, ccy = c)
+                for obj in objs:
+                    tot += 1
+                    self.assertEqual(obj.type,t)
+                    self.assertEqual(obj.ccy,c)
+        all = Instrument.objects.all()
+        self.assertEqual(tot,len(all))
+        
+    def _testForeignKey(self):
         p = Instrument.objects.get(id = 1)
         f = Fund(name='myfund', ccy='EUR', type = 1).save()
         t = Position(instrument = p, dt = datetime.date.today(), fund = f)
