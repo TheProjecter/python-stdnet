@@ -27,17 +27,7 @@ class HashTable(structures.HashTable):
         loads = self.cursor._res_to_val
         for obj in objs:
             yield loads(obj)
-        
-    def keys(self, desc = False):
-        raise NotImplementedError
     
-    def items(self, desc = False):
-        keys = self.keys(desc = desc)
-        id   = self.id
-        r    = self.cursor
-        for key in keys:
-            yield key,r.hget(id,key)
-
     def add(self, key, value):
         return self.cursor.hset(self.id,key,value)
     
@@ -45,10 +35,10 @@ class HashTable(structures.HashTable):
         return self.cursor.hmset(self.id,mapping)
     
     def keys(self):
-        return self.cursor.hkeys(self.id)
+        return self.cursor.execute_command('HKEYS', self.id)
     
     def items(self):
-        res = self.execute_command('HGETALL', self.id)
+        res = self.cursor.execute_command('HGETALL', self.id)
         loads = self.cursor._res_to_val
         for key,val in result:
             yield key,loads(val)
@@ -69,7 +59,8 @@ class Map(HashTable):
             return ks
         
     def keys(self, desc = False):
-        return self._keys(self.redis.hkeys(self.id),desc)
+        ks = super(Map,self).keys()
+        return self._keys(ks,desc)
 
     def items(self, desc = False):
         kv   = self.cursor.execute_command('HGETALL', self.id)
