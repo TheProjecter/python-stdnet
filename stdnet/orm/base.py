@@ -3,9 +3,9 @@ from fields import Field, AutoField
 
 def get_fields(bases, attrs):
     fields = {}
-    for base in reversed(bases):
-        if hasattr(base, 'orm_fields'):
-            fields.update(base.orm_fields)
+    for base in bases:
+        if hasattr(base, '_meta'):
+            fields.update(base._meta.fields)
     
     for name,field in attrs.items():
         if isinstance(field,Field):
@@ -35,7 +35,8 @@ class Metaclass(object):
                 raise FieldError("Primary key must be named id")
             
         for name,field in self.fields.items():
-            field.register_with_model(model)
+            if not abstract:
+                field.register_with_model(model)
             if name == 'id':
                 continue
             if field.primary_key:

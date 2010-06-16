@@ -5,15 +5,15 @@ from stdnet import orm
 
 class Base(orm.StdModel):
     name = orm.AtomField(unique = True)
+    type = orm.AtomField()
     
     class Meta:
         abstract = True
 
 class Instrument(Base):
-    type = orm.AtomField()
+    pass
     
-class Fund(orm.StdModel):
-    name = orm.AtomField(unique = True)
+class Fund(Base):
     ccy  = orm.AtomField()
 
 class Position(orm.StdModel):
@@ -42,6 +42,8 @@ class TestORM(unittest.TestCase):
         
     def testIds(self):
         p = self.p
+        self.assertEqual(len(Instrument._meta.fields),3)
+        self.assertEqual(len(Fund._meta.fields),4)
         self.assertEqual(p.name,'eru10')
         self.assertEqual(p.type, 4)
         self.assertEqual(p.id,1)
