@@ -66,6 +66,12 @@ class TestORM(unittest.TestCase):
         self.assertEqual(p,p1)
         self.assertEqual(obj.instrument.name,'eru10')
         
+    def testDelete(self):
+        p = self.p
+        self.assertEqual(len(p._meta.keys),3)
+        p.delete()
+        obj = Position.objects.getid(t.id)
+        
     def tearDown(self):
         orm.clear()
         

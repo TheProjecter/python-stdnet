@@ -24,11 +24,11 @@ class Field(object):
             self.index    = True
         else:
             self.unique = unique
+            self.required = required
             if unique:
                 self.index = True
             else:
                 self.index = index
-        self.required = required
         self.ordered  = ordered
         self.value    = None
         self.obj      = None
@@ -36,7 +36,8 @@ class Field(object):
         self.name     = None   
         
     def register_with_model(self, model):
-        pass    
+        '''Called by the model meta class when the model class is created'''
+        pass
     
     def set_model_value(self, name, obj, value = _novalue):
         self.obj  = obj
@@ -76,6 +77,7 @@ class Field(object):
         if self.required and not value:
             raise FieldError('Field %s for %s has no value' % (name,obj))
         key     = '%s:%s' % (basekey,value)
+        meta.keys.append(key)
         if self.primary_key:
             setattr(obj,name,value)
             cache.set(key,obj)

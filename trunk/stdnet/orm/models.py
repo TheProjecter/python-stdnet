@@ -19,7 +19,9 @@ def get_fields(bases, attrs):
 
 
 class Metaclass(object):
-    keyprefix = 'stdnet' 
+    keyprefix = 'stdnet'
+    '''Model metaclass contains all the information which relates the python object to
+    the database model'''
     
     def __init__(self, model, fields):
         self.model  = model
@@ -39,6 +41,7 @@ class Metaclass(object):
             self.fields['id'] = self.pk
         
         self.cache = None
+        self.keys  = None
         
     def basekey(self, *args):
         key = '%s:%s' % (self.keyprefix,self.name)
@@ -46,24 +49,24 @@ class Metaclass(object):
             key = '%s:%s' % (key,arg)
         return key
     
-    def save(self, obj):
+    def save(self):
         self.pk.save()
         for name,field in self.fields.items():
             if name is not 'id':
                 field.save()
-    
-    def delete(self, obj):
-        pass
+        
+    def delete(self):
+        if self.keys:
+            return self.cache.delete(*tuple(self.keys))
             
     def __deepcopy__(self, memodict):
-        # We don't have to deepcopy very much here, since most things are not
-        # intended to be altered after initial creation.
+        # We deep copy on fields and create the keys list
         obj = copy.copy(self)
         obj.fields = copy.deepcopy(self.fields, memodict)
-        obj.pk = obj.fields['id']
+        obj.pk     = obj.fields['id']
+        obj.keys   = []
         memodict[id(self)] = obj
         return obj
-
 
 
 
@@ -117,7 +120,7 @@ class StdModel(object):
             self.__dict__[name] = value
     
     def save(self):
-        meta  = self._meta.save(self)
+        meta  = self._meta.save()
         return self
         
     def __getstate__(self):
@@ -144,7 +147,7 @@ class StdModel(object):
             return False
         
     def delete(self):
-        meta  = self._meta.delete(self)
+        return self._meta.delete()
     
         
     
