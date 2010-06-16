@@ -50,7 +50,7 @@ class StdModel(object):
         meta = odict.pop('_meta')
         for name,field in meta.fields.items():
             val = field.model_get_arg()
-            if val:
+            if val is not None:
                 odict[name] = val
             else:
                 if field.required:

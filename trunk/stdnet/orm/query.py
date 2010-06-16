@@ -45,12 +45,18 @@ class QuerySet(object):
         return result
         
     def __iter__(self):
-        unique,result = self.aggregate()
-        if unique:
-            yield result
+        meta = self._meta
+        if not self.kwargs:
+            hash = meta.cursor.hash(meta.basekey())
+            for val in hash.values():
+                yield val
         else:
-            meta = self._meta
-            ids = meta.cursor.sinter(result)
-            objs = meta.cursor.hash(meta.basekey()).mget(ids)
-            for obj in objs:
-                yield obj
+            unique,result = self.aggregate()
+            if unique:
+                yield result
+            else:
+                meta = self._meta
+                ids = meta.cursor.sinter(result)
+                objs = meta.cursor.hash(meta.basekey()).mget(ids)
+                for obj in objs:
+                    yield obj

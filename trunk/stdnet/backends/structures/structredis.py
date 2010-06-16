@@ -38,9 +38,9 @@ class HashTable(structures.HashTable):
         return self.cursor.execute_command('HKEYS', self.id)
     
     def items(self):
-        res = self.cursor.execute_command('HGETALL', self.id)
-        loads = self.cursor._res_to_val
-        for key,val in result:
+        result = self.cursor.execute_command('HGETALL', self.id)
+        loads  = self.cursor._res_to_val
+        for key,val in result.iteritems():
             yield key,loads(val)
 
     def values(self):

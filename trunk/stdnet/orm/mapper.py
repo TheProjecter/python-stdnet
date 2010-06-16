@@ -21,6 +21,9 @@ class Manager(object):
     def filter(self, **kwargs):
         return QuerySet(self._meta, kwargs)
 
+    def all(self):
+        return self.filter()
+    
 
 def clear(backend = None):
     backend = backend or settings.DEFAULT_BACKEND
