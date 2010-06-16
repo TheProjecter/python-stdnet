@@ -4,7 +4,7 @@ Memcached cache backend
 from itertools import imap
 import time
 
-from stdnet.backends.base import BaseCache, ImproperlyConfigured, BadCacheDataStructure
+from stdnet.backends.base import BaseBackend, ImproperlyConfigured, BadCacheDataStructure
 from stdnet.utils import smart_str, json
 
 try:
@@ -95,10 +95,10 @@ class MemcachedMap(object):
             yield int(key),cache.get(kid(key))
             
 
-class CacheClass(BaseCache):
+class BackEnd(BaseBackend):
     
-    def __init__(self, server, params):
-        super(CacheClass,self).__init__(params)
+    def __init__(self, name, server, params):
+        super(BackEnd,self).__init__(name,params)
         self._cache = memcache.Client(server.split(';'))
 
     def _get_memcache_timeout(self, timeout):

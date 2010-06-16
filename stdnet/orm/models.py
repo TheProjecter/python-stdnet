@@ -19,7 +19,7 @@ def get_fields(bases, attrs):
 
 
 class Metaclass(object):
-    keyprefix = 'stdnet'
+    keyprefix = None
     '''Model metaclass contains all the information which relates the python object to
     the database model'''
     
@@ -27,43 +27,47 @@ class Metaclass(object):
         self.model  = model
         self.name   = model.__name__.lower()
         self.fields = fields
-        self.pk     = None
-        for name,field in self.fields.items():
-            if field.primary_key:
-                if name == 'id':
-                    self.pk = field
-                else:
-                    raise FieldError("Primary key must be named id, not %s" % name)
-            field.register_with_model(model)
+        try:
+            pk = self.pk
+        except:
+            fields['id'] = AutoField(primary_key = True)
+        if not self.pk.primary_key:
+            raise FieldError("Primary key must be named id")
             
-        if not self.pk:
-            self.pk = AutoField(primary_key = True)
-            self.fields['id'] = self.pk
-        
-        self.cache = None
+        for name,field in self.fields.items():
+            field.register_with_model(model)
+            if name == 'id':
+                continue
+            if field.primary_key:
+                raise FieldError("Primary key already available %s." % name)
+            
+        self.cursor = None
         self.keys  = None
         
+    @property
+    def pk(self):
+        return self.fields['id']
+        
     def basekey(self, *args):
-        key = '%s:%s' % (self.keyprefix,self.name)
+        key = '%s%s' % (self.keyprefix,self.name)
         for arg in args:
             key = '%s:%s' % (key,arg)
         return key
     
-    def save(self):
-        self.pk.save()
+    def save(self, commit = True):
+        res = self.pk.save(commit)
         for name,field in self.fields.items():
             if name is not 'id':
-                field.save()
+                field.save(commit)
         
     def delete(self):
         if self.keys:
-            return self.cache.delete(*tuple(self.keys))
+            return self.cursor.delete(*tuple(self.keys))
             
     def __deepcopy__(self, memodict):
         # We deep copy on fields and create the keys list
         obj = copy.copy(self)
         obj.fields = copy.deepcopy(self.fields, memodict)
-        obj.pk     = obj.fields['id']
         obj.keys   = []
         memodict[id(self)] = obj
         return obj
@@ -119,8 +123,8 @@ class StdModel(object):
         if value is not _novalue:
             self.__dict__[name] = value
     
-    def save(self):
-        meta  = self._meta.save()
+    def save(self, commit = True):
+        meta  = self._meta.save(commit)
         return self
         
     def __getstate__(self):

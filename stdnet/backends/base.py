@@ -5,47 +5,69 @@ from stdnet.exceptions import ImproperlyConfigured, BadCacheDataStructure
 
 novalue = object()
 
-class BaseCache(object):
+class cacheValue(object):
     
-    def __init__(self, params):
-        timeout = params.get('timeout', 300)
+    def __init__(self, value, timeout):
+        self.timeout
+        self.value = value
+
+
+
+class BaseBackend(object):
+    
+    def __init__(self, name, params):
+        self.__name = name
+        timeout = params.get('timeout', 0)
         try:
             timeout = int(timeout)
         except (ValueError, TypeError):
-            timeout = 300
+            timeout = 0
         self.default_timeout = timeout
+        self._cache_objs = {}
+        self._cache_strs = {}
+        self._cache_sets = {}
     
-    def add(self, key, value, timeout=None):
-        """
-        Set a value in the cache if the key does not already exist. If
-        timeout is given, that timeout will be used for the key; otherwise
-        the default cache timeout will be used.
-
-        Returns True if the value was stored, False otherwise.
-        """
-        raise NotImplementedError
+    def __repr__(self):
+        return '%s backend' % self.__name
     
-    def sadd(self, key, value, timeout=None):
-        """**Set operation**
-        
-        Add the specified *member* to the set value stored at *key*.
-        If member is already a member of the set no operation is performed.
-        If key does not exist a new set with the specified member as sole member is created.
-        If the key exists but does not hold a set value an error is returned.
-        """
-        raise NotImplementedError
+    def __str__(self):
+        return self.__repr__()
+    
+    def add_object(self, key, obj, commit = True, timeout = 0):
+        '''Add a model object to the database'''
+        if commit:
+            hash = self.hash(key,timeout)
+            return hash.add(obj.id, obj)
+        else:
+            cache = self._cache_objs
+            cvalue = cache.get(key,None)
+            if cvalue is None:
+                cvalue = cacheValue({},timeout)
+                cache[key] = cvalue
+            cvalue.value[obj.id] = obj
+    
+    def add_string(self, key, value, commit = True, timeout = 0):
+        if commit:
+            return self.set(key, value, timeout = timeout)
+        else:
+            self._cache_strs[key] = cacheValue(value,timeout)
+    
+    def add_index(self, key, value, commit = True, timeout = 0):
+        if commit:
+            set = self.unordered_set(key,timeout)
+            return set.add(value)
+        else:
+            cache = self._cache_sets
+            cvalue = cache.get(key,None)
+            if cvalue is None:
+                cvalue = cacheValue(set(),timeout)
+                cache[key] = cvalue
+            cvalue.value.add(value)
 
     def get(self, key, default=None):
         """
         Fetch a given key from the cache. If the key does not exist, return
         default, which itself defaults to None.
-        """
-        raise NotImplementedError
-
-    def set(self, key, value, timeout=None):
-        """
-        Set a value in the cache. If timeout is given, that timeout will be
-        used for the key; otherwise the default cache timeout will be used.
         """
         raise NotImplementedError
 
@@ -129,11 +151,11 @@ class BaseCache(object):
         raise NotImplementedError
 
     
-    def zadd(self, key, value, score = novalue):
+    def hash(self, key, timeout = 0):
         raise NotImplementedError
     
-    def zlen(self, key):
+    def unordered_set(self, key, timeout = 0):
         raise NotImplementedError
     
-    def map(self, key):
+    def map(self, key, timeout = 0):
         raise NotImplementedError

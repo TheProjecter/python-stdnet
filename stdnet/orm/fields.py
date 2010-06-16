@@ -56,7 +56,7 @@ class Field(object):
     def get_value(self, name, obj):
         return self.value
     
-    def _cleanvalue(self, basekey, obj, cache):
+    def _cleanvalue(self):
         return self.value
         
     def getkey(self,obj,value):
@@ -66,28 +66,30 @@ class Field(object):
         keyname = self.getkey(obj,value)
         raise NotImplementedError('Cannot set the field')
     
-    def save(self):
+    def save(self, commit):
         '''Save the field and the index for object *obj*'''
         name    = self.name
         obj     = self.obj
         meta    = self.meta
-        cache   = meta.cache
-        basekey = meta.basekey(name)
-        value   = self._cleanvalue(basekey,obj,cache)
+        value   = self._cleanvalue()
         if self.required and not value:
             raise FieldError('Field %s for %s has no value' % (name,obj))
-        key     = '%s:%s' % (basekey,value)
-        meta.keys.append(key)
+        
         if self.primary_key:
+            key = meta.basekey()
             setattr(obj,name,value)
-            cache.set(key,obj)
-        elif self.unique:
-            cache.set(key,obj.id)
-        elif self.ordered:
-            cache.zadd(key,obj.id)
-        else:
-            cache.sadd(key,obj.id)
-        self.savevalue(value)
+            return meta.cursor.add_object(key,obj,commit)
+        
+        elif self.index:
+            key     = meta.basekey(name,value)
+            if self.unique:
+                return meta.cursor.add_string(key, obj.id, commit, timeout = meta.timeout)
+            elif self.ordered:
+                raise NotImplementedError
+            else:
+                return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
+        
+            self.savevalue(value)
         
     def savevalue(self, value):
         pass
@@ -98,9 +100,10 @@ class Field(object):
     
 class AutoField(Field):
     
-    def _cleanvalue(self, basekey, obj, cache):
+    def _cleanvalue(self):
         if not self.value:
-            self.value = cache.incr(basekey)
+            meta = self.meta
+            self.value = meta.cursor.incr(meta.basekey('ids'))
         return self.value
             
 
@@ -112,7 +115,7 @@ class AtomField(Field):
 
 class DateField(Field):
     
-    def _cleanvalue(self, basekey, obj, cache):
+    def _cleanvalue(self):
         dte = self.value
         if dte:
             return int(time.mktime(dte.timetuple()))
@@ -142,7 +145,7 @@ class ForeignKey(Field):
     def set(self,obj,value):
         pass
     
-    def _cleanvalue(self, basekey, obj, cache):
+    def _cleanvalue(self):
         if isinstance(self.value,self.model):
             return self.value.id
         else:

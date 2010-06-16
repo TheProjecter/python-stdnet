@@ -1,59 +1,41 @@
-from stdnet.main import get_cache
+from stdnet.main import getdb
 from stdnet.conf import settings
 
-
-class QuerySet(object):
+from query import QuerySet
     
-    def __init__(self, meta, kwargs):
-        self._meta  = meta
-        self.kwargs = kwargs
-        
-    def filter(self,**kwargs):
-        self.kwargs.update(kwargs)
-        
-    def __iter__(self):
-        skeys = []
-        meta  = self._meta
-        for v in self.kwargs.items():
-            skeys.append(meta.basekey(*v))
-        ids = meta.cache.sinter(skeys)
-        for id in ids:
-            key = meta.basekey('id',id)
-            yield meta.cache.get(key)
-    
-
 
 class Manager(object):
     
-    def getid(self, id):
-        '''retrive object form id'''
-        key = self._meta.basekey('id',id)
-        return self.cache.get(key)
+    def get(self, **kwargs):
+        qs = self.filter(**kwargs)
+        return qs.get()
     
     def filter(self, **kwargs):
-        return QuerySet(self._meta, kwargs)           
-         
-        
+        return QuerySet(self._meta, kwargs)
 
 
 def clear(backend = None):
     backend = backend or settings.DEFAULT_BACKEND
-    cache = get_cache(backend)
-    cache.clear()
+    cursor = getdb(backend)
+    cursor.clear()
 
-def register(model, backend = None, keyprefix = None, namespace = None):
+
+def register(model, backend = None, keyprefix = None, timeout = 0):
     backend = backend or settings.DEFAULT_BACKEND
-    prefix  = keyprefix or model._meta.keyprefix or 'stdnet'
+    prefix  = keyprefix or model._meta.keyprefix or settings.DEFAULT_KEYPREFIX or ''
+    if prefix:
+        prefix = '%s:' % prefix
     meta    = model._meta
     meta.keyprefix = prefix
+    meta.timeout   = timeout or 0
     objects = getattr(model,'objects',None)
     if not objects:
         objects = Manager()
         model.objects = objects
-    meta.cache = get_cache(backend)
-    objects.model = model
-    objects._meta = meta
-    objects.cache = meta.cache
+    meta.cursor    = getdb(backend)
+    objects.model  = model
+    objects._meta  = meta
+    objects.cursor = meta.cursor
     
 
 _registry = {}
