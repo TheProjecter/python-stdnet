@@ -33,9 +33,9 @@ orm.register(Instrument)
 orm.register(Fund)
 orm.register(Position)
 
-
+TYPELEN = 10
 names = populate('string',1000, min_len = 5, max_len = 20)
-types = populate('integer',1000, start=0, end=10)
+types = populate('integer',1000, start=0, end=TYPELEN-1)
 
 class TestORM(unittest.TestCase):
     
@@ -48,20 +48,22 @@ class TestORM(unittest.TestCase):
         objs = list(objs)
         self.assertTrue(len(objs)>0)
         
-    def _testObject(self):
-        p = self.p
-        obj = Instrument.objects.get(id = p.id)
-        self.assertEqual(obj.name,'eru10')
-        self.assertEqual(obj.type,4)
+    def testObject(self):
+        obj = Instrument.objects.get(id = 1)
         self.assertEqual(obj.id,1)
-        self.assertEqual(obj,p)
+        self.assertTrue(obj.name)
+        obj2 = Instrument.objects.get(name = obj.name)
+        self.assertEqual(obj,obj2)
         
-    def _testFilter(self):
-        objs = Instrument.objects.filter(type = 4)
-        objs = list(objs)
-        self.assertEqual(len(objs),2)
-        for obj in objs:
-            self.assertEqual(obj.type,4)
+    def testFilter(self):
+        c = 0
+        for t in range(TYPELEN):
+            objs = Instrument.objects.filter(type = t)
+            for obj in objs:
+                c += 1
+                self.assertEqual(obj.type,t)
+        all = Instrument.objects.all()
+        self.assertEqual(c,len(all))
     
     def _testForeignKey(self):
         p = Instrument.objects.get(id = self.p.id)
