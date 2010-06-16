@@ -8,7 +8,7 @@ Backends
 ====================
 
  * local memory
- * memcached
+ * memcached (not fully supported)
  * redis
  
  

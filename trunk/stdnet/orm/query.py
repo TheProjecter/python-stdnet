@@ -13,9 +13,9 @@ class QuerySet(object):
     def getid(self, id):
         meta = self._meta
         return meta.cursor.hash(meta.basekey()).get(id)
-        
-    def getids(self, *ids):
-        pass
+    
+    def __len__(self):
+        return len(list(self.items()))
     
     def aggregate(self):
         unique  = False
@@ -44,7 +44,7 @@ class QuerySet(object):
             raise QuerySetError('Queryset not unique')
         return result
         
-    def __iter__(self):
+    def items(self):
         meta = self._meta
         if not self.kwargs:
             hash = meta.cursor.hash(meta.basekey())
@@ -60,3 +60,6 @@ class QuerySet(object):
                 objs = meta.cursor.hash(meta.basekey()).mget(ids)
                 for obj in objs:
                     yield obj
+                    
+    def __iter__(self):
+        return self.items()
