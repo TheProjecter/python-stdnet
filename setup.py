@@ -90,7 +90,7 @@ setup(
         url          = 'http://code.google.com/p/python-stdnet/',
         license      = 'BSD',
         description  = 'A networked standard template library and ORM for python',
-        long_description = read('README'),
+        long_description = read('README.rst'),
         packages     = packages,
         cmdclass     = cmdclasses,
         data_files   = data_files,

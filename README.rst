@@ -22,7 +22,7 @@ Backends
  
  Object-relational mapping
  ================================
- The module ``orm`` is a lightweight ORM with the any of the backends.
+ The module ``stdnet.orm`` is a lightweight ORM.
  For example::
  
  	from stdnet import orm
