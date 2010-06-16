@@ -38,7 +38,7 @@ def parse_backend_uri(backend_uri):
     return scheme, host, params
 
 
-def get_cache(backend_uri):
+def getdb(backend_uri):
     if not backend_uri:
         return None
     scheme, host, params = parse_backend_uri(backend_uri)
@@ -47,4 +47,4 @@ def get_cache(backend_uri):
     else:
         name = scheme
     module = import_module(name)
-    return getattr(module, 'CacheClass')(host, params)
+    return getattr(module, 'BackEnd')(name, host, params)

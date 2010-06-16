@@ -28,10 +28,10 @@ class StdOrderedSet(StdField):
     pass
 
 
-class StdHash(StdField):
+class HashField(StdField):
     
     def __init__(self):
-        super(StdHash,self).__init__()
+        super(HashField,self).__init__()
         self._cache = {}
         
     def add(self, key, value):
@@ -45,15 +45,15 @@ class StdHash(StdField):
         obj = self.cacheobj()
         return obj.items() 
             
-    def save(self):
-        if self._cache:
+    def save(self, commit = True):
+        if self._cache and commit:
             obj = self.cacheobj()
             obj.update(self._cache)
             self._cache.clear()
         
 
-class StdMap(StdHash):
+class MapField(HashField):
     '''A map is a sorted key-value container'''
     def cacheobj(self):
-        return self.meta.cache.map(self._id())
+        return self.meta.cursor.map(self._id())
     

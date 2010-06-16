@@ -7,7 +7,7 @@ try:
 except ImportError:
     import pickle
 
-from stdnet.backends.base import BaseCache, novalue
+from stdnet.backends.base import BaseBackend, novalue
 from stdnet.utils import RWLock, OrderedDict
 
 class dummyPickle():
@@ -31,10 +31,10 @@ class cache(object):
 _cache = cache()
     
 
-class CacheClass(BaseCache):
+class BackEnd(BaseBackend):
     
-    def __init__(self, _, params):
-        super(CacheClass,self).__init__(params)
+    def __init__(self, name, _, params):
+        super(BackEnd,self).__init__(name,params)
         try:
             dopickle = int(params.get('pickle', 1))
         except:

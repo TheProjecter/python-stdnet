@@ -11,3 +11,6 @@ class BadCacheDataStructure(StdNetException):
 
 class FieldError(StdNetException):
     pass
+
+class QuerySetError(StdNetException):
+    pass
