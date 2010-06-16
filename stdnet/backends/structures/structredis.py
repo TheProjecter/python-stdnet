@@ -10,6 +10,9 @@ class Set(structures.Set):
         '''Size of map'''
         return self.cursor.zcard(self.id)
     
+    def add(self, value):
+        return self.cursor.execute_command('SADD', self.id, value)
+    
 
 class HashTable(structures.HashTable):
     
@@ -18,6 +21,12 @@ class HashTable(structures.HashTable):
     
     def get(self, key):
         return self.cursor.hget(self.id,key)
+    
+    def mget(self, keys):
+        objs = self.cursor.execute_command('HMGET', self.id, *keys)
+        loads = self.cursor._res_to_val
+        for obj in objs:
+            yield loads(obj)
         
     def keys(self, desc = False):
         raise NotImplementedError

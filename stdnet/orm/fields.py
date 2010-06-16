@@ -174,9 +174,8 @@ class ForeignKey(Field):
             self.value = value.id
         else:
             meta    = self.model._meta
-            cache   = meta.cache
             key     = meta.basekey('id',value)
-            value   = cache.get(key)
+            value   = meta.cursor.get(key)
         return value
     
     

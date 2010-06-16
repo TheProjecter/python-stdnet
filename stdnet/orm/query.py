@@ -49,7 +49,8 @@ class QuerySet(object):
         if unique:
             yield result
         else:
-            ids = meta.cursor.sinter(skeys)
-            for id in ids:
-                key = meta.basekey('id',id)
-                yield meta.cursor.get(key)
+            meta = self._meta
+            ids = meta.cursor.sinter(result)
+            objs = meta.cursor.hash(meta.basekey()).mget(ids)
+            for obj in objs:
+                yield obj
