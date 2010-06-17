@@ -4,6 +4,22 @@ ordered associative container
 from stdnet import structures
 
 
+class List(structures.List):
+    
+    def size(self):
+        '''Size of map'''
+        return self.cursor.execute_command('LLEN', self.id)
+    
+    def push_back(self, value):
+        return self.cursor.execute_command('RPUSH', self.id, self.cursor._res_to_val(value))
+    
+    def push_front(self, value):
+        return self.cursor.execute_command('LPUSH', self.id, self.cursor._res_to_val(value))
+    
+    def _all(self):
+        return self.cursor.execute_command('LRANGE', self.id, 0, -1)
+        
+
 class Set(structures.Set):
     
     def size(self):
