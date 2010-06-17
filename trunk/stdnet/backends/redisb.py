@@ -1,6 +1,6 @@
 
 from stdnet.backends.base import BaseBackend, ImproperlyConfigured, novalue
-from stdnet.backends.structures.structredis import Set,HashTable,Map
+from stdnet.backends.structures.structredis import List,Set,HashTable,Map
 
 try:
     import redis
@@ -39,7 +39,10 @@ class BackEnd(BaseBackend):
         timeout = timeout or self.default_timeout
         if timeout:
             self.execute_command('EXPIRE', id, timeout)
-        
+    
+    def has_key(self, id):
+        return self.execute_command('EXISTS', id)
+    
     def set(self, id, value, timeout = None):
         value = self._val_to_store_info(value)
         r = self._cache.set(id,value)
@@ -55,6 +58,9 @@ class BackEnd(BaseBackend):
         for key in keys:
             km += RedisMap1(self,key).ids()
         return self._cache.delete(*km)
+    
+    def list(self, id, timeout = 0):
+        return List(self,id,timeout)
     
     def unordered_set(self, id, timeout = 0):
         return Set(self,id,timeout)
