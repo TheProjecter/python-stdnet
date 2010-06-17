@@ -31,7 +31,7 @@ def populate(datatype = 'string', size  = 10,
         end = end or 10
         for s in range(size):
             data.append(converter(uniform(start,end)))
-    elif datatype == 'chioce':
+    elif datatype == 'choice':
         for s in range(size):
             data.append(choice(choice_from))
     else:
