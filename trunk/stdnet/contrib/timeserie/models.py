@@ -15,6 +15,15 @@ class TimeSerieField(orm.MapField):
 class TimeSerie(orm.StdModel):
     data  = TimeSerieField()
     
+    def fromto(self):
+        if self.start:
+            return '%s - %s' % (self.start.strftime('%Y %m %d'),self.end.strftime('%Y %m %d'))
+        else:
+            return ''
+        
+    def __str__(self):
+        return self.fromto()
+    
     def converter(self, key):
         return date2timestamp(key)
     
