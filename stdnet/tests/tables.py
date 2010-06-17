@@ -72,12 +72,20 @@ class TestORM(unittest.TestCase):
     def testFilter2(self):
         tot = 0
         for t in range(TYPELEN):
+            fs = Fund.objects.filter(type = t)
+            count = {}
+            for f in fs:
+                count[f.ccy] = count.get(f.ccy,0) + 1
             for c in choice_from:
-                objs = Fund.objects.filter(type = t, ccy = c)
+                x = count.get(c,0)
+                objs = fs.filter(ccy = c)
+                y = 0
                 for obj in objs:
+                    y += 1
                     tot += 1
                     self.assertEqual(obj.type,t)
                     self.assertEqual(obj.ccy,c)
+                self.assertEqual(x,y)
         all = Instrument.objects.all()
         self.assertEqual(tot,len(all))
         

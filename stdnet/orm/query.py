@@ -8,7 +8,8 @@ class QuerySet(object):
         self.kwargs = kwargs
         
     def filter(self,**kwargs):
-        self.kwargs.update(kwargs)
+        kwargs.update(self.kwargs)
+        return self.__class__(self._meta,kwargs)
     
     def getid(self, id):
         meta = self._meta
