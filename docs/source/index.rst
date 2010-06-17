@@ -13,6 +13,7 @@ Contents:
    
    model/index
    utility/index
+   contrib/index
 
 Indices and tables
 ==================
