@@ -1,16 +1,25 @@
 from stdnet import orm
-from stdnet.utils import date2timestamp
+from stdnet.utils import date2timestamp, timestamp2date
+from stdnet.contrib.timeserie.utils import default_parse_interval
 
-default_parse_interval = lambda d,x : d
 
 class TimeSerieField(orm.MapField):
     
-    def __init__(self, converter = date2timestamp, **kwargs):
-        super(TimeSerieField,self).__init__(converter=converter,**kwargs)
+    def __init__(self, converter = date2timestamp,
+                 inverse = timestamp2date, **kwargs):
+        super(TimeSerieField,self).__init__(converter=converter,
+                                            inverse=inverse,
+                                            **kwargs)
 
 
 class TimeSerie(orm.StdModel):
     data  = TimeSerieField()
+    
+    def converter(self, key):
+        return date2timestamp(key)
+    
+    def inverse(self, key):
+        return timestamp2date(key)
     
     def __init__(self, start = None, end = None, **kwargs):
         super(TimeSerie,self).__init__(**kwargs)
@@ -21,8 +30,8 @@ class TimeSerie(orm.StdModel):
         '''Store the start/end date of the timeseries'''
         dates = self.data.keys()
         if dates:
-            self.start = dates[0]
-            self.end   = dates[-1]
+            self.start = self.inverse(dates[0])
+            self.end   = self.inverse(dates[-1])
         else:
             self.start = None
             self.end   = None
@@ -45,13 +54,13 @@ tuples.'''
             if startdate < start:
                 calc_start = startdate
                 calc_end = parseinterval(start, -1)
-                if calc_end >= startdate:
+                if calc_end >= calc_start:
                     calc_intervals.append((calc_start, calc_end))
 
             if enddate > end:
-                calc_start = parseinterval(start, 1)
+                calc_start = parseinterval(end, 1)
                 calc_end = enddate
-                if calc_end >= startdate:
+                if calc_end >= calc_start:
                     calc_intervals.append((calc_start, calc_end))
         else:
             start = startdate

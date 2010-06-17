@@ -28,14 +28,21 @@ class StdOrderedSet(StdField):
     pass
 
 
-default_converter = lambda x: x
+defcon = lambda x: x
 
 class HashField(StdField):
     
-    def __init__(self, converter = default_converter):
-        self.converter = converter
+    def __init__(self, converter = defcon, inverse = defcon):
         self._cache    = {}
+        self.converter = converter
+        self.inverse   = inverse
         super(HashField,self).__init__()
+        
+    def converter(self, key):
+        return key
+    
+    def inverse(self, key):
+        return key
         
     def add(self, key, value):
         self._cache[self.converter(key)] = value
