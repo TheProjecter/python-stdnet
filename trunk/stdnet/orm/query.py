@@ -6,7 +6,21 @@ class QuerySet(object):
     def __init__(self, meta, kwargs):
         self._meta  = meta
         self.kwargs = kwargs
+        self._seq   = None
         
+    def __repr__(self):
+        if self._seq is None:
+            return '%s(%s)' % (self.__class__.__name__,self.kwargs)
+        else:
+            return str(self._seq)
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    def get(self, index):
+        return self._unwind()[index]
+    __getitem__ = get
+    
     def filter(self,**kwargs):
         kwargs.update(self.kwargs)
         return self.__class__(self._meta,kwargs)
@@ -16,7 +30,7 @@ class QuerySet(object):
         return meta.cursor.hash(meta.basekey()).get(id)
     
     def __len__(self):
-        return len(list(self.items()))
+        return len(self._unwind())
     
     def aggregate(self):
         unique  = False
@@ -61,6 +75,12 @@ class QuerySet(object):
                 objs = meta.cursor.hash(meta.basekey()).mget(ids)
                 for obj in objs:
                     yield obj
-                    
+    
     def __iter__(self):
-        return self.items()
+        return self._unwind().__iter__()
+    
+    def _unwind(self):
+        if self._seq is None:
+            self._seq = list(self.items())
+        return self._seq
+    

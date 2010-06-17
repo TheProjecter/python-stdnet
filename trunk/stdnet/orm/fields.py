@@ -174,8 +174,8 @@ class ForeignKey(Field):
             self.value = value.id
         else:
             meta    = self.model._meta
-            key     = meta.basekey('id',value)
-            value   = meta.cursor.get(key)
+            hash    = meta.cursor.hash(meta.basekey())
+            value   = hash.get(self.value)
         return value
     
     

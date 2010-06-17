@@ -5,9 +5,14 @@ from itertools import izip
 from stdnet import orm
 from stdnet.utils import populate
 
+# Create some models for testing
+
 class Base(orm.StdModel):
     name = orm.AtomField(unique = True)
     type = orm.AtomField()
+    
+    def __str__(self):
+        return str(self.name)
     
     class Meta:
         abstract = True
@@ -89,20 +94,21 @@ class TestORM(unittest.TestCase):
         all = Instrument.objects.all()
         self.assertEqual(tot,len(all))
         
-    def _testForeignKey(self):
-        p = Instrument.objects.get(id = 1)
-        f = Fund(name='myfund', ccy='EUR', type = 1).save()
-        t = Position(instrument = p, dt = datetime.date.today(), fund = f)
-        t.save()
-        obj = Position.objects.get(id = t.id)
-        p1  = obj.instrument
-        self.assertEqual(p,p1)
-        self.assertEqual(obj.instrument.name,'eru10')
+    def testForeignKey(self):
+        instruments = Instrument.objects.all()
+        funds = populate('choice',5,choice_from = Fund.objects.all())
+        dates = populate('date',10,start=datetime.date(2010,6,1),end=datetime.date(2010,6,6))
+        for f in funds:
+            insts = populate('choice',10,choice_from = instruments)
+            for inst,dt in izip(insts,dates):
+                Position(instrument = inst, dt = dt, fund = f).save()
+        #
+        positions = Position.objects.all()
+        for p in positions:
+            self.assertTrue(isinstance(p.instrument,Instrument))
+        
         
     def _testDelete(self):
-        p = self.p
-        self.assertEqual(len(p._meta.keys),3)
-        p.delete()
         obj = Position.objects.getid(t.id)
         
     def tearDown(self):

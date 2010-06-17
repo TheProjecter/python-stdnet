@@ -9,6 +9,12 @@ class StdModel(object):
     
     def __init__(self, **kwargs):
         self._load(kwargs)
+        
+    def __repr__(self):
+        return '%s: %s' % (self.__class__.__name__,self)
+    
+    def __str__(self):
+        return ''
     
     def _load(self, kwargs):
         meta = copy.deepcopy(self.__class__._meta)

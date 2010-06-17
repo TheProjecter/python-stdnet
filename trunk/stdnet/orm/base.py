@@ -76,21 +76,23 @@ class Metaclass(object):
 
 
 class DataMetaClass(type):
-    
+    '''StdModel python metaclass'''
     def __new__(cls, name, bases, attrs):
         super_new = super(DataMetaClass, cls).__new__
         parents = [b for b in bases if isinstance(b, DataMetaClass)]
         if not parents:
             return super_new(cls, name, bases, attrs)
         
-        # Create the class.
+        # remove the Meta class if present
         meta      = attrs.pop('Meta', None)
+        # remove and build field list
+        fields    = get_fields(bases, attrs)
+        # create the new class
         new_class = super_new(cls, name, bases, attrs)
         if meta:
             kwargs   = meta_options(**meta.__dict__)
         else:
             kwargs   = {}
-        fields           = get_fields(bases, attrs)
         Metaclass(new_class,fields,**kwargs)
         return new_class
     
