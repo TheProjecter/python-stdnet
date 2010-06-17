@@ -2,6 +2,7 @@ import datetime
 import unittest
 from itertools import izip
 
+from stdnet.stdtest import TestBase
 from stdnet import orm
 from stdnet.utils import populate
 
@@ -45,7 +46,7 @@ names = populate('string',LEN, min_len = 5, max_len = 20)
 types = populate('integer',LEN, start=0, end=TYPELEN-1)
 ccys  = populate('choice',LEN, choice_from = choice_from)
 
-class TestORM(unittest.TestCase):
+class TestORM(TestBase):
     
     def setUp(self):
         for name,typ,ccy in izip(names,types,ccys):
@@ -111,7 +112,5 @@ class TestORM(unittest.TestCase):
     def _testDelete(self):
         obj = Position.objects.getid(t.id)
         
-    def tearDown(self):
-        orm.clearall()
         
 
