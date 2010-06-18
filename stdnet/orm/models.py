@@ -56,18 +56,7 @@ class StdModel(object):
         return self
         
     def __getstate__(self):
-        odict = self.__dict__.copy()
-        meta = odict.pop('_meta')
-        for name,field in meta.fields.items():
-            val = field.model_get_arg()
-            if val is not None:
-                odict[name] = val
-            else:
-                if field.required:
-                    raise ValueError("Field %s is required" % name)
-                else:
-                    odict.pop(name,None)
-        return odict
+        return self.todict()
     
     def __setstate__(self,dict):
         self._load(dict)
@@ -81,6 +70,23 @@ class StdModel(object):
     def delete(self):
         return self._meta.delete()
     
+    def todict(self):
+        odict = self.__dict__.copy()
+        meta = odict.pop('_meta')
+        for name,field in meta.fields.items():
+            val = field.model_get_arg()
+            if val is not None:
+                odict[name] = val
+            else:
+                if field.required:
+                    raise ValueError("Field %s is required" % name)
+                else:
+                    odict.pop(name,None)
+        return odict
+        
+    @property
+    def uniqueid(self):
+        return self._meta.basekey(self.id)
         
     
 

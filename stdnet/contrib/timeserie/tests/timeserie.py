@@ -28,10 +28,8 @@ orm.register(TimeSerie)
 class TestTimeSerie(TestBase):
     
     def setUp(self):
-        self.ticker = Ticker(code = 'GOOG')
-        self.ticker.save()
-        self.field = Field(code = 'CLOSE')
-        self.field.save()
+        self.ticker = Ticker(code = 'GOOG').save()
+        self.field = Field(code = 'CLOSE').save()
         self.ts = TimeSerie(ticker = self.ticker, field = self.field).save()
 
     def fill(self, a, b, targets, C, D):
