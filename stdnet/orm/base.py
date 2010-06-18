@@ -71,9 +71,9 @@ class Metaclass(object):
         # We deep copy on fields and create the keys list
         obj = copy.copy(self)
         obj.fields = copy.deepcopy(self.fields, memodict)
-        obj.keys   = []
+        obj.related = copy.deepcopy(self.related, memodict)
         memodict[id(self)] = obj
-        return obj        
+        return obj
 
 
 

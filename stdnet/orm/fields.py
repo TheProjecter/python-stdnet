@@ -1,3 +1,4 @@
+from copy import copy
 import time
 from stdnet.exceptions import FieldError
 
@@ -53,8 +54,8 @@ class Field(object):
     def get_model_value(self, name, obj, value = _novalue):
         return self.value
     
-    def get_value(self, name, obj):
-        return self.value
+    def get_value(self, value):
+        return value
     
     def _cleanvalue(self):
         return self.value
@@ -137,6 +138,9 @@ class RelatedManager(object):
             hash = meta.cursor.hash(meta.basekey())
             return hash.mget(data)
     
+    def __deepcopy__(self, memodict):
+        # We only copy here
+        return self.__class__(self.fieldname,self.related)
         
 
 
@@ -201,5 +205,10 @@ The StdNet equivalent to django ForeignKey::
             value   = hash.get(self.value)
         return value
     
+    def get_value(self, value):
+        if isinstance(value,self.model):
+            return value.id
+        else:
+            return value
     
         

@@ -33,6 +33,7 @@ class QuerySet(object):
         return len(self._unwind())
     
     def aggregate(self):
+        '''Aggregate query results'''
         unique  = False
         meta    = self._meta
         result  = []
@@ -41,7 +42,10 @@ class QuerySet(object):
                 unique = True
                 result = self.getid(value)
                 break
-            field = meta.fields[name]
+            field = meta.fields.get(name,None)
+            if not field:
+                raise QuerySetError("Field %s not defined" % name)
+            value = field.get_value(value)
             if field.unique:
                 unique = True
                 id = meta.cursor.get(meta.basekey(name,value))
