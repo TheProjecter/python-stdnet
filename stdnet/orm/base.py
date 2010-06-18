@@ -25,6 +25,7 @@ class Metaclass(object):
         self.model     = model
         self.name      = model.__name__.lower()
         self.fields    = fields
+        self.related   = {}
         model._meta    = self
         if not self.abstract:
             try:
@@ -36,7 +37,7 @@ class Metaclass(object):
             
         for name,field in self.fields.items():
             if not abstract:
-                field.register_with_model(model)
+                field.register_with_model(name,model)
             if name == 'id':
                 continue
             if field.primary_key:
@@ -60,6 +61,7 @@ class Metaclass(object):
         for name,field in self.fields.items():
             if name is not 'id':
                 field.save(commit)
+        
         
     def delete(self):
         if self.keys:

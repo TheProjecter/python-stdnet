@@ -23,11 +23,14 @@ class List(structures.List):
 class Set(structures.Set):
     
     def size(self):
-        '''Size of map'''
-        return self.cursor.zcard(self.id)
+        '''Size of set'''
+        return self.cursor.execute_command('SCARD', self.id)
     
     def add(self, value):
         return self.cursor.execute_command('SADD', self.id, value)
+    
+    def _all(self):
+        return self.cursor.execute_command('SMEMBERS', self.id)
     
 
 class HashTable(structures.HashTable):
