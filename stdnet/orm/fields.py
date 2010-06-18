@@ -72,8 +72,8 @@ class Field(object):
         name    = self.name
         obj     = self.obj
         meta    = self.meta
-        value   = self._cleanvalue()
-        if self.required and value is None:
+        value   = self.get_value(self._cleanvalue())
+        if value is None and self.required:
             raise FieldError('Field %s for %s has no value' % (name,obj))
         
         if self.primary_key:
@@ -159,6 +159,8 @@ The StdNet equivalent to django ForeignKey::
         
     def register_with_model(self, name, related):
         '''Class registration as a ForeignKey labelled *name* within model *related*'''
+        if self.model == 'self':
+            self.model = related
         related_name = self.related_name or '%s_set' % related._meta.name
         meta = self.model._meta
         if related_name not in meta.related:
@@ -208,6 +210,8 @@ The StdNet equivalent to django ForeignKey::
     def get_value(self, value):
         if isinstance(value,self.model):
             return value.id
+        elif value is None:
+            return 0
         else:
             return value
     
