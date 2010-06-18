@@ -62,7 +62,7 @@ class Field(object):
         
     def getkey(self,obj,value):
         pass
-        
+    
     def set(self,obj,value):    
         keyname = self.getkey(obj,value)
         raise NotImplementedError('Cannot set the field')

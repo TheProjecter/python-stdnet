@@ -62,11 +62,19 @@ class Metaclass(object):
             if name is not 'id':
                 field.save(commit)
         
-        
     def delete(self):
-        if self.keys:
-            return self.cursor.delete(*tuple(self.keys))
-            
+        '''Delete the object from the backend database'''
+        id = self.id
+        if not id:
+            return
+        # First thing Remove id form indexes
+        for name,field in self.fields.itervalues():
+            if name is not 'id':
+                field.remove(id)
+        self.pk.remove()
+        for related in self.related:
+            pass
+                            
     def __deepcopy__(self, memodict):
         # We deep copy on fields and create the keys list
         obj = copy.copy(self)
