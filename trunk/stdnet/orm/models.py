@@ -19,12 +19,16 @@ class StdModel(object):
     def _load(self, kwargs):
         meta = copy.deepcopy(self.__class__._meta)
         self.__dict__['_meta'] = meta
-        for name,field in meta.fields.items():
+        for name,field in meta.fields.iteritems():
             value = kwargs.pop(name,_novalue)
             self.setfield(name, field, value)
             
         for name,value in kwargs.items():
             setattr(self,name,value)
+        
+        for name,related in meta.related.iteritems():
+            related.obj = self
+            setattr(self,name,related)
         
     def __setattr__(self,name,value):
         field = self._meta.fields.get(name,None)

@@ -108,6 +108,20 @@ class TestORM(TestBase):
         for p in positions:
             self.assertTrue(isinstance(p.instrument,Instrument))
         
+        total_positions = len(positions)
+        totp = 0
+        for instrument in instruments:
+            pos  = list(instrument.position_set.all())
+            for p in pos:
+                self.assertTrue(isinstance(p,Position))
+                self.assertEqual(p.instrument,instrument)
+            totp += len(pos)
+        
+        self.assertEqual(total_positions,totp)
+            
+            
+            
+        
         
     def _testDelete(self):
         obj = Position.objects.getid(t.id)

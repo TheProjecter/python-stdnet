@@ -25,7 +25,7 @@ class Structure(object):
         raise NotImplementedError
     
     def __iter__(self):
-        raise NotImplementedError
+        return self._unwind().__iter__()
     
     def _all(self):
         raise NotImplementedError
@@ -35,7 +35,7 @@ class Structure(object):
     
     def _unwind(self):
         if self._cache is None:
-            self._cache = self.all()
+            self._cache = self._all()
         return self._cache
     
     
@@ -46,9 +46,6 @@ class List(Structure):
     
     def push_front(self, value):
         raise NotImplementedError
-    
-    def __iter__(self):
-        return self._unwind().__iter__()
     
     
 class HashTable(Structure):
@@ -79,4 +76,5 @@ class Set(Structure):
     
     def add(self, value):
         raise NotImplementedError
+    
     

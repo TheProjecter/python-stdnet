@@ -35,7 +35,7 @@ class Field(object):
         self.meta     = None
         self.name     = None   
         
-    def register_with_model(self, model):
+    def register_with_model(self, fieldname, model):
         '''Called by the model meta class when the model class is created'''
         pass
     
@@ -124,20 +124,43 @@ class DateField(Field):
 
 class RelatedManager(object):
     
-    def __init__(self, related):
-        self.related = related
+    def __init__(self, fieldname, related):
+        self.related    = related
+        self.fieldname  = fieldname
+        self.obj        = None
+        
+    def all(self):
+        if self.obj:
+            meta = self.related._meta
+            id   = meta.basekey(self.fieldname,self.obj.id)
+            data = meta.cursor.unordered_set(id)
+            hash = meta.cursor.hash(meta.basekey())
+            return hash.mget(data)
+    
+        
 
 
 class ForeignKey(Field):
-    
+    '''A field defining a one-to-many objects relationship.
+The StdNet equivalent to django ForeignKey::
+
+    * **model** the One model the many models refer to
+    * *related_name* is the attribute name created in the **model**
+'''
     def __init__(self, model, related_name = None, **kwargs):
         self.model = model
         self.related_name = related_name
+        kwargs['index'] = True
         super(ForeignKey,self).__init__(**kwargs)
         
-    def register_with_model(self, model):
-        name = self.related_name or '%s_set' % model._meta.name
-        setattr(self.model,name,RelatedManager(model))
+    def register_with_model(self, name, related):
+        '''Class registration as a ForeignKey labelled *name* within model *related*'''
+        related_name = self.related_name or '%s_set' % related._meta.name
+        meta = self.model._meta
+        if related_name not in meta.related:
+            meta.related[related_name] = RelatedManager(name,related)
+        else:
+            raise FieldError("Duplicated related name %s in model %s and field %s" % (related_name,related,name))
     
     def getkey(self,obj,value):
         pass
