@@ -9,7 +9,8 @@ BACKENDS = {
     'file': 'filebased',
     'db': 'db',
     'dummy': 'dummy',
-    'redis': 'redisb'
+    'redis': 'redisb',
+    'couchdb': 'couchdbb'
 }
 
 

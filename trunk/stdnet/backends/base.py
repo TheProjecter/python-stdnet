@@ -33,6 +33,9 @@ class BaseBackend(object):
     def __str__(self):
         return self.__repr__()
     
+    def createdb(self, name):
+        pass
+    
     def add_object(self, key, obj, commit = True, timeout = 0):
         '''Add a model object to the database'''
         if commit:
