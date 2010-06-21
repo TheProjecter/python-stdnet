@@ -3,7 +3,7 @@ from stdnet.utils import date2timestamp, timestamp2date
 from stdnet.contrib.timeserie.utils import default_parse_interval
 
 
-class TimeSerieField(orm.MapField):
+class TimeSerieField(orm.HashField):
     
     def __init__(self, converter = date2timestamp,
                  inverse = timestamp2date, **kwargs):
@@ -34,11 +34,12 @@ class TimeSerie(orm.StdModel):
         super(TimeSerie,self).__init__(**kwargs)
         self.start = start
         self.end   = end
-        
+
     def storestartend(self):
         '''Store the start/end date of the timeseries'''
         dates = self.data.keys()
         if dates:
+            dates.order()
             self.start = self.inverse(dates[0])
             self.end   = self.inverse(dates[-1])
         else:

@@ -15,4 +15,4 @@ def date2timestamp(dte):
 
 def timestamp2date(tstamp):
     "Converts a unix timestamp to a Python datetime object"
-    return datetime.fromtimestamp(tstamp).date()
+    return datetime.fromtimestamp(int(tstamp)).date()

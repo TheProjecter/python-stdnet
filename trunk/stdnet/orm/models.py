@@ -43,7 +43,7 @@ class StdModel(object):
                 self.__dict__[name] = value
             return value
         else:
-            return self.__dict__[name]
+            return self.__dict__.get(name,None)
             
     def setfield(self, name, field, value):
         if field:
@@ -87,6 +87,6 @@ class StdModel(object):
     @property
     def uniqueid(self):
         return self._meta.basekey(self.id)
-        
+    
     
 

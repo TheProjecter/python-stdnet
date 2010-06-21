@@ -1,4 +1,4 @@
-
+from stdnet.utils import jsonPickler
 from stdnet.backends.base import BaseBackend, ImproperlyConfigured, novalue
 from stdnet.backends.structures.structredis import List,Set,HashTable,Map
 
@@ -12,10 +12,13 @@ try:
 except ImportError:
     import pickle
 
+#default_pickler = jsonPickler()
+default_pickler = pickle
+
 
 class BackEnd(BaseBackend):
     
-    def __init__(self, name, server, params, pickler = pickle):
+    def __init__(self, name, server, params, pickler = default_pickler):
         super(BackEnd,self).__init__(name,params)
         servs = server.split(':')
         server = servs[0]
