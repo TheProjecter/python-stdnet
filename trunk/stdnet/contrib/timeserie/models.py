@@ -39,7 +39,7 @@ class TimeSerie(orm.StdModel):
         '''Store the start/end date of the timeseries'''
         dates = self.data.keys()
         if dates:
-            dates.order()
+            dates.sort()
             self.start = self.inverse(dates[0])
             self.end   = self.inverse(dates[-1])
         else:
