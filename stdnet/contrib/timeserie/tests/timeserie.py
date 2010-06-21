@@ -120,9 +120,9 @@ class TestTimeSerie(TestBase):
         data = obj.data.items()
         data = list(data)
         self.assertTrue(len(data)>0)
-        d = None
-        for dt,value in data:
-            if d:
-                self.assertTrue(dt>d)
-            d = dt
+        #d = None
+        #for dt,value in data:
+        #    if d:
+        #        self.assertTrue(dt>d)
+        #    d = dt
     
