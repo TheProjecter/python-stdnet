@@ -53,12 +53,14 @@ class HashField(StdField):
         return obj.get(self.converter(key))
 
     def cacheobj(self):
-        return self.meta.cache.hash(self._id())
+        return self.meta.cursor.hash(self._id())
     
     def items(self):
         self.save()
         obj = self.cacheobj()
-        return obj.items()
+        inv = self.inverse
+        for key,value in obj.items():
+            yield inv(key),value 
     
     def keys(self):
         self.save()

@@ -16,3 +16,12 @@ class JSONRPCEncoder(json.JSONEncoder):
             return date2timestamp(obj)
         else:
             raise exceptions.JSONEncodeException("%r is not JSON serializable" % (obj,))
+        
+
+class jsonPickler(object):
+    
+    def dumps(self, obj, **kwargs):
+        return json.dumps(res, cls=JSONRPCEncoder, **kwargs)
+    
+    def loads(self,sobj):
+        return json.loads(sobj)
