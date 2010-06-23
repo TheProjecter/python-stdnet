@@ -88,3 +88,8 @@ class QuerySet(object):
             self._seq = list(self.items())
         return self._seq
     
+    def delete(self):
+        '''Delete all the element in the queryset'''
+        for el in self:
+            el.delete()
+    
