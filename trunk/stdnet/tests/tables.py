@@ -129,7 +129,8 @@ class TestORM(TestBase):
         self.assertEqual(total_positions,totp)
         
     def _testDelete(self):
-        obj = Position.objects.getid(t.id)
+        insts = Instrument.objects.all()
+        insts.delete()
         
         
 
