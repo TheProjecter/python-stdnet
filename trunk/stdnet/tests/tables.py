@@ -10,7 +10,7 @@ from stdnet.utils import populate
 
 class Base(orm.StdModel):
     name = orm.AtomField(unique = True)
-    type = orm.AtomField()
+    ccy  = orm.AtomField()
     
     def __str__(self):
         return str(self.name)
@@ -19,10 +19,10 @@ class Base(orm.StdModel):
         abstract = True
 
 class Instrument(Base):
-    pass
+    type = orm.AtomField()
     
 class Fund(Base):
-    ccy  = orm.AtomField()
+    pass
 
 class Position(orm.StdModel):
     instrument = orm.ForeignKey(Instrument)
@@ -39,19 +39,38 @@ orm.register(Instrument)
 orm.register(Fund)
 orm.register(Position)
 
-TYPELEN = 10
-LEN     = 100
-choice_from = ['EUR','GBP','USD','JPY']
-names = populate('string',LEN, min_len = 5, max_len = 20)
-types = populate('integer',LEN, start=0, end=TYPELEN-1)
-ccys  = populate('choice',LEN, choice_from = choice_from)
+INST_LEN    = 100
+FUND_LEN    = 20
+POS_LEN     = 30
+NUM_DATES   = 3
+
+ccys_types  = ['EUR','GBP','AUD','USD','CHF','JPY']
+insts_types = ['equity','bond','future','cash','option']
+
+inst_names = populate('string',INST_LEN, min_len = 5, max_len = 20)
+inst_types = populate('choice',INST_LEN, choice_from = insts_types)
+inst_ccys  = populate('choice',INST_LEN, choice_from = ccys_types)
+
+fund_names = populate('string',FUND_LEN, min_len = 5, max_len = 20)
+fund_ccys  = populate('choice',FUND_LEN, choice_from = ccys_types)
+
+dates = populate('date',NUM_DATES,start=datetime.date(2009,6,1),end=datetime.date(2010,6,6))
 
 class TestORM(TestBase):
     
     def setUp(self):
-        for name,typ,ccy in izip(names,types,ccys):
-            Instrument(name = name, type = typ).save()
-            Fund(name = name, type = typ, ccy = ccy).save()
+        for name,typ,ccy in izip(inst_names,inst_types,inst_ccys):
+            Instrument(name = name, type = typ, ccy = ccy).save()
+        for name,ccy in izip(fund_names,fund_ccys):
+            Fund(name = name, ccy = ccy).save()
+    
+    def makePositions(self):
+        instruments = Instrument.objects.all()
+        for f in Fund.objects.all():
+            insts = populate('choice',POS_LEN,choice_from = instruments)
+            for dt in dates:
+                for inst in insts:
+                    Position(instrument = inst, dt = dt, fund = f).save()
         
     def testIds(self):
         objs = Instrument.objects.all()
@@ -96,13 +115,7 @@ class TestORM(TestBase):
         self.assertEqual(tot,len(all))
         
     def testForeignKey(self):
-        instruments = Instrument.objects.all()
-        funds = populate('choice',5,choice_from = Fund.objects.all())
-        dates = populate('date',10,start=datetime.date(2010,6,1),end=datetime.date(2010,6,6))
-        for f in funds:
-            insts = populate('choice',10,choice_from = instruments)
-            for inst,dt in izip(insts,dates):
-                Position(instrument = inst, dt = dt, fund = f).save()
+        self.makePositions()
         #
         positions = Position.objects.all()
         for p in positions:
@@ -119,7 +132,7 @@ class TestORM(TestBase):
         # Testing 
         total_positions = len(positions)
         totp = 0
-        for instrument in instruments:
+        for instrument in Instruments.objects.all():
             pos  = list(instrument.position_set.all())
             for p in pos:
                 self.assertTrue(isinstance(p,Position))
@@ -128,7 +141,8 @@ class TestORM(TestBase):
         
         self.assertEqual(total_positions,totp)
         
-    def _testDelete(self):
+    def testDelete(self):
+        self.makePositions()
         insts = Instrument.objects.all()
         insts.delete()
         

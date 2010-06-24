@@ -1,5 +1,6 @@
 import copy
 from fields import Field, AutoField
+from stdnet.exceptions import *
 
 def get_fields(bases, attrs):
     fields = {}
@@ -49,6 +50,9 @@ class Metaclass(object):
     @property
     def pk(self):
         return self.fields['id']
+    
+    def has_pk(self):
+        return self.pk.value
         
     def basekey(self, *args):
         key = '%s%s' % (self.keyprefix,self.name)
@@ -64,16 +68,21 @@ class Metaclass(object):
         
     def delete(self):
         '''Delete the object from the backend database'''
-        id = self.id
-        if not id:
-            return
-        # First thing Remove id form indexes
-        for name,field in self.fields.itervalues():
-            if name is not 'id':
-                field.remove(id)
-        self.pk.remove()
-        for related in self.related:
-            pass
+        if not self.has_pk():
+            raise StdNetException('Cannot delete object. It was never saved.')
+        # Gather related objects to delete
+        objs = self.related_objects()
+        T = 0
+        for obj in objs:
+            T += obj.delete()
+        return T+1
+    
+    def related_objects(self):
+        objs = []
+        for rel in self.related.itervalues():
+            objs.extend(rel.all())
+        return objs
+                
                             
     def __deepcopy__(self, memodict):
         # We deep copy on fields and create the keys list
