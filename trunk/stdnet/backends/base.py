@@ -66,6 +66,10 @@ class BaseBackend(object):
                 cvalue = cacheValue(set(),timeout)
                 cache[key] = cvalue
             cvalue.value.add(value)
+            
+    def delete_object(self, obj):
+        '''Remove a StdModel from database'''
+        raise NotImplementedError()
 
     def get(self, key, default=None):
         """
@@ -162,3 +166,4 @@ class BaseBackend(object):
     
     def map(self, key, timeout = 0):
         raise NotImplementedError
+

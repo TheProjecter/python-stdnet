@@ -17,7 +17,7 @@ default_pickler = pickle
 
 
 class BackEnd(BaseBackend):
-    
+    '''Redis backend for StdNet. This is the backend to use really.'''
     def __init__(self, name, server, params, pickler = default_pickler):
         super(BackEnd,self).__init__(name,params)
         servs = server.split(':')
@@ -56,7 +56,9 @@ class BackEnd(BaseBackend):
         res = self.execute_command('GET', id)
         return self._res_to_val(res)        
         
-    def delete(self, *keys):
+    def delete(self, obj):
+        '''Delete an object from the database'''
+        id = obj.basekey()
         km = ()
         for key in keys:
             km += RedisMap1(self,key).ids()
@@ -84,6 +86,10 @@ class BackEnd(BaseBackend):
             return self.pickler.loads(res)
         except:
             return res
+        
+    def delete_object(self, obj):
+        '''Remove a StdModel from database'''
+        raise NotImplementedError()
     
     # Hashes
     def hset(self, id, key, value):
