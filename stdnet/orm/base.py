@@ -75,7 +75,7 @@ class Metaclass(object):
         T = 0
         for obj in objs:
             T += obj.delete()
-        self.cursor.delete(self)
+        self.cursor.delete_object(self)
         return T+1
     
     def related_objects(self):
