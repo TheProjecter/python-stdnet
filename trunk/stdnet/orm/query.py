@@ -2,7 +2,7 @@ from stdnet.exceptions import QuerySetError
 
 
 class QuerySet(object):
-    
+    '''Class used to build querysets'''
     def __init__(self, meta, kwargs):
         self._meta  = meta
         self.kwargs = kwargs
@@ -90,6 +90,8 @@ class QuerySet(object):
     
     def delete(self):
         '''Delete all the element in the queryset'''
+        T = 0
         for el in self:
-            el.delete()
+            T += el.delete()
+        return T
     

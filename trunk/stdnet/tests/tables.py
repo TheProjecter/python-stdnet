@@ -1,5 +1,6 @@
 import datetime
 import unittest
+import logging
 from itertools import izip
 
 from stdnet.stdtest import TestBase
@@ -29,6 +30,9 @@ class Position(orm.StdModel):
     fund       = orm.ForeignKey(Fund)
     dt         = orm.DateField()
     
+    def __str__(self):
+        return '%s: %s @ %s' % (self.fund,self.instrument,self.dt)
+    
     def __init__(self, size = 1, price = 1, **kwargs):
         self.size  = size
         self.price = price
@@ -56,6 +60,8 @@ fund_ccys  = populate('choice',FUND_LEN, choice_from = ccys_types)
 
 dates = populate('date',NUM_DATES,start=datetime.date(2009,6,1),end=datetime.date(2010,6,6))
 
+
+
 class TestORM(TestBase):
     
     def setUp(self):
@@ -66,11 +72,14 @@ class TestORM(TestBase):
     
     def makePositions(self):
         instruments = Instrument.objects.all()
+        n = 0
         for f in Fund.objects.all():
             insts = populate('choice',POS_LEN,choice_from = instruments)
             for dt in dates:
                 for inst in insts:
+                    n += 1
                     Position(instrument = inst, dt = dt, fund = f).save()
+        return n
         
     def testIds(self):
         objs = Instrument.objects.all()
@@ -83,25 +92,16 @@ class TestORM(TestBase):
         self.assertTrue(obj.name)
         obj2 = Instrument.objects.get(name = obj.name)
         self.assertEqual(obj,obj2)
-        
-    def testFilter(self):
-        c = 0
-        for t in range(TYPELEN):
-            objs = Instrument.objects.filter(type = t)
-            for obj in objs:
-                c += 1
-                self.assertEqual(obj.type,t)
-        all = Instrument.objects.all()
-        self.assertEqual(c,len(all))
     
-    def testFilter2(self):
+    def testFilter(self):
+        '''Test filtering'''
         tot = 0
-        for t in range(TYPELEN):
-            fs = Fund.objects.filter(type = t)
+        for t in insts_types:
+            fs = Instrument.objects.filter(type = t)
             count = {}
             for f in fs:
                 count[f.ccy] = count.get(f.ccy,0) + 1
-            for c in choice_from:
+            for c in ccys_types:
                 x = count.get(c,0)
                 objs = fs.filter(ccy = c)
                 y = 0
@@ -114,7 +114,7 @@ class TestORM(TestBase):
         all = Instrument.objects.all()
         self.assertEqual(tot,len(all))
         
-    def testForeignKey(self):
+    def _testForeignKey(self):
         self.makePositions()
         #
         positions = Position.objects.all()
@@ -132,7 +132,7 @@ class TestORM(TestBase):
         # Testing 
         total_positions = len(positions)
         totp = 0
-        for instrument in Instruments.objects.all():
+        for instrument in Instrument.objects.all():
             pos  = list(instrument.position_set.all())
             for p in pos:
                 self.assertTrue(isinstance(p,Position))
@@ -142,9 +142,13 @@ class TestORM(TestBase):
         self.assertEqual(total_positions,totp)
         
     def testDelete(self):
-        self.makePositions()
-        insts = Instrument.objects.all()
-        insts.delete()
+        '''Test delete object method'''
+        # Create Positions which hold foreign keys to Instruments
+        Np = self.makePositions()
+        instruments = Instrument.objects.all()
+        Ni = len(instruments)
+        T = instruments.delete()
+        self.assertEqual(T,Np+Ni)
         
         
 
