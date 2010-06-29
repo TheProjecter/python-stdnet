@@ -6,6 +6,26 @@
 Python StdNet
 =========================================
 
+.. rubric:: A Networked Standard template library for Python.
+
+Define your model::
+	
+	from stdnet import orm
+	
+	class TimeSerie(orm.StdModel):
+		ticker = orm.AtomField()
+		data   = orm.HashField()
+		
+Register your model to a backend::
+
+	orm.register(TimeSerie,'redis://')
+	
+Django style object::
+
+	ts = TimeSerie(ticker = 'GOOG').save()
+	ts.data.add(date.today(),485)
+	ts.save()
+
 Contents:
 
 .. toctree::

@@ -51,6 +51,10 @@ class Metaclass(object):
     def pk(self):
         return self.fields['id']
     
+    @property
+    def id(self):
+        return self.pk.value
+    
     def has_pk(self):
         return self.pk.value
         
@@ -67,7 +71,7 @@ class Metaclass(object):
                 field.save(commit)
         
     def delete(self):
-        '''Delete the object from the backend database'''
+        '''Delete the object from the back-end database'''
         if not self.has_pk():
             raise StdNetException('Cannot delete object. It was never saved.')
         # Gather related objects to delete
@@ -75,8 +79,7 @@ class Metaclass(object):
         T = 0
         for obj in objs:
             T += obj.delete()
-        self.cursor.delete_object(self)
-        return T+1
+        return T + self.cursor.delete_object(self)
     
     def related_objects(self):
         objs = []

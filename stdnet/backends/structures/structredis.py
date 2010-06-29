@@ -42,6 +42,7 @@ class HashTable(structures.HashTable):
         return self.cursor.hget(self.id,key)
     
     def mget(self, keys):
+        '''Get multiple keys'''
         if not keys:
             raise StopIteration
         objs = self.cursor.execute_command('HMGET', self.id, *keys)
@@ -54,6 +55,9 @@ class HashTable(structures.HashTable):
     
     def update(self, mapping):
         return self.cursor.hmset(self.id,mapping)
+    
+    def delete(self, key):
+        return self.cursor.execute_command('HDEL', self.id, key)
     
     def keys(self):
         return self.cursor.execute_command('HKEYS', self.id)
