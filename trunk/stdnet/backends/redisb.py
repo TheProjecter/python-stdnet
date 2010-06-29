@@ -56,13 +56,24 @@ class BackEnd(BaseBackend):
         res = self.execute_command('GET', id)
         return self._res_to_val(res)        
         
-    def delete(self, obj):
+    def delete_object(self, meta):
         '''Delete an object from the database'''
-        id = obj.basekey()
-        km = ()
-        for key in keys:
-            km += RedisMap1(self,key).ids()
-        return self._cache.delete(*km)
+        hash = self.hash(meta.basekey())
+        id   = meta.id
+        if not hash.delete(id):
+            return 0
+        for field in meta.fields.itervalues():
+            if field.primary_key or not field.index:
+                continue
+            value = field.get_value(field._cleanvalue())
+            fid   = meta.basekey(field.name,value)
+            if field.unique:
+                if not self.execute_command('DEL', fid):
+                    raise Exception('could not delete unique index at %s' % fid)
+            else:
+                if not self.execute_command('SREM', fid, id):
+                    raise Exception('could not delete index at set %s' % fid)
+        return 1
     
     def list(self, id, timeout = 0):
         return List(self,id,timeout)
@@ -86,10 +97,6 @@ class BackEnd(BaseBackend):
             return self.pickler.loads(res)
         except:
             return res
-        
-    def delete_object(self, obj):
-        '''Remove a StdModel from database'''
-        raise NotImplementedError()
     
     # Hashes
     def hset(self, id, key, value):

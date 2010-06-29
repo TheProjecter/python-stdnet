@@ -91,6 +91,22 @@ class Field(object):
                 return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
         
             self.savevalue(value)
+            
+    def delete(self):
+        '''Delete the field from the database.'''
+        meta    = self.meta
+        value   = self.get_value(self._cleanvalue())
+        if self.primary_key:
+            return meta.cursor.delete_object(obj)
+        
+        elif self.index:
+            key     = meta.basekey(name,value)
+            if self.unique:
+                return meta.cursor.add_string(key, obj.id, commit, timeout = meta.timeout)
+            elif self.ordered:
+                raise NotImplementedError
+            else:
+                return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
         
     def savevalue(self, value):
         pass

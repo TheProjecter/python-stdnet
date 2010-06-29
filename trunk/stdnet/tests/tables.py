@@ -114,7 +114,7 @@ class TestORM(TestBase):
         all = Instrument.objects.all()
         self.assertEqual(tot,len(all))
         
-    def _testForeignKey(self):
+    def testForeignKey(self):
         self.makePositions()
         #
         positions = Position.objects.all()
@@ -140,6 +140,14 @@ class TestORM(TestBase):
             totp += len(pos)
         
         self.assertEqual(total_positions,totp)
+        
+    def testDeleteSimple(self):
+        instruments = Instrument.objects.all()
+        funds = Fund.objects.all()
+        Ni = len(instruments)
+        Nf = len(funds)
+        self.assertEqual(Ni,instruments.delete())
+        self.assertEqual(Nf,funds.delete())
         
     def testDelete(self):
         '''Test delete object method'''
