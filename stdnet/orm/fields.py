@@ -1,6 +1,8 @@
 from copy import copy
 import time
 from stdnet.exceptions import FieldError
+from query import RelatedManager
+
 
 __all__ = ['Field',
            'AutoField',
@@ -136,27 +138,6 @@ class DateField(Field):
         dte = self.value
         if dte:
             return int(time.mktime(dte.timetuple()))
-
-
-
-class RelatedManager(object):
-    
-    def __init__(self, fieldname, related):
-        self.related    = related
-        self.fieldname  = fieldname
-        self.obj        = None
-        
-    def all(self):
-        if self.obj:
-            meta = self.related._meta
-            id   = meta.basekey(self.fieldname,self.obj.id)
-            data = meta.cursor.unordered_set(id)
-            hash = meta.cursor.hash(meta.basekey())
-            return hash.mget(data)
-    
-    def __deepcopy__(self, memodict):
-        # We only copy here
-        return self.__class__(self.fieldname,self.related)
         
 
 

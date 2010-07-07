@@ -2,28 +2,7 @@ import copy
 from stdnet.main import getdb
 from stdnet.conf import settings
 
-from query import QuerySet
-    
-
-class Manager(object):
-    
-    def get(self, **kwargs):
-        qs = self.filter(**kwargs)
-        return qs.get()
-    
-    def get_or_create(self, **kwargs):
-        res = self.get(**kwargs)
-        if not res:
-            res = self.model(**kwargs)
-            res.save()
-        return res
-    
-    def filter(self, **kwargs):
-        return QuerySet(self._meta, kwargs)
-
-    def all(self):
-        return self.filter()
-    
+from query import Manager    
 
 def clear(backend = None):
     backend = backend or settings.DEFAULT_BACKEND

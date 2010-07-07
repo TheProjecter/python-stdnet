@@ -26,7 +26,7 @@ class Fund(Base):
     pass
 
 class Position(orm.StdModel):
-    instrument = orm.ForeignKey(Instrument)
+    instrument = orm.ForeignKey(Instrument, related_name = 'positions')
     fund       = orm.ForeignKey(Fund)
     dt         = orm.DateField()
     
@@ -71,6 +71,7 @@ class TestORM(TestBase):
             Fund(name = name, ccy = ccy).save()
     
     def makePositions(self):
+        '''Create Positions objects which hold foreign key to instruments and funds'''
         instruments = Instrument.objects.all()
         n = 0
         for f in Fund.objects.all():
@@ -81,9 +82,9 @@ class TestORM(TestBase):
                     Position(instrument = inst, dt = dt, fund = f).save()
         return n
         
-    def testIds(self):
+    def testLen(self):
+        '''Simply test len of objects greater than zero'''
         objs = Instrument.objects.all()
-        objs = list(objs)
         self.assertTrue(len(objs)>0)
         
     def testObject(self):
@@ -115,6 +116,7 @@ class TestORM(TestBase):
         self.assertEqual(tot,len(all))
         
     def testForeignKey(self):
+        '''Test filtering with foreignkeys'''
         self.makePositions()
         #
         positions = Position.objects.all()
@@ -133,7 +135,7 @@ class TestORM(TestBase):
         total_positions = len(positions)
         totp = 0
         for instrument in Instrument.objects.all():
-            pos  = list(instrument.position_set.all())
+            pos  = list(instrument.positions.all())
             for p in pos:
                 self.assertTrue(isinstance(p,Position))
                 self.assertEqual(p.instrument,instrument)
@@ -141,7 +143,26 @@ class TestORM(TestBase):
         
         self.assertEqual(total_positions,totp)
         
+    def testRelatedManagerFilter(self):
+        self.makePositions()
+        instruments = Instrument.objects.all()
+        for instrument in instruments:
+            positions = instrument.positions.all()
+            funds = {}
+            flist = []
+            for pos in positions:
+                fund = pos.fund
+                n    = funds.get(fund.id,0) + 1
+                funds[fund.id] = n
+                if n == 1:
+                    flist.append(fund)
+            for fund in flist:
+                positions = instrument.positions.filter(fund = fund)
+                self.assertEqual(len(positions),funds[fund.id])
+            
+        
     def testDeleteSimple(self):
+        '''Test delete on models without without related models'''
         instruments = Instrument.objects.all()
         funds = Fund.objects.all()
         Ni = len(instruments)
@@ -150,7 +171,7 @@ class TestORM(TestBase):
         self.assertEqual(Nf,funds.delete())
         
     def testDelete(self):
-        '''Test delete object method'''
+        '''Test delete on models with related models'''
         # Create Positions which hold foreign keys to Instruments
         Np = self.makePositions()
         instruments = Instrument.objects.all()
