@@ -17,10 +17,16 @@ def get_fields(bases, attrs):
 
 
 class Metaclass(object):
-    '''Model metaclass contains all the information which relates the python object to
-    the database model'''
     
     def __init__(self, model, fields, abstract = False, keyprefix = None):
+        '''Model metaclass contains all the information which relates a python class to a database model. An instnace
+is initiated when registering a new model with a database backend:
+
+    * *model* a model class
+    * *fields* dictionary of field instances
+    * *abstract* if True, it represents an abstract model and no database model are created
+    * *keyprefix*
+'''
         self.abstract  = abstract
         self.keyprefix = keyprefix
         self.model     = model
@@ -28,7 +34,7 @@ class Metaclass(object):
         self.fields    = fields
         self.related   = {}
         model._meta    = self
-        if not self.abstract:
+        if not abstract:
             try:
                 pk = self.pk
             except:
@@ -71,7 +77,7 @@ class Metaclass(object):
                 field.save(commit)
         
     def delete(self):
-        '''Delete the object from the back-end database'''
+        '''Delete the object from the back-end database and return the number of objects removed.'''
         if not self.has_pk():
             raise StdNetException('Cannot delete object. It was never saved.')
         # Gather related objects to delete
@@ -86,7 +92,6 @@ class Metaclass(object):
         for rel in self.related.itervalues():
             objs.extend(rel.all())
         return objs
-                
                             
     def __deepcopy__(self, memodict):
         # We deep copy on fields and create the keys list
@@ -119,6 +124,7 @@ class DataMetaClass(type):
         Metaclass(new_class,fields,**kwargs)
         return new_class
     
+
 
 def meta_options(abstract = False,
                  keyprefix = None,

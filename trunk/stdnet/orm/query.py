@@ -2,8 +2,14 @@ from stdnet.exceptions import QuerySetError
 
 
 class QuerySet(object):
-    '''Class used to build querysets'''
+    '''Queryset manager'''
+    
     def __init__(self, meta, kwargs):
+        '''A query set is  initialized with
+        
+        * *meta* an model instance meta attribute,
+        * *kwargs* dictionary of query keys
+        '''
         self._meta  = meta
         self.kwargs = kwargs
         self._seq   = None
@@ -29,6 +35,10 @@ class QuerySet(object):
         meta = self._meta
         return meta.cursor.hash(meta.basekey()).get(id)
     
+    def count(self):
+        '''Return the number of objects in the queryset without fetching objects'''
+        raise NotImplementedError
+        
     def __len__(self):
         return len(self._unwind())
     
@@ -95,3 +105,44 @@ class QuerySet(object):
             T += el.delete()
         return T
     
+
+class Manager(object):
+    
+    def get(self, **kwargs):
+        qs = self.filter(**kwargs)
+        return qs.get()
+    
+    def get_or_create(self, **kwargs):
+        res = self.get(**kwargs)
+        if not res:
+            res = self.model(**kwargs)
+            res.save()
+        return res
+    
+    def filter(self, **kwargs):
+        return QuerySet(self._meta, kwargs)
+
+    def all(self):
+        return self.filter()
+    
+    
+class RelatedManager(Manager):
+    
+    def __init__(self, fieldname, related):
+        self.related    = related
+        self.fieldname  = fieldname
+        self.obj        = None
+        
+    def filter(self, **kwargs):
+        if self.obj:
+            kwargs[self.fieldname] = self.obj.id
+            return QuerySet(self.related._meta, kwargs)
+            #meta = self.related._meta
+            #id   = meta.basekey(self.fieldname,self.obj.id)
+            #data = meta.cursor.unordered_set(id)
+            #hash = meta.cursor.hash(meta.basekey())
+            #return hash.mget(data)
+    
+    def __deepcopy__(self, memodict):
+        # We only copy here
+        return self.__class__(self.fieldname,self.related)
