@@ -1,4 +1,8 @@
 
+python-stdnet 0.2.3
+========================================
+ * StdModel raise AttributEerror when method not available
+
 python-stdnet 0.2.2 - 2010 July 7
 ========================================
  * RelatedManager is derived by Manager and therefore implements both all and filter methods.

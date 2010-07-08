@@ -43,7 +43,10 @@ class StdModel(object):
                 self.__dict__[name] = value
             return value
         else:
-            return self.__dict__.get(name,None)
+            try:
+                return self.__dict__[name]
+            except KeyError:
+                raise AttributeError("object '%s' has not attribute %s" % (self,name))
             
     def setfield(self, name, field, value):
         if field:
