@@ -4,7 +4,7 @@ from stdnet.contrib.timeserie.utils import default_parse_interval
 
 
 class TimeSerieField(orm.HashField):
-    
+    '''A timeserie filed hold a key-ordered hash table with'''
     def __init__(self, converter = date2timestamp,
                  inverse = timestamp2date, **kwargs):
         super(TimeSerieField,self).__init__(converter=converter,

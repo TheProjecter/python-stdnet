@@ -14,6 +14,9 @@ of users and developers.
 At the moment, they are best suited for for traditional
 `relational databases <http://en.wikipedia.org/wiki/Relational_database>`_ back-ends. 
 
+On the other hand, stdnet is geared towards non-conventional databases or nosql__ as
+they are known. It is also a lightweight module, which deal only with ORM and nothing else.
+
 
 Contents:
 
@@ -22,6 +25,8 @@ Contents:
    
    models
    fields
+   structure
 
 __ http://www.sqlalchemy.org/   
 __ http://docs.djangoproject.com/en/dev/ref/models/instances/
+__ http://nosql-database.org/

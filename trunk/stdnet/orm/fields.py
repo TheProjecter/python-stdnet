@@ -17,7 +17,15 @@ class NoValue(object):
 _novalue = NoValue()
 
 class Field(object):
+    '''This is the base class of of StdNet Fields. The following arguments
+    are available to all field types. All are optional.
     
+    * **index** If True, the field will create indexes for fast search.
+    * **unique** If True, this field must be unique throughout the model. If True index is also True. Enforced at database level.
+    * **ordered** If True, the field is ordered (if unique is True this has no effect).
+    * **primary_key** If True, this field is the primary key for the model. In this case the Field is also unique.
+    * **required** If False, the field is allowed to be null.
+    '''
     def __init__(self, unique = False, ordered = False, primary_key = False,
                  required = True, index = True):
         self.primary_key = primary_key
@@ -39,10 +47,10 @@ class Field(object):
         self.name     = None
         
     def hash(self, value):
-        return hash(value)
+        '''Internal function used to hash the value so it can be used as index'''
+        return value
         
     def register_with_model(self, fieldname, model):
-        '''Called by the model meta class when the model class is created'''
         pass
     
     def set_model_value(self, name, obj, value = _novalue):
@@ -73,7 +81,7 @@ class Field(object):
         raise NotImplementedError('Cannot set the field')
     
     def save(self, commit):
-        '''Save the field and the index for object *obj*'''
+        #TODO: move this to the backend database
         name    = self.name
         obj     = self.obj
         meta    = self.meta
@@ -98,7 +106,7 @@ class Field(object):
             self.savevalue(value)
             
     def delete(self):
-        '''Delete the field from the database.'''
+        #Delete the field from the database.
         meta    = self.meta
         value   = self.get_value(self._cleanvalue())
         if self.primary_key:
@@ -118,9 +126,9 @@ class Field(object):
     
     def add(self, *args, **kwargs):
         raise NotImplementedError("Cannot add to field")
-    
-    
-class AutoField(Field):
+            
+
+class AtomField(Field):
     '''The simpliest field possible, it can be of four different types:
 
     * boolean
@@ -128,21 +136,29 @@ class AutoField(Field):
     * floating point
     * string
     '''
-    def _cleanvalue(self):
-        if not self.value:
-            meta = self.meta
-            self.value = meta.cursor.incr(meta.basekey('ids'))
-        return self.value
-            
-
-class AtomField(Field):
+    def hash(self, value):
+        return hash(value)
     
     def set(self,obj,value):
         pass
 
 
+class AutoField(Field):
+    '''An integer only field that automatically increments. You usually won't
+    need to use this directly;
+    a primary key field will automatically be added to your model
+    if you don't specify otherwise.
+    '''
+    def _cleanvalue(self):
+        if not self.value:
+            meta = self.meta
+            self.value = meta.cursor.incr(meta.basekey('ids'))
+        return self.value
+    
+    
 class DateField(Field):
-
+    '''A date, represented in Python by a datetime.date instance.
+    '''
     def hash(self, value):
         return int(1000*time.mktime(dte.timetuple()))
     
@@ -150,15 +166,26 @@ class DateField(Field):
         dte = self.value
         if dte:
             return int(time.mktime(dte.timetuple()))
-        
 
 
 class ForeignKey(Field):
     '''A field defining a one-to-many objects relationship.
-The StdNet equivalent to django ForeignKey::
+The StdNet equivalent to `django ForeignKey <http://docs.djangoproject.com/en/dev/ref/models/fields/#foreignkey>`_.
+Requires a positional argument: the class to which the model is related.
+To create a recursive relationship, an object that has a many-to-one relationship with itself,
+use::
 
-    * **model** the One model the many models refer to
-    * *related_name* is the attribute name created in the **model**
+    orm.ForeignKey('self')
+
+It accepts **related_name** as extra argument. It is the name to use for the relation from the related object
+back to self. For example::
+
+    class Folder(orm.StdModel):
+        name = orm.AtomField()
+    
+    class File(orm.StdModel):
+        folder = orm.ForeignKey(Folder, related_name = 'files')
+        
 '''
     def __init__(self, model, related_name = None, **kwargs):
         self.model = model
@@ -167,7 +194,7 @@ The StdNet equivalent to django ForeignKey::
         super(ForeignKey,self).__init__(**kwargs)
         
     def register_with_model(self, name, related):
-        '''Class registration as a ForeignKey labelled *name* within model *related*'''
+        #Class registration as a ForeignKey labelled *name* within model *related*
         if self.model == 'self':
             self.model = related
         related_name = self.related_name or '%s_set' % related._meta.name

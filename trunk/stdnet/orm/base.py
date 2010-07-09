@@ -71,6 +71,8 @@ is initiated when registering a new model with a database backend:
         return key
     
     def save(self, commit = True):
+        if not self.cursor:
+            raise ModelNotRegistered('Model %s is not registered with a backend database. Cannot save any instance.' % self.name)
         res = self.pk.save(commit)
         for name,field in self.fields.items():
             if name is not 'id':

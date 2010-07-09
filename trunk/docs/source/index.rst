@@ -1,3 +1,4 @@
+.. _stdnet-doc:
 
 Python StdNet
 =========================================
@@ -10,7 +11,9 @@ Dive In
 
 :ref:`Overview and Installation <intro-overview>`
 
-:ref:`An example <intro-example>`
+Examples
+
+:ref:`A simple example <intro-example>` | :ref:`Tagging <tag-example>` 
 
 
 .. _contents:

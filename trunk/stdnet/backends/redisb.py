@@ -18,6 +18,7 @@ default_pickler = pickle
 
 class BackEnd(BaseBackend):
     '''Redis backend for StdNet. This is the backend to use really.'''
+    
     def __init__(self, name, server, params, pickler = default_pickler):
         super(BackEnd,self).__init__(name,params)
         servs = server.split(':')
@@ -74,6 +75,8 @@ class BackEnd(BaseBackend):
                 if not self.execute_command('SREM', fid, id):
                     raise Exception('could not delete index at set %s' % fid)
         return 1
+    
+    # Data structures
     
     def list(self, id, timeout = 0):
         return List(self,id,timeout)

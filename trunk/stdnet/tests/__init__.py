@@ -3,4 +3,5 @@
 
 from tables import *
 from fktest import *
+from listfield import *
 from stdnet.contrib.timeserie.tests import *
