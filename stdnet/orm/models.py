@@ -55,6 +55,8 @@ class StdModel(object):
             self.__dict__[name] = value
     
     def save(self, commit = True):
+        '''Save the instance to the back-end database. The model must be registered with a backend
+    otherwise a ModelNotRegistered exception will be raised.'''
         meta  = self._meta.save(commit)
         return self
         

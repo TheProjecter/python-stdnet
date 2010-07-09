@@ -10,11 +10,19 @@ class List(structures.List):
         '''Size of map'''
         return self.cursor.execute_command('LLEN', self.id)
     
-    def push_back(self, value):
-        return self.cursor.execute_command('RPUSH', self.id, self.cursor._res_to_val(value))
+    def push_back(self, values):
+        for value in values:
+            self.cursor.execute_command('RPUSH', self.id, self.cursor._res_to_val(value))
     
-    def push_front(self, value):
-        return self.cursor.execute_command('LPUSH', self.id, self.cursor._res_to_val(value))
+    def push_front(self, values):
+        for value in values:
+            self.cursor.execute_command('LPUSH', self.id, self.cursor._res_to_val(value))
+    
+    def pop_back(self):
+        return self.cursor._res_to_val(self.cursor.execute_command('RPOP', self.id))
+    
+    def pop_front(self):
+        return self.cursor._res_to_val(self.cursor.execute_command('LPOP', self.id))
     
     def _all(self):
         return self.cursor.execute_command('LRANGE', self.id, 0, -1)
