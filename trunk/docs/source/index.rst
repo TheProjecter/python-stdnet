@@ -2,32 +2,21 @@
 Python StdNet
 =========================================
 
-.. rubric:: A Networked Standard template library for Python.
+.. rubric:: An object relational mapper library for remote data-structures.
+Simple to use and configure. It uses several back-end databases including Redis and CouchDB.
 
-An object relational mapper library for remote data-structures.
-Simple to use and configure. Define your model::
-	
-	from stdnet import orm
-	
-	class TimeSerie(orm.StdModel):
-	    ticker = orm.AtomField()
-	    data   = orm.HashField()
-		
-register it to a backend::
+Dive In
+============
 
-	orm.register(TimeSerie,'redis://')
-	
-and create objects::
+:ref:`Overview and Installation <intro-overview>`
 
-	ts = TimeSerie(ticker = 'GOOG').save()
-	ts.data.add(date.today(),485)
-	ts.save()
+:ref:`An example <intro-example>`
 
 
 .. _contents:
 
 Contents
-------------
+===========
 
 .. toctree::
    :maxdepth: 2
