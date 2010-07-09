@@ -2,6 +2,7 @@ import os
 import sys
 import unittest
 
+
 def add2path():
     path = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]
     if path not in sys.path:
