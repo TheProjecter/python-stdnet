@@ -157,7 +157,6 @@ class BaseBackend(object):
         """Remove *all* values from the cache at once."""
         raise NotImplementedError
 
-    
     def hash(self, key, timeout = 0):
         raise NotImplementedError
     

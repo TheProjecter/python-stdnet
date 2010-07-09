@@ -1,7 +1,7 @@
 
 python-stdnet 0.2.3
 ========================================
- * StdModel raise AttributEerror when method not available
+ * StdModel raise AttributEerror when method/attribute not available. Previously it return None.
 
 python-stdnet 0.2.2 - 2010 July 7
 ========================================
