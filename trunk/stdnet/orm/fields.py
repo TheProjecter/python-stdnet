@@ -36,7 +36,10 @@ class Field(object):
         self.value    = None
         self.obj      = None
         self.meta     = None
-        self.name     = None   
+        self.name     = None
+        
+    def hash(self, value):
+        return hash(value)
         
     def register_with_model(self, fieldname, model):
         '''Called by the model meta class when the model class is created'''
@@ -118,7 +121,13 @@ class Field(object):
     
     
 class AutoField(Field):
-    
+    '''The simpliest field possible, it can be of four different types:
+
+    * boolean
+    * integer
+    * floating point
+    * string
+    '''
     def _cleanvalue(self):
         if not self.value:
             meta = self.meta
@@ -133,6 +142,9 @@ class AtomField(Field):
 
 
 class DateField(Field):
+
+    def hash(self, value):
+        return int(1000*time.mktime(dte.timetuple()))
     
     def _cleanvalue(self):
         dte = self.value
