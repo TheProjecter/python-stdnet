@@ -5,6 +5,7 @@ from stdnet.exceptions import FieldError
 
 
 class StdModel(object):
+    '''Base class for StdNet models'''
     __metaclass__ = DataMetaClass
     
     def __init__(self, **kwargs):
@@ -21,7 +22,7 @@ class StdModel(object):
         self.__dict__['_meta'] = meta
         for name,field in meta.fields.iteritems():
             value = kwargs.pop(name,_novalue)
-            self.setfield(name, field, value)
+            self.__set_field(name, field, value)
             
         for name,value in kwargs.items():
             setattr(self,name,value)
@@ -32,26 +33,22 @@ class StdModel(object):
         
     def __setattr__(self,name,value):
         field = self._meta.fields.get(name,None)
-        self.setfield(name, field, value)
+        self.__set_field(name, field, value)
         
-    def __getattr__(self,name):
+    def __getattr__(self, name):
         field = self._meta.fields.get(name,None)
         if field:
-            value = self.__dict__.get(name,_novalue)
-            if value is _novalue:
-                value = field.get_model_value(name,self)
-                self.__dict__[name] = value
-            return value
+            return field.get_value()
         else:
             try:
                 return self.__dict__[name]
             except KeyError:
                 raise AttributeError("object '%s' has not attribute %s" % (self,name))
             
-    def setfield(self, name, field, value):
+    def __set_field(self, name, field, value):
         if field:
-            value = field.set_model_value(name,self,value)
-        if value is not _novalue:
+            field.set_value(name,self,value)
+        else:
             self.__dict__[name] = value
     
     def save(self, commit = True):
@@ -79,7 +76,7 @@ class StdModel(object):
         odict = self.__dict__.copy()
         meta = odict.pop('_meta')
         for name,field in meta.fields.items():
-            val = field.model_get_arg()
+            val = field.serialize()
             if val is not None:
                 odict[name] = val
             else:

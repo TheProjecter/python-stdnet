@@ -162,7 +162,7 @@ class TestORM(TestBase):
             
         
     def testDeleteSimple(self):
-        '''Test delete on models without without related models'''
+        '''Test delete on models without related models'''
         instruments = Instrument.objects.all()
         funds = Fund.objects.all()
         Ni = len(instruments)

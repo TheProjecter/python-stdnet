@@ -48,4 +48,4 @@ def getdb(backend_uri):
     else:
         name = scheme
     module = import_module(name)
-    return getattr(module, 'BackEnd')(name, host, params)
+    return getattr(module, 'BackEnd')(scheme, host, params)
