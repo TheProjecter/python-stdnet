@@ -59,10 +59,10 @@ is initiated when registering a new model with a database backend:
     
     @property
     def id(self):
-        return self.pk.value
+        return self.pk.get_value()
     
     def has_pk(self):
-        return self.pk.value
+        return self.pk._value
         
     def basekey(self, *args):
         key = '%s%s' % (self.keyprefix,self.name)

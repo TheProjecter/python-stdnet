@@ -23,7 +23,7 @@ class Structure(object):
     
     def size(self):
         raise NotImplementedError
-    
+
     def __contains__(self, val):
         raise NotImplementedError
     

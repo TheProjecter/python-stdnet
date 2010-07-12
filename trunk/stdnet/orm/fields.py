@@ -66,6 +66,9 @@ class Field(object):
         '''Return the field value'''
         return self._value
     
+    def convert(self, value):
+        return value
+    
     def serialize(self):
         return self._value
         
@@ -237,7 +240,7 @@ back to self. For example::
     def get_value(self):
         '''Return the field value'''
         v = self.__value_obj
-        if v == _novalue:
+        if isinstance(v,NoValue):
             if self._value:
                 meta    = self.model._meta
                 hash    = meta.cursor.hash(meta.basekey())
@@ -246,6 +249,9 @@ back to self. For example::
                 v = None
             self.__value_obj = v
         return v
+    
+    def convert(self, value):
+        return value
     
     def save_index(self, commit, value):
         meta    = self.meta
