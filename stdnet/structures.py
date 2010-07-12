@@ -24,10 +24,16 @@ class Structure(object):
     def size(self):
         raise NotImplementedError
     
+    def __contains__(self, val):
+        raise NotImplementedError
+    
     def __iter__(self):
         return self._unwind().__iter__()
     
     def _all(self):
+        raise NotImplementedError
+    
+    def delete(self):
         raise NotImplementedError
     
     def __len__(self):
@@ -68,6 +74,9 @@ class HashTable(Structure):
     def items(self, desc = False):
         raise NotImplementedError
     
+    def update(self, mapping):
+        raise NotImplementedError
+    
     def __iter__(self):
         return self.keys().__iter__()
 
@@ -76,5 +85,7 @@ class Set(Structure):
     
     def add(self, value):
         raise NotImplementedError
-    
+
+    def update(self, sset):
+        raise NotImplementedError
     

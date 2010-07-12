@@ -31,7 +31,8 @@ def register(model, backend = None, keyprefix = None, timeout = 0):
     objects.model    = model
     objects._meta    = meta
     objects.cursor   = meta.cursor
-    _registry[model] = meta 
+    _registry[model] = meta
+    return meta.cursor.name
     
 
 _registry = {}

@@ -64,16 +64,18 @@ class BackEnd(BaseBackend):
         if not hash.delete(id):
             return 0
         for field in meta.fields.itervalues():
-            if field.primary_key or not field.index:
+            if field.primary_key:
                 continue
-            value = field.get_value(field._cleanvalue())
-            fid   = meta.basekey(field.name,value)
-            if field.unique:
-                if not self.execute_command('DEL', fid):
-                    raise Exception('could not delete unique index at %s' % fid)
-            else:
-                if not self.execute_command('SREM', fid, id):
-                    raise Exception('could not delete index at set %s' % fid)
+            if field.index:
+                value = field.get_value(field._cleanvalue())
+                fid   = meta.basekey(field.name,value)
+                if field.unique:
+                    if not self.execute_command('DEL', fid):
+                        raise Exception('could not delete unique index at %s' % fid)
+                else:
+                    if not self.execute_command('SREM', fid, id):
+                        raise Exception('could not delete index at set %s' % fid)
+            field.delete()
         return 1
     
     # Data structures
@@ -101,18 +103,3 @@ class BackEnd(BaseBackend):
         except:
             return res
     
-    # Hashes
-    def hset(self, id, key, value):
-        value = self._val_to_store_info(value)
-        return self.execute_command('HSET', id, key, value)
-    
-    def hmset(self, id, mapping):
-        items = []
-        [items.extend((key,self._val_to_store_info(value))) for key,value in mapping.iteritems()]
-        return self.execute_command('HMSET', id, *items)
-    
-    def hget(self, id, key):
-        res = self.execute_command('HGET', id, key)
-        return self._res_to_val(res)
-    
-        

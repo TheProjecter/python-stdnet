@@ -13,7 +13,8 @@ Dive In
 
 Examples
 
-:ref:`A simple example <intro-example>` | :ref:`Tagging <tag-example>` 
+:ref:`A simple example <intro-example>` | :ref:`Tagging <tag-example>` |
+:ref:`Twitter <twitter-example>`  
 
 
 .. _contents:

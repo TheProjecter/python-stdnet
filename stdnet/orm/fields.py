@@ -41,7 +41,7 @@ class Field(object):
             else:
                 self.index = index
         self.ordered  = ordered
-        self.value    = None
+        self._value   = None
         self.obj      = None
         self.meta     = None
         self.name     = None
@@ -53,25 +53,21 @@ class Field(object):
     def register_with_model(self, fieldname, model):
         pass
     
-    def set_model_value(self, name, obj, value = _novalue):
+    def set_value(self, name, obj, value):
+        # Called by constructor in the model
         self.obj  = obj
         self.name = name
         self.meta = obj._meta
         if value is not _novalue:
-            self.value = value
-        return self.value
+            self._value = value
+        return self._value
     
-    def model_get_arg(self):
-        return self.value
+    def get_value(self):
+        '''Return the field value'''
+        return self._value
     
-    def get_model_value(self, name, obj, value = _novalue):
-        return self.value
-    
-    def get_value(self, value):
-        return value
-    
-    def _cleanvalue(self):
-        return self.value
+    def serialize(self):
+        return self._value
         
     def getkey(self,obj,value):
         pass
@@ -81,47 +77,43 @@ class Field(object):
         raise NotImplementedError('Cannot set the field')
     
     def save(self, commit):
-        #TODO: move this to the backend database
+        '''Save field in the database. this function is called by an instance
+        '''
         name    = self.name
         obj     = self.obj
         meta    = self.meta
-        value   = self.get_value(self._cleanvalue())
+        value   = self.serialize()
+        #value   = self.get_value(self._cleanvalue())
         if value is None and self.required:
             raise FieldError('Field %s for %s has no value' % (name,obj))
         
+        # Add object to database
         if self.primary_key:
             key = meta.basekey()
             setattr(obj,name,value)
             return meta.cursor.add_object(key,obj,commit)
         
+        # Create index
         elif self.index:
-            key     = meta.basekey(name,value)
-            if self.unique:
-                return meta.cursor.add_string(key, obj.id, commit, timeout = meta.timeout)
-            elif self.ordered:
-                raise NotImplementedError
-            else:
-                return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
+            self.save_index(commit,value)
         
-            self.savevalue(value)
+        self.savevalue(commit, value = value)
             
-    def delete(self):
-        #Delete the field from the database.
+    def save_index(self, commit, value):
+        obj     = self.obj
         meta    = self.meta
-        value   = self.get_value(self._cleanvalue())
-        if self.primary_key:
-            return meta.cursor.delete_object(obj)
+        key     = meta.basekey(self.name,value)
+        if self.unique:
+            return meta.cursor.add_string(key, obj.id, commit, timeout = meta.timeout)
+        elif self.ordered:
+            raise NotImplementedError
+        else:
+            return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
+    
+    def delete(self):
+        pass       
         
-        elif self.index:
-            key     = meta.basekey(name,value)
-            if self.unique:
-                return meta.cursor.add_string(key, obj.id, commit, timeout = meta.timeout)
-            elif self.ordered:
-                raise NotImplementedError
-            else:
-                return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
-        
-    def savevalue(self, value):
+    def savevalue(self, commit, value = None):
         pass
     
     def add(self, *args, **kwargs):
@@ -149,11 +141,11 @@ class AutoField(Field):
     a primary key field will automatically be added to your model
     if you don't specify otherwise.
     '''
-    def _cleanvalue(self):
-        if not self.value:
+    def serialize(self):
+        if not self._value:
             meta = self.meta
-            self.value = meta.cursor.incr(meta.basekey('ids'))
-        return self.value
+            self._value = meta.cursor.incr(meta.basekey('ids'))
+        return self._value
     
     
 class DateField(Field):
@@ -163,12 +155,49 @@ class DateField(Field):
         return int(1000*time.mktime(dte.timetuple()))
     
     def _cleanvalue(self):
-        dte = self.value
+        dte = self._value
         if dte:
             return int(time.mktime(dte.timetuple()))
 
 
-class ForeignKey(Field):
+
+def register_field_related(field, name, related):
+    #Class registration as a ForeignKey labelled *name* within model *related*
+    if field.model == 'self':
+        field.model = related
+    model = field.model
+    meta  = model._meta
+    related_name = field.related_name or '%s_set' % related._meta.name
+    if related_name not in meta.related:
+        meta.related[related_name] = RelatedManager(name,related)
+    else:
+        raise FieldError("Duplicated related name %s in model %s and field %s" % (related_name,related,name))
+
+
+class RelatedField(Field):
+    
+    def __init__(self, model = None, related_name = None, **kwargs):
+        self.model = model
+        self.related_name = related_name
+        if self.model:
+            kwargs['index'] = True
+        super(RelatedField,self).__init__(**kwargs)
+    
+    def register_with_model(self, name, related):
+        if not self.model:
+            return
+        if self.model == 'self':
+            self.model = related
+        model = self.model
+        meta  = model._meta
+        related_name = self.related_name or '%s_set' % related._meta.name
+        if related_name not in meta.related:
+            meta.related[related_name] = RelatedManager(name,related)
+        else:
+            raise FieldError("Duplicated related name %s in model %s and field %s" % (related_name,related,name))
+
+
+class ForeignKey(RelatedField):
     '''A field defining a one-to-many objects relationship.
 The StdNet equivalent to `django ForeignKey <http://docs.djangoproject.com/en/dev/ref/models/fields/#foreignkey>`_.
 Requires a positional argument: the class to which the model is related.
@@ -186,69 +215,43 @@ back to self. For example::
     class File(orm.StdModel):
         folder = orm.ForeignKey(Folder, related_name = 'files')
         
-'''
-    def __init__(self, model, related_name = None, **kwargs):
-        self.model = model
-        self.related_name = related_name
-        kwargs['index'] = True
-        super(ForeignKey,self).__init__(**kwargs)
+'''        
+    def __init__(self, model, **kwargs):
+        if not model:
+            raise ValueError('Model not specified')
+        self.__value_obj = _novalue
+        super(ForeignKey,self).__init__(model = model, **kwargs)
         
-    def register_with_model(self, name, related):
-        #Class registration as a ForeignKey labelled *name* within model *related*
-        if self.model == 'self':
-            self.model = related
-        related_name = self.related_name or '%s_set' % related._meta.name
-        meta = self.model._meta
-        if related_name not in meta.related:
-            meta.related[related_name] = RelatedManager(name,related)
-        else:
-            raise FieldError("Duplicated related name %s in model %s and field %s" % (related_name,related,name))
-    
     def getkey(self,obj,value):
         pass
         
     def set(self,obj,value):
         pass
     
-    def _cleanvalue(self):
-        if isinstance(self.value,self.model):
-            return self.value.id
-        else:
-            return self.value
+    def set_value(self, name, obj, value):
+        value = super(ForeignKey,self).set_value(name,obj,value)
+        if isinstance(value,self.model):
+            self.__value_obj = value
+            self._value = value.id
     
-    def set_model_value(self, name, obj, value = _novalue):
-        value = super(ForeignKey,self).set_model_value(name, obj, value)
-        if value is not _novalue:
-            if isinstance(value,self.model):
-                self.value = value.id
+    def get_value(self):
+        '''Return the field value'''
+        v = self.__value_obj
+        if v == _novalue:
+            if self._value:
+                meta    = self.model._meta
+                hash    = meta.cursor.hash(meta.basekey())
+                v       = hash.get(self._value)
             else:
-                self.value = value
-                value = _novalue
-        else:
-            value = self.value
-        return value
+                v = None
+            self.__value_obj = v
+        return v
     
-    def model_get_arg(self):
-        return self.value
-        
-    def get_model_value(self, name, obj, value = _novalue):
-        if value == _novalue:
-            value = self.value
-            
-        if isinstance(value,self.model):
-            self.value = value.id
-        else:
-            meta    = self.model._meta
-            hash    = meta.cursor.hash(meta.basekey())
-            value   = hash.get(self.value)
-        return value
-    
-    def get_value(self, value):
-        if isinstance(value,self.model):
-            return value.id
-        elif value is None:
-            return 0
-        else:
-            return value
+    def save_index(self, commit, value):
+        meta    = self.meta
+        name    = self.name
+        obj     = self.obj
+        key     = meta.basekey(name,value)
+        return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
     
         

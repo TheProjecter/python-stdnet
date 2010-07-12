@@ -12,7 +12,6 @@ class cacheValue(object):
         self.value = value
 
 
-
 class BaseBackend(object):
     
     def __init__(self, name, params):
@@ -26,6 +25,10 @@ class BaseBackend(object):
         self._cache_objs = {}
         self._cache_strs = {}
         self._cache_sets = {}
+
+    @property
+    def name(self):
+        return self.__name
     
     def __repr__(self):
         return '%s backend' % self.__name
