@@ -55,7 +55,7 @@ class QuerySet(object):
             field = meta.fields.get(name,None)
             if not field:
                 raise QuerySetError("Field %s not defined" % name)
-            value = field.get_value(value)
+            value = field.convert(value)
             if field.unique:
                 unique = True
                 id = meta.cursor.get(meta.basekey(name,value))
