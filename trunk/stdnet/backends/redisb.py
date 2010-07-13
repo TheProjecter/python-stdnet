@@ -70,23 +70,21 @@ class BackEnd(BaseBackend):
             uset.update(s)
         
             
-    def delete_object(self, meta):
+    def delete_indexes(self, obj):
         '''Delete an object from the database'''
-        hash = self.hash(meta.basekey())
-        id   = meta.id
-        if not hash.delete(id):
-            return 0
+        meta  = obj.meta
+        objid = obj.id
         for field in meta.fields.itervalues():
             if field.primary_key:
                 continue
             if field.index:
-                value = field.hash()
+                value = field.hash(field.serialize())
                 fid   = meta.basekey(field.name,value)
                 if field.unique:
                     if not self.execute_command('DEL', fid):
                         raise Exception('could not delete unique index at %s' % fid)
                 else:
-                    if not self.execute_command('SREM', fid, id):
+                    if not self.execute_command('SREM', fid, objid):
                         raise Exception('could not delete index at set %s' % fid)
             field.delete()
         return 1

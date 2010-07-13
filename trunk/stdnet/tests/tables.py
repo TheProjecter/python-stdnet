@@ -175,7 +175,7 @@ class TestORM(TestBase):
                 self.assertEqual(len(positions),funds[fund.id])
             
         
-    def _testDeleteSimple(self):
+    def testDeleteSimple(self):
         '''Test delete on models without related models'''
         instruments = Instrument.objects.all()
         funds = Fund.objects.all()

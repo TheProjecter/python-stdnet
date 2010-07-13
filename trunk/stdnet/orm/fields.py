@@ -94,6 +94,9 @@ class Field(object):
     
     def add(self, *args, **kwargs):
         raise NotImplementedError("Cannot add to field")
+    
+    def delete(self):
+        pass
             
 
 class AtomField(Field):
