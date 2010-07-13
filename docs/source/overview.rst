@@ -6,7 +6,7 @@ Overview
 
 .. rubric:: A networked standard template library for python.
 
-The data is own by different, configurable back-end databases and it is accessed using a
+The data is owned by different, configurable back-end databases and it is accessed using a
 light-weight Object Relational Mapping (ORM__) inspired by Django__. 
 The source code is hosted at `google code <http://code.google.com/p/python-stdnet/>`_ while
 Documentation__ and Downloads__ are

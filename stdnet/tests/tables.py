@@ -98,7 +98,7 @@ class TestORM(TestBase):
         else:
             self.fail('get query on non-unique field should have failed')
         
-    def _testLen(self):
+    def testLen(self):
         '''Simply test len of objects greater than zero'''
         objs = Instrument.objects.all()
         self.assertTrue(len(objs)>0)
@@ -125,7 +125,7 @@ class TestORM(TestBase):
         all = Instrument.objects.all()
         self.assertEqual(tot,len(all))
         
-    def _testForeignKey(self):
+    def testForeignKey(self):
         '''Test filtering with foreignkeys'''
         self.makePositions()
         #

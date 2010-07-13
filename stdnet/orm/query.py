@@ -25,7 +25,6 @@ class QuerySet(object):
         self.fargs  = fargs
         self.eargs  = eargs
         self.qset   = None
-        self._count = None
         self._seq   = None
         
     def __repr__(self):
@@ -97,7 +96,7 @@ class QuerySet(object):
                 field = meta.fields.get(name,None)
                 if not field:
                     raise QuerySetError("Could not filter. Field %s not defined." % name)
-                value = field.get_value(value)
+                value = field.hash(value)
                 unique = field.unique
             if unique:
                 result[name] = value
@@ -176,6 +175,11 @@ class QuerySet(object):
             for item in self.items():
                 seq.append(item)
                 yield item
+                
+    def _unwind(self):
+        if not self._seq:
+            self._seq = list(self)
+        return self._seq
     
     def delete(self):
         '''Delete all the element in the queryset'''

@@ -4,9 +4,14 @@
 StdNet Models
 ============================
 
-A model is the single, definitive source of data about your data.
-It contains the essential fields and behaviors of the data you’re storing.
-Each model maps to a single database table.
+.. autoclass:: stdnet.orm.models.StdModel
+   :members:
+
+
+.. _creating-models:
+
+Creating Models
+======================
 
 Defining a stdnet models is simple, you derive a Python class from ``StdModel``::
 
@@ -17,9 +22,10 @@ Defining a stdnet models is simple, you derive a Python class from ``StdModel``:
 	
 	class Book(orm.StdModel):
 	    title  = orm.AtomField()
-	    author = orm.ForeignKey(Author)
+	    author = orm.ForeignKey(Author, related_name = 'books')
 	    
 	    
+.. _register-model:
 	    
 Register A Model
 =====================
@@ -38,3 +44,10 @@ For Redis the syntax is the following::
 the database number (very useful for separating data on the same redis instance).
 
  
+.. _database-metaclass:
+
+Database Metaclass
+==========================
+
+.. autoclass:: stdnet.orm.base.Metaclass
+   :members:

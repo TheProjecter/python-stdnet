@@ -1,6 +1,3 @@
-'''
-Base class for jflow cache
-'''
 from stdnet.exceptions import ImproperlyConfigured, BadCacheDataStructure
 
 novalue = object()
@@ -13,7 +10,11 @@ class cacheValue(object):
 
 
 class BaseBackend(object):
+    '''Generic interface for a backend database:
     
+    * *name* name of database, such as **redis**, **couchdb**, etc..
+    * *params* dictionary of configuration parameters
+    '''
     def __init__(self, name, params):
         self.__name = name
         timeout = params.get('timeout', 0)
@@ -39,10 +40,13 @@ class BaseBackend(object):
     def createdb(self, name):
         pass
     
-    def add_object(self, key, obj, commit = True, timeout = 0):
-        '''Add a model object to the database'''
+    def add_object(self, id, obj, commit = True, timeout = 0):
+        '''Add a model object to the database:
+        
+        * *obj* instance of ref:`StdModel <std-model>`
+        '''
         if commit:
-            hash = self.hash(key,timeout)
+            hash = self.hash(id,timeout)
             return hash.add(obj.id, obj)
         else:
             cache = self._cache_objs
@@ -160,7 +164,14 @@ class BaseBackend(object):
         """Remove *all* values from the cache at once."""
         raise NotImplementedError
 
-    def hash(self, key, timeout = 0):
+    def list(self, id, timeout = 0):
+        '''Return an instance of :ref:`List <list-structure>`
+        for a given *id*.'''
+        raise NotImplementedError
+    
+    def hash(self, id, timeout = 0):
+        '''Return an instance of :ref:`HashTable <hash-structure>`
+        for a given *id*.'''
         raise NotImplementedError
     
     def unordered_set(self, key, timeout = 0):

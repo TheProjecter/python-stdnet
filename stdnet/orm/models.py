@@ -5,7 +5,11 @@ from stdnet.exceptions import FieldError
 
 
 class StdModel(object):
-    '''Base class for StdNet models'''
+    '''A model is the single, definitive source of data
+about your data. It contains the essential fields and behaviors
+of the data you're storing. Each model maps to a single
+database Hash-table.'''
+
     __metaclass__ = DataMetaClass
     
     def __init__(self, **kwargs):
@@ -53,7 +57,7 @@ class StdModel(object):
     
     def save(self, commit = True):
         '''Save the instance to the back-end database. The model must be registered with a backend
-    otherwise a ModelNotRegistered exception will be raised.'''
+    otherwise a ``ModelNotRegistered`` exception will be raised.'''
         meta  = self._meta.save(commit)
         return self
         
@@ -70,6 +74,8 @@ class StdModel(object):
             return False
         
     def delete(self):
+        '''Delete an instance from database. If the instance is not available (it does not have an id) and
+``StdNetException`` exception will raise.'''
         return self._meta.delete()
     
     def todict(self):
@@ -85,9 +91,15 @@ class StdModel(object):
                 else:
                     odict.pop(name,None)
         return odict
+    
+    @property
+    def meta(self):
+        '''Return an instance of :ref:`Database Metaclass <database-metaclass>`'''
+        return self._meta
         
     @property
     def uniqueid(self):
+        '''Unique id for an instance. This is unique across multiple model types.'''
         return self._meta.basekey(self.id)
     
     
