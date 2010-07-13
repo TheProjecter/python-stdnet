@@ -5,6 +5,9 @@ class StdNetException(Exception):
 class ModelNotRegistered(StdNetException):
     pass
 
+class ObjectNotValidated(StdNetException):
+    pass
+
 class ImproperlyConfigured(StdNetException):
     "stdnet is somehow improperly configured"
     pass

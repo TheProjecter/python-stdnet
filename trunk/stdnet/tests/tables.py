@@ -68,9 +68,10 @@ class TestORM(TestBase):
     
     def setUp(self):
         for name,typ,ccy in izip(inst_names,inst_types,inst_ccys):
-            Instrument(name = name, type = typ, ccy = ccy).save()
+            Instrument(name = name, type = typ, ccy = ccy).save(False)
+            Instrument.commit()
         for name,ccy in izip(fund_names,fund_ccys):
-            Fund(name = name, ccy = ccy).save()
+            Fund(name = name, ccy = ccy).save(False)
     
     def makePositions(self):
         '''Create Positions objects which hold foreign key to instruments and funds'''
@@ -153,7 +154,7 @@ class TestORM(TestBase):
         
         self.assertEqual(total_positions,totp)
         
-    def _testRelatedManagerFilter(self):
+    def testRelatedManagerFilter(self):
         self.makePositions()
         instruments = Instrument.objects.all()
         for instrument in instruments:

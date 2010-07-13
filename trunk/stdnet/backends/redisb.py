@@ -55,7 +55,10 @@ class BackEnd(BaseBackend):
     def get(self, id):
         res = self.execute_command('GET', id)
         return self._res_to_val(res)        
+    
+    def commit_indexes(self, cvalue):
         
+            
     def delete_object(self, meta):
         '''Delete an object from the database'''
         hash = self.hash(meta.basekey())

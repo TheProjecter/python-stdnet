@@ -60,7 +60,10 @@ class Field(object):
         return self._value
     
     def get_full_value(self):
-        '''Return the field full value'''
+        '''Return the expanded value of the field. For standard fields this is the
+        same as the field value, while for more complex fields, such as ForeignKey, it
+        retrives extra data from the database. This function is called by the model when accessing
+        fields values.'''
         return self._value
     
     def get_value(self, value):
@@ -73,52 +76,21 @@ class Field(object):
     
     def serialize(self):
         return self.get_value(self._value)
-        
-    def getkey(self,obj,value):
-        pass
     
     def set(self,obj,value):    
         keyname = self.getkey(obj,value)
         raise NotImplementedError('Cannot set the field')
     
-    def save(self, commit):
-        '''Save field in the database. this function is called by an instance
-        '''
+    def isvalid(self):
         name    = self.name
         obj     = self.obj
-        meta    = self.meta
         value   = self.serialize()
-        #value   = self.get_value(self._cleanvalue())
         if value is None and self.required:
             raise FieldError('Field %s for %s has no value' % (name,obj))
-        
-        # Add object to database
         if self.primary_key:
-            key = meta.basekey()
             setattr(obj,name,value)
-            return meta.cursor.add_object(key,obj,commit)
-        
-        # Create index
-        elif self.index:
-            self.save_index(commit, value)
-        
-        self.savevalue(commit, value = value)
+        return True
             
-    def save_index(self, commit, value):
-        obj     = self.obj
-        meta    = self.meta
-        value   = self.hash(value)
-        key     = meta.basekey(self.name,value)
-        if self.unique:
-            return meta.cursor.add_string(key, obj.id, commit, timeout = meta.timeout)
-        elif self.ordered:
-            raise NotImplementedError
-        else:
-            return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
-    
-    def delete(self):
-        pass       
-        
     def savevalue(self, commit, value = None):
         pass
     
@@ -237,12 +209,6 @@ back to self. For example::
             raise ValueError('Model not specified')
         self.__value_obj = _novalue
         super(ForeignKey,self).__init__(model = model, **kwargs)
-        
-    def getkey(self,obj,value):
-        pass
-        
-    def set(self,obj,value):
-        pass
     
     def set_value(self, name, obj, value):
         value = super(ForeignKey,self).set_value(name,obj,value)
@@ -251,7 +217,6 @@ back to self. For example::
             self._value = value.id
     
     def get_full_value(self):
-        '''Return the field value'''
         v = self.__value_obj
         if isinstance(v,NoValue):
             if self._value:
@@ -269,11 +234,14 @@ back to self. For example::
         else:
             return value
     
-    def save_index(self, commit, value):
-        meta    = self.meta
-        name    = self.name
-        obj     = self.obj
-        key     = meta.basekey(name,value)
-        return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
+    def hash(self, value):
+        return self.get_value(value)
+    
+    #def save_index(self, commit, value):
+    #    meta    = self.meta
+    #    name    = self.name
+    #    obj     = self.obj
+    #    key     = meta.basekey(name,value)
+    #    return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
     
         
