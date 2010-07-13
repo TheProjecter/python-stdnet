@@ -67,7 +67,7 @@ class BackEnd(BaseBackend):
             if field.primary_key:
                 continue
             if field.index:
-                value = field.get_value(field._cleanvalue())
+                value = field.hash()
                 fid   = meta.basekey(field.name,value)
                 if field.unique:
                     if not self.execute_command('DEL', fid):
@@ -77,6 +77,29 @@ class BackEnd(BaseBackend):
                         raise Exception('could not delete index at set %s' % fid)
             field.delete()
         return 1
+    
+    def get_object(self, meta, name, value):
+        if name != 'id':
+            value = self.get(meta.basekey(name,value))
+        return self.hash(meta.basekey()).get(value)
+            
+    def query(self, meta, fargs, eargs):
+        '''Query a model table'''
+        qset = None
+        if fargs:
+            skeys = [meta.basekey(name,value) for name,value in fargs.iteritems()]
+            qset  = self.sinter(skeys)
+        if eargs:
+            skeys = [meta.basekey(name,value) for name,value in fargs.iteritems()]
+            eset  = self.sinter(skeys)
+            if not qset:
+                qset = set(hash(meta.basekey()).keys())
+            return qset.difference(eset)
+        else:
+            if qset is None:
+                return 'all'
+            else:
+                return qset
     
     # Data structures
     

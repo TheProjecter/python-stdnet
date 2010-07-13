@@ -46,10 +46,6 @@ class Field(object):
         self.meta     = None
         self.name     = None
         
-    def hash(self, value):
-        '''Internal function used to hash the value so it can be used as index'''
-        return value
-        
     def register_with_model(self, fieldname, model):
         pass
     
@@ -62,15 +58,20 @@ class Field(object):
             self._value = value
         return self._value
     
-    def get_value(self):
-        '''Return the field value'''
+    def get_full_value(self):
+        '''Return the field full value'''
         return self._value
     
-    def convert(self, value):
+    def get_value(self, value):
+        ''''''
         return value
     
-    def serialize(self):
+    def hash(self):
+        '''Internal function used to hash the value so it can be used as index'''
         return self._value
+    
+    def serialize(self):
+        return self.get_value(self._value)
         
     def getkey(self,obj,value):
         pass
@@ -237,7 +238,7 @@ back to self. For example::
             self.__value_obj = value
             self._value = value.id
     
-    def get_value(self):
+    def get_full_value(self):
         '''Return the field value'''
         v = self.__value_obj
         if isinstance(v,NoValue):
@@ -250,8 +251,11 @@ back to self. For example::
             self.__value_obj = v
         return v
     
-    def convert(self, value):
-        return value
+    def get_value(self, value):
+        if isinstance(value,self.model):
+            return value.id
+        else:
+            return value
     
     def save_index(self, commit, value):
         meta    = self.meta
