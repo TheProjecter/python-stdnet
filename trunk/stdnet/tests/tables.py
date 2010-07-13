@@ -6,6 +6,8 @@ from itertools import izip
 from stdnet.stdtest import TestBase
 from stdnet import orm
 from stdnet.utils import populate
+from stdnet.exceptions import QuerySetError
+
 
 # Create some models for testing
 
@@ -43,10 +45,10 @@ orm.register(Instrument)
 orm.register(Fund)
 orm.register(Position)
 
-INST_LEN    = 100
-FUND_LEN    = 20
-POS_LEN     = 30
-NUM_DATES   = 3
+INST_LEN    = 40
+FUND_LEN    = 5
+POS_LEN     = 10
+NUM_DATES   = 2
 
 ccys_types  = ['EUR','GBP','AUD','USD','CHF','JPY']
 insts_types = ['equity','bond','future','cash','option']
@@ -82,23 +84,31 @@ class TestORM(TestBase):
                     Position(instrument = inst, dt = dt, fund = f).save()
         return n
         
-    def testLen(self):
-        '''Simply test len of objects greater than zero'''
-        objs = Instrument.objects.all()
-        self.assertTrue(len(objs)>0)
-        
-    def testObject(self):
+    def testGetObject(self):
+        '''Test get method for id and unique field'''
         obj = Instrument.objects.get(id = 1)
         self.assertEqual(obj.id,1)
         self.assertTrue(obj.name)
         obj2 = Instrument.objects.get(name = obj.name)
         self.assertEqual(obj,obj2)
+        try:
+            result = Instrument.objects.get(type = 'equity')
+        except QuerySetError:
+            pass
+        else:
+            self.fail('get query on non-unique field should have failed')
+        
+    def _testLen(self):
+        '''Simply test len of objects greater than zero'''
+        objs = Instrument.objects.all()
+        self.assertTrue(len(objs)>0)
     
     def testFilter(self):
         '''Test filtering'''
         tot = 0
         for t in insts_types:
             fs = Instrument.objects.filter(type = t)
+            N  = fs.count()
             count = {}
             for f in fs:
                 count[f.ccy] = count.get(f.ccy,0) + 1
@@ -115,7 +125,7 @@ class TestORM(TestBase):
         all = Instrument.objects.all()
         self.assertEqual(tot,len(all))
         
-    def testForeignKey(self):
+    def _testForeignKey(self):
         '''Test filtering with foreignkeys'''
         self.makePositions()
         #
@@ -143,7 +153,7 @@ class TestORM(TestBase):
         
         self.assertEqual(total_positions,totp)
         
-    def testRelatedManagerFilter(self):
+    def _testRelatedManagerFilter(self):
         self.makePositions()
         instruments = Instrument.objects.all()
         for instrument in instruments:
@@ -161,7 +171,7 @@ class TestORM(TestBase):
                 self.assertEqual(len(positions),funds[fund.id])
             
         
-    def testDeleteSimple(self):
+    def _testDeleteSimple(self):
         '''Test delete on models without related models'''
         instruments = Instrument.objects.all()
         funds = Fund.objects.all()
@@ -170,7 +180,7 @@ class TestORM(TestBase):
         self.assertEqual(Ni,instruments.delete())
         self.assertEqual(Nf,funds.delete())
         
-    def testDelete(self):
+    def _testDelete(self):
         '''Test delete on models with related models'''
         # Create Positions which hold foreign keys to Instruments
         Np = self.makePositions()

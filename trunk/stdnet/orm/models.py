@@ -38,7 +38,7 @@ class StdModel(object):
     def __getattr__(self, name):
         field = self._meta.fields.get(name,None)
         if field:
-            return field.get_value()
+            return field.get_full_value()
         else:
             try:
                 return self.__dict__[name]
