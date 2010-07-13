@@ -150,6 +150,7 @@ class QuerySet(object):
             raise QuerySetError('Get query yielded non unique results')
         
     def items(self):
+        '''Generator of queryset objects'''
         self.buildquery()
         meta = self._meta
         ids = self.qset
@@ -161,7 +162,7 @@ class QuerySet(object):
                 for val in hash.values():
                     yield val
             else:
-                objs = meta.cursor.hash(meta.basekey()).mget(ids)
+                objs = hash.mget(ids)
                 for obj in objs:
                     yield obj
     

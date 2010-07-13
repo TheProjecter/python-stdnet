@@ -45,9 +45,9 @@ orm.register(Instrument)
 orm.register(Fund)
 orm.register(Position)
 
-INST_LEN    = 40
-FUND_LEN    = 5
-POS_LEN     = 10
+INST_LEN    = 100
+FUND_LEN    = 10
+POS_LEN     = 30
 NUM_DATES   = 2
 
 ccys_types  = ['EUR','GBP','AUD','USD','CHF','JPY']
@@ -67,11 +67,13 @@ dates = populate('date',NUM_DATES,start=datetime.date(2009,6,1),end=datetime.dat
 class TestORM(TestBase):
     
     def setUp(self):
+        '''Create Instruments and Funds commiting at the end for speed'''
         for name,typ,ccy in izip(inst_names,inst_types,inst_ccys):
             Instrument(name = name, type = typ, ccy = ccy).save(False)
-            Instrument.commit()
+        Instrument.commit()
         for name,ccy in izip(fund_names,fund_ccys):
             Fund(name = name, ccy = ccy).save(False)
+        Fund.commit()
     
     def makePositions(self):
         '''Create Positions objects which hold foreign key to instruments and funds'''
@@ -82,7 +84,8 @@ class TestORM(TestBase):
             for dt in dates:
                 for inst in insts:
                     n += 1
-                    Position(instrument = inst, dt = dt, fund = f).save()
+                    Position(instrument = inst, dt = dt, fund = f).save(False)
+        Position.commit()
         return n
         
     def testGetObject(self):
@@ -105,7 +108,7 @@ class TestORM(TestBase):
         self.assertTrue(len(objs)>0)
     
     def testFilter(self):
-        '''Test filtering'''
+        '''Test filtering on a model without foreignkeys'''
         tot = 0
         for t in insts_types:
             fs = Instrument.objects.filter(type = t)

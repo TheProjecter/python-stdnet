@@ -57,6 +57,17 @@ class BackEnd(BaseBackend):
         return self._res_to_val(res)        
     
     def commit_indexes(self, cvalue):
+        '''Commit indexes to redis'''
+        # unique indexes
+        if cvalue.keys:
+            items = []
+            ser   = self._val_to_store_info
+            [items.extend((key,ser(value))) for key,value in cvalue.keys.iteritems()]
+            self.execute_command('MSET', *items)
+        # loop over sets
+        for id,s in cvalue.indexes.iteritems():
+            uset = self.unordered_set(id)
+            uset.update(s)
         
             
     def delete_object(self, meta):
@@ -103,6 +114,19 @@ class BackEnd(BaseBackend):
             else:
                 return qset
     
+    # Serializers
+    
+    def _val_to_store_info(self, value):
+        return self.pickler.dumps(value)
+    
+    def _res_to_val(self, res):
+        if not res:
+            return res
+        try:
+            return self.pickler.loads(res)
+        except:
+            return res
+        
     # Data structures
     
     def list(self, id, timeout = 0):
@@ -116,15 +140,4 @@ class BackEnd(BaseBackend):
     
     def map(self, id, timeout = 0):
         return Map(self,id,timeout)
-    
-    def _val_to_store_info(self, value):
-        return self.pickler.dumps(value)
-    
-    def _res_to_val(self, res):
-        if not res:
-            return res
-        try:
-            return self.pickler.loads(res)
-        except:
-            return res
     

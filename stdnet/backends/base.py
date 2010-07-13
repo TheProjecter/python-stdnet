@@ -69,17 +69,18 @@ class BaseBackend(object):
         if cvalue is None:
             cvalue = ObjectCache(meta)
             cache[id] = cvalue
-                
-        cvalue.objs[obj.id] = obj
+        
+        objid = obj.id        
+        cvalue.objs[objid] = obj
         
         for name,field in meta.fields.items():
             if name is not 'id' and field.index:
                 value   = field.hash(field.serialize())
                 key     = meta.basekey(field.name,value)
                 if field.unique:
-                    cvalue.keys[key] = obj.id
+                    cvalue.keys[key] = objid
                 else:
-                    cvalue.addindex(key,value)
+                    cvalue.addindex(key,objid)
                 
         if commit:
             self.commit()
@@ -90,10 +91,11 @@ class BaseBackend(object):
             if not cvalue.objs:
                 continue
             hash = self.hash(id)
-            hash.update(self.objs)
-            if cvalue.needtimeout:
-                cvalue.needtimeout = False
+            hash.update(cvalue.objs)
             self.commit_indexes(cvalue)
+            if cvalue.needtimeout:
+                #TODO: add timeout if needed
+                cvalue.needtimeout = False
             cvalue.clear()
             
     def commit_indexes(self, cvalue):
