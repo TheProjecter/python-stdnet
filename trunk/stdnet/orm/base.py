@@ -17,16 +17,15 @@ def get_fields(bases, attrs):
 
 
 class Metaclass(object):
-    
-    def __init__(self, model, fields, abstract = False, keyprefix = None):
-        '''Model metaclass contains all the information which relates a python class to a database model. An instnace
-is initiated when registering a new model with a database backend:
+    '''A database model metaclass contains all the information which relates a python class to a database model.
+    An instance is initiated when registering a new model with a database backend:
 
-    * *model* a model class
+    * *model* a subclass of :ref:`StdModel <model-model>`
     * *fields* dictionary of field instances
-    * *abstract* if True, it represents an abstract model and no database model are created
-    * *keyprefix*
+    * *abstract* if True, it represents an abstract model and no database elements are created.
+    * *keyprefix* prefix for the database table (by default 'stdnet')
 '''
+    def __init__(self, model, fields, abstract = False, keyprefix = None):
         self.abstract  = abstract
         self.keyprefix = keyprefix
         self.model     = model
@@ -55,20 +54,34 @@ is initiated when registering a new model with a database backend:
         
     @property
     def pk(self):
+        '''primary key field'''
         return self.fields['id']
     
     @property
     def id(self):
+        '''primary key value'''
         return self.pk.get_value()
     
     def has_pk(self):
         return self.pk._value
         
     def basekey(self, *args):
+        '''Calculate the key to access model hash-table, and model filters in the database.
+        For example::
+        
+            >>> a = Author(name = 'Dante Alighieri').save()
+            >>> a.meta.basekey()
+            'stdnet:author'
+            '''
         key = '%s%s' % (self.keyprefix,self.name)
         for arg in args:
             key = '%s:%s' % (key,arg)
         return key
+    
+    def table(self):
+        '''Return an instance of :ref:`HashTable <hash-structure>` holding
+        the model table'''
+        return self.cursor.hash(self.basekey())
     
     def save(self, commit = True):
         if not self.cursor:
@@ -79,7 +92,6 @@ is initiated when registering a new model with a database backend:
                 field.save(commit)
         
     def delete(self):
-        '''Delete the object from the back-end database and return the number of objects removed.'''
         if not self.has_pk():
             raise StdNetException('Cannot delete object. It was never saved.')
         # Gather related objects to delete

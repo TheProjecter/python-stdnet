@@ -17,7 +17,6 @@ default_pickler = pickle
 
 
 class BackEnd(BaseBackend):
-    '''Redis backend for StdNet. This is the backend to use really.'''
     
     def __init__(self, name, server, params, pickler = default_pickler):
         super(BackEnd,self).__init__(name,params)

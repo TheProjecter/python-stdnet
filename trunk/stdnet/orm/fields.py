@@ -1,5 +1,6 @@
 from copy import copy
 import time
+from datetime import date, datetime
 from stdnet.exceptions import FieldError
 from query import RelatedManager
 
@@ -66,9 +67,9 @@ class Field(object):
         ''''''
         return value
     
-    def hash(self):
+    def hash(self, value):
         '''Internal function used to hash the value so it can be used as index'''
-        return self._value
+        return value
     
     def serialize(self):
         return self.get_value(self._value)
@@ -99,13 +100,14 @@ class Field(object):
         
         # Create index
         elif self.index:
-            self.save_index(commit,value)
+            self.save_index(commit, value)
         
         self.savevalue(commit, value = value)
             
     def save_index(self, commit, value):
         obj     = self.obj
         meta    = self.meta
+        value   = self.hash(value)
         key     = meta.basekey(self.name,value)
         if self.unique:
             return meta.cursor.add_string(key, obj.id, commit, timeout = meta.timeout)
@@ -133,7 +135,10 @@ class AtomField(Field):
     * string
     '''
     def hash(self, value):
-        return hash(value)
+        if isinstance(value,basestring):
+            return hash(value)
+        else:
+            return value
     
     def set(self,obj,value):
         pass
@@ -156,13 +161,20 @@ class DateField(Field):
     '''A date, represented in Python by a datetime.date instance.
     '''
     def hash(self, value):
-        return int(1000*time.mktime(dte.timetuple()))
+        if isinstance(value,date):
+            return int(1000*time.mktime(value.timetuple()))
+        else:
+            return value
+        
+    def serialize(self):
+        return self.hash(self._value)
     
-    def _cleanvalue(self):
-        dte = self._value
-        if dte:
-            return int(time.mktime(dte.timetuple()))
-
+    def set_value(self, name, obj, value):
+        value = super(DateField,self).set_value(name,obj,value)
+        if not isinstance(value,date):
+            value = datetime.fromtimestamp(0.0001*value).date()
+        self._value = value
+    
 
 
 def register_field_related(field, name, related):
