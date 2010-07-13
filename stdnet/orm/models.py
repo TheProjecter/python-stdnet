@@ -1,7 +1,7 @@
 import copy
 from base import DataMetaClass
 from fields import _novalue
-from stdnet.exceptions import FieldError
+from stdnet.exceptions import *
 
 
 class StdModel(object):
@@ -58,8 +58,17 @@ database Hash-table.'''
     def save(self, commit = True):
         '''Save the instance to the back-end database. The model must be registered with a backend
     otherwise a ``ModelNotRegistered`` exception will be raised.'''
-        meta  = self._meta.save(commit)
+        meta = self._meta
+        if not meta.cursor:
+            raise ModelNotRegistered('Model %s is not registered with a backend database. Cannot save any instance.' % meta.name)
+        if meta.isvalid():
+            meta.cursor.add_object(self, commit = commit)
+        else:
+            raise ObjectNotValidated('Object %s is not validated')
         return self
+    
+    def isvalid(self):
+        return self.meta.isvalid()
         
     def __getstate__(self):
         return self.todict()
@@ -96,11 +105,10 @@ database Hash-table.'''
     def meta(self):
         '''Return an instance of :ref:`Database Metaclass <database-metaclass>`'''
         return self._meta
-        
-    @property
-    def uniqueid(self):
-        '''Unique id for an instance. This is unique across multiple model types.'''
-        return self._meta.basekey(self.id)
+    
+    @classmethod
+    def commit(cls):
+        return cls._meta.cursor.commit()
     
     
 

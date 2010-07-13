@@ -78,18 +78,24 @@ class Metaclass(object):
             key = '%s:%s' % (key,arg)
         return key
     
+    @property
+    def uniqueid(self):
+        '''Unique id for an instance. This is unique across multiple model types.'''
+        return self.basekey(self.id)
+    
     def table(self):
         '''Return an instance of :ref:`HashTable <hash-structure>` holding
         the model table'''
         return self.cursor.hash(self.basekey())
     
-    def save(self, commit = True):
-        if not self.cursor:
-            raise ModelNotRegistered('Model %s is not registered with a backend database. Cannot save any instance.' % self.name)
-        res = self.pk.save(commit)
-        for name,field in self.fields.items():
-            if name is not 'id':
-                field.save(commit)
+    def isvalid(self):
+        valid = True
+        for field in self.fields.itervalues():
+            try:
+                valid = valid & field.isvalid()
+            except FieldError:
+                valid = False
+        return valid
         
     def delete(self):
         if not self.has_pk():
