@@ -17,6 +17,7 @@ class NoValue(object):
 
 _novalue = NoValue()
 
+
 class Field(object):
     '''This is the base class of of StdNet Fields. The following arguments
     are available to all field types. All are optional.
@@ -77,11 +78,8 @@ class Field(object):
     def serialize(self):
         return self.get_value(self._value)
     
-    def set(self,obj,value):    
-        keyname = self.getkey(obj,value)
-        raise NotImplementedError('Cannot set the field')
-    
     def isvalid(self):
+        '''Return ``True`` if Field is valid otherwise raise a ``FieldError`` exception.'''
         name    = self.name
         obj     = self.obj
         value   = self.serialize()

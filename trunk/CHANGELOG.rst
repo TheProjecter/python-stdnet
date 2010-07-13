@@ -1,6 +1,7 @@
 
-python-stdnet 0.2.3
+python-stdnet 0.3.0
 ========================================
+ * Overall code refactoring.
  * Added ListField with Redis implementation.
  * StdModel raise AttributError when method/attribute not available. Previously it returned None.
  * StdModel raise ModelNotRegistered when trying to save an instance of a non-registered model.
