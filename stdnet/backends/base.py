@@ -59,8 +59,8 @@ class BaseBackend(object):
     def add_object(self, obj, commit = True):
         '''Add a model object to the database:
         
-        * *obj* instance of ref:`StdModel <std-model>`
-        * *commit* If true model is saved to database, otherwise it remains in cache.
+        * *obj* instance of :ref:`StdModel <model-model>` to add to database
+        * *commit* If True, *obj* is saved to database, otherwise it remains in local cache.
         '''
         meta   = obj.meta
         id     = meta.basekey()
@@ -86,7 +86,7 @@ class BaseBackend(object):
             self.commit()
             
     def commit(self):
-        '''Commit cache objects to0 backend database'''
+        '''Commit cache objects to backend database'''
         for id,cvalue in self._cachepipe.iteritems():
             if not cvalue.objs:
                 continue
@@ -100,56 +100,24 @@ class BaseBackend(object):
             
     def commit_indexes(self, cvalue):
         pass
-            
-    def add_object_old(self, obj, commit = True):
-        '''Add a model object to the database:
-        
-        * *obj* instance of ref:`StdModel <std-model>`
-        * *commit* If true model is saved to database, otherwise it remains in cache.
-        '''
-        id = obj.meta.basekey()
-        if commit:
-            hash = self.hash(id)
-            return hash.add(obj.id, obj)
-        else:
-            cache  = self._cache_objs
-            cvalue = cache.get(id,None)
-            if cvalue is None:
-                cvalue = cacheValue({})
-                cache[id] = cvalue
-            cvalue.value[obj.id] = obj
     
-    def add_index(self, key, obj, commit = True):
-        '''Add index for model instance *obj*'''
-        cache  = self._cachepipe
-        cvalue = cache.get(obj.meta.basekey(),None)
-        if cvalue is None:
-            cvalue = cacheValue(set())
-            cache[key] = cvalue
-        cvalue.value.add(value)
-        if commit:
-            self.commit()
-    
-    def add_string(self, key, value, commit = True, timeout = 0):
-        if commit:
-            return self.set(key, value, timeout = timeout)
-        else:
-            self._cache_strs[key] = cacheValue(value,timeout)
-            
     def delete_object(self, obj):
-        '''Remove a StdModel from database'''
-        raise NotImplementedError()
-
+        '''Delete an object from the database'''
+        meta   = obj.meta
+        id     = meta.basekey()
+        hash   = self.hash(id)
+        if not hash.delete(obj.id):
+            return 0
+        self.delete_indexes(obj)
+        return 1
+    
+    def delete_indexes(self, obj):
+        pass
+            
     def get(self, key, default=None):
         """
         Fetch a given key from the cache. If the key does not exist, return
         default, which itself defaults to None.
-        """
-        raise NotImplementedError
-
-    def delete(self, key):
-        """
-        Delete a key from the cache, failing silently.
         """
         raise NotImplementedError
 
@@ -223,7 +191,7 @@ class BaseBackend(object):
             self.delete(key)
 
     def clear(self):
-        """Remove *all* values from the cache at once."""
+        """Remove *all* values from the database at once."""
         raise NotImplementedError
 
     def list(self, id, timeout = 0):

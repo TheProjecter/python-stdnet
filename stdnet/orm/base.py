@@ -96,16 +96,6 @@ class Metaclass(object):
             except FieldError:
                 valid = False
         return valid
-        
-    def delete(self):
-        if not self.has_pk():
-            raise StdNetException('Cannot delete object. It was never saved.')
-        # Gather related objects to delete
-        objs = self.related_objects()
-        T = 0
-        for obj in objs:
-            T += obj.delete()
-        return T + self.cursor.delete_object(self)
     
     def related_objects(self):
         objs = []
