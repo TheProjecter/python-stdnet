@@ -4,7 +4,7 @@ Python StdNet
 =========================================
 
 .. rubric:: An object relational mapper library for remote data-structures. Design to work with Redis__ key-datastructure store, but implemented so that other key-value storage systems can be supported in the future.
-CReate a model, register a model to the back-end database and create objects. Simple to use and configure.
+Create a model, register a model to the back-end database and create objects. Simple to use and configure.
 
 Dive In
 ============
@@ -13,8 +13,8 @@ Dive In
 
 Examples
 
-:ref:`A simple example <intro-example>` | :ref:`Tagging <tag-example>` |
-:ref:`Twitter <twitter-example>`  
+:ref:`Timeseries <intro-example>` | :ref:`Tagging <tag-example>` |
+:ref:`Twitter Clone<twitter-example>`  
 
 
 .. _contents:

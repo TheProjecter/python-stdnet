@@ -20,27 +20,36 @@ class TestLListField(TestBase):
         for elem in elems:
             names.push_back(elem)
         li.save()
-        self.assertEqual(names.size(),len(elems))
+        self.assertEqual(li.names.size(),len(elems))
         for elem in reversed(elems):
-            self.assertEqual(names.pop_back(),elem)
-        self.assertEqual(names.size(),0)
+            self.assertEqual(li.names.pop_back(),elem)
+        self.assertEqual(li.names.size(),0)
     
     def testPushFrontPopFront(self):
         li = SimpleList()
         names = li.names
-        for elem in elems:
+        for elem in reversed(elems):
             names.push_front(elem)
         li.save()
-        self.assertEqual(names.size(),len(elems))
-        for elem in reversed(elems):
-            self.assertEqual(names.pop_front(),elem)
-        self.assertEqual(names.size(),0)
+        self.assertEqual(li.names.size(),len(elems))
+        for elem in elems:
+            self.assertEqual(li.names.pop_front(),elem)
+        self.assertEqual(li.names.size(),0)
         
-    def testIterator(self):
+    def testPushBack(self):
         li = SimpleList()
         names = li.names
         for elem in elems:
             names.push_back(elem)
+        li.save()
+        for el,ne in izip(elems,names):
+            self.assertEqual(el,ne)
+            
+    def testPushFront(self):
+        li = SimpleList()
+        names = li.names
+        for elem in reversed(elems):
+            names.push_front(elem)
         li.save()
         for el,ne in izip(elems,names):
             self.assertEqual(el,ne)

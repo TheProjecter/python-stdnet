@@ -31,6 +31,7 @@ class Metaclass(object):
         self.model     = model
         self.name      = model.__name__.lower()
         self.fields    = fields
+        self.timeout   = 0
         self.related   = {}
         model._meta    = self
         if not abstract:

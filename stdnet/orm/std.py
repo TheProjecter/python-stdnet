@@ -1,37 +1,77 @@
 from fields import Field, RelatedField, _novalue
+from query import MultiRelatedManager
 
 
-class StdField(RelatedField):
-    '''Base class for data-structure fields'''
-    def __init__(self, model = None, index = False, required = False, **kwargs):
-        self._cache = set()
-        super(StdField,self).__init__(model = model, index = index,
-                                      required = required, **kwargs)
+class ModelFieldPickler(object):
+    
+    def __init__(self, model):
+        self.model = model
+        self.get   = model.objects.get
         
-    def set_model_value(self, name, obj, value = _novalue):
-        super(StdField,self).set_model_value(name, obj, value)
-        return self
+    def loads(self, s):
+        return self.get(id = s)
     
-    def model_get_arg(self):
+    def dumps(self, obj):
+        return obj.id
+    
+
+class listPipeline(object):
+    def __init__(self):
+        self.clear()
+        
+    def push_front(self, value):
+        self.front.append(value)
+        
+    def push_back(self, value):
+        self.back.append(value)
+        
+    def clear(self):
+        self.back = []
+        self.front = []
+        
+    def __len__(self):
+        return len(self.back) + len(self.front)
+    
+
+class MultiField(RelatedField):
+    '''Base virtual class for data-structure fields:
+    
+    * *model* optional :ref:`StdModel <model-model>` class. If specified, the field maintains a many-to-many object relationship.
+    * *related_name* same as :ref:`ForeignKey <foreignkey>` Field.
+    '''
+    backend_structure = None
+    _pipeline = None
+    
+    def __init__(self,
+                 model = None,
+                 related_name = None,
+                 pickler = None,
+                 **kwargs):
+        super(MultiField,self).__init__(model = model,
+                                        required = False,
+                                        relmanager = MultiRelatedManager,
+                                        **kwargs)
+        self.index       = False
+        self.unique      = False
+        self.pickler     = pickler
+        
+    def get_full_value(self):
+        id = self.meta.basekey('id',self.obj.id,self.name)
+        return self.structure(id,
+                              timeout = self.meta.timeout,
+                              pipeline = self._pipeline,
+                              pickler = self.pickler)
+    
+    def set_value(self, name, obj, value):
+        v = super(MultiField,self).set_value(name, obj, value)
+        self.structure = getattr(self.meta.cursor,self.backend_structure,None)
+        if self.model and not self.pickler:
+            self.pickler = ModelFieldPickler(self.model)
+        return v
+    
+    def serialize(self):
         return None
-    
-    def delete(self):
-        self.dbobj().delete()
-    
-    def dbobj(self):
-        raise NotImplementedError('Could not obtain database object')
-    
-    def from_value(self, value):
-        if self.model:
-            return value.id
-        else:
-            return value
-    
-    def _id(self):
-        '''The structure id in the database. It depends on the object id
-and the name of the field.'''
-        return self.meta.basekey('id',self.obj.id,self.name)
-    
+        
     def save_index(self, commit, value):
         if self._cache and commit:
             if self.model:
@@ -41,175 +81,105 @@ and the name of the field.'''
                     related = getattr(obj,self.related_name)
                     related.add(self.obj)
                     related.save(commit)
-                    
+    
+    def save(self):
+        return self.get_full_value().save()
+        
+    def __deepcopy__(self, memodict):
+        obj = super(MultiField,self).__deepcopy__(memodict)
+        obj._pipeline = self.__class__._pipeline()
+        return obj
 
 
-class SetField(StdField):
-    '''A field maintaining an unordered collection of string/numeric values. It is initiated
-without any argument. Equivalent to python ``set``. For example::
+class SetField(MultiField):
+    '''A field maintaining an unordered collection of values. It is initiated
+without any argument otherr than an optional model class.
+Equivalent to python ``set``. For example::
 
     class User(orm.StdModel):
         username  = orm.AtomField(unique = True)
         password  = orm.AtomField()
-        friends   = orm.SetField()
+        following = orm.SetField(model = 'self',
+                                 index = True,
+                                 related_name = 'followers')
     
-    
+The ``following`` field define a many-to-many relationship between Users.
 It can be used in the following way::
     
     >>> user = User(username = 'lsbardel', password = 'mypassword').save()
     >>> user2 = User(username = 'pippo', password = 'pippopassword').save()
-    >>> user.add(user2)
+    >>> user.following.add(user2)
     >>> user.save()
-    >>> user2 in user.friends
+    >>> user2 in user.following
     True
     >>> _
-    '''    
-    def __iter__(self):
-        self.save()
-        return self.dbobj().__iter__()
+    '''
+    backend_structure = 'unordered_set'
+    _pipeline = set
     
-    def dbobj(self):
-        return self.meta.cursor.unordered_set(self._id())
-    
-    def add(self, value):
-        '''Add a *value* to the set. If value is
-an instance of :ref:`StdModel <model-model>`, the id will be added.'''
-        self._cache.add(value)
-        
-    def update(self, values):
-        '''Update self with the union of itself and *values*.'''
-        
-        self._cache.update(set(self.from_value(value) for value in values))
-    
-    def __contains__(self, value):
-        self.save()
-        return self.from_value(value) in self.dbobj()
-    
-    def savevalue(self, commit = True, **kwargs):
-        if self._cache and commit:
-            obj = self.dbobj()
-            obj.update(self._cache)
-            self._cache.clear()
-            
 
-class ListField(StdField):
-    '''A field maintaining a list of string/numeric values. It is initiated without any argument.
-For example::
+class ListField(MultiField):
+    '''A field maintaining a list of values. When accessed from the model instance,
+it returns an instance of :ref:`list structure <list-structure>`. For example::
 
     class UserMessage(orm.StdModel):
         user = orm.AtomField()
         messages = orm.ListField()
     
-    m = UserMessage(user = 'pippo')
-    m.push_back("ciao")
-    m.save()
+Can be used as::
+
+    >>> m = UserMessage(user = 'pippo')
+    >>> m.messages.push_back("adding my first message to the list")
+    >>> m.messages.push_back("ciao")
+    >>> m.save()
     '''
-    def __init__(self, **kwargs):
-        self._back_cache = []
-        self._front_cache = []
-        super(ListField,self).__init__(**kwargs)
-    
-    def size(self):
-        '''Return the length of the list'''
-        return self.dbobj().size()
-    
-    def __iter__(self):
-        self.save()
-        return self.dbobj().__iter__()
-    
-    def push_back(self, value):
-        '''Appends a copy of *value* to the end of the list. If *value* is
-an instance of :ref:`StdModel <model-model>`, the id will be used.'''
-        self._back_cache.append(self.from_value(value))
-        
-    def push_front(self, value):
-        '''Appends a copy of *value* to the front of the list. If *value* is
-an instance of :ref:`StdModel <model-model>`, the id will be used.'''
-        self._front_cache.append(self.from_value(value))
-        
-    def pop_back(self):
-        '''Removes and returns the last element.'''
-        self.save()
-        return self.dbobj().pop_back()
-        
-    def pop_front(self):
-        '''Removes and returns the first element.'''
-        self.save()
-        return self.dbobj().pop_front()
-    
-    def save(self, commit = True):
-        if (self._back_cache or self._front_cache) and commit:
-            obj = self.dbobj()
-            if self._back_cache:
-                obj.push_back(self._back_cache)
-                self._back_cache = []
-            if self._front_cache:
-                obj.push_front(self._front_cache)
-                self._front_cache = []
-    
-    def dbobj(self):
-        return self.meta.cursor.list(self._id())
-                
-
-class OrderedSetField(StdField):
-    pass
+    backend_structure = 'list'
+    _pipeline = listPipeline                
 
 
-defcon = lambda x: x
+class OrderedSetField(SetField):
+    '''A field maintaining an ordered set of values. It is initiated without any argument.
+For example::
+    
+    import time
+    from datetime import date
+    from stdnet import orm
+    
+    class DateValue(object):
+        def __init__(self, dt, value):
+            self.dt = dt
+            self.value = value
+    
+        def score(self):
+            "implement the score function for sorting in the ordered set"
+            return int(1000*time.mktime(self.dt.timetuple()))
+    
+    class TimeSerie(orm.StdModel):
+        ticker = orm.AtomField()
+        data   = orm.OrderedSetField()
+    
+    
+And to use it::
 
-class HashField(StdField):
+    >>> m = TimeSerie(ticker = 'GOOG')
+    >>> m.data.add(DateValue(date(2010,6,1), 482.37))
+    >>> m.data.add(DateValue(date(2010,6,2), 493.37))
+    >>> m.data.add(DateValue(date(2010,6,3), 505.06))
+    >>> m.save()
+    '''
+    backend_structure = 'ordered_set'
+
+
+class HashField(MultiField):
     '''A Hash table field, the networked equivalent of a python dictionary.
 Keys are string while values are string/numeric. It accepts to optional arguments:
-    * *converter* to convert the key into a new representation.
-    * *inverse* the inverse of *converter*.
 '''
-    def __init__(self, converter = None, inverse = None):
-        self._cache    = {}
-        self.converter = converter or defcon
-        self.inverse   = inverse or defcon
-        super(HashField,self).__init__()
+    backend_structure = 'hash'
+    _pipeline = dict
             
-    def add(self, key, value):
-        '''Add a key with value *value*. If key is available, its value will be updated'''
-        self._cache[self.converter(key)] = value
-        
-    def get(self, key):
-        '''Get a key value. If key is not available it will return None.'''
-        self.save()
-        return self.dbobj().get(self.converter(key))
-    
-    def __setitem__(self, key, value):
-        self.add(key,value)
-        
-    def __getitem__(self, key):
-        self.ged(key)
-
-    def dbobj(self):
-        return self.meta.cursor.hash(self._id())
-    
-    def items(self):
-        self.save()
-        obj = self.dbobj()
-        inv = self.inverse
-        for key,value in obj.items():
-            yield inv(key),value 
-    
-    def keys(self):
-        self.save()
-        obj = self.dbobj()
-        return obj.keys()
-        
-    def save(self, commit = True):
-        if self._cache and commit:
-            obj = self.dbobj()
-            obj.update(self._cache)
-            self._cache.clear()
-        
-
 
 class MapField(HashField):
     '''A map is a sorted key-value container'''
-    def dbobj(self):
-        return self.meta.cursor.map(self._id())
+    backend_structure = 'map'
 
-    
+ 

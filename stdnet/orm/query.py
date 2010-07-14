@@ -72,6 +72,7 @@ class QuerySet(object):
         return self.count()
     
     def buildquery(self):
+        '''Build a queryset'''
         if self.qset is not None:
             return
         meta = self._meta
@@ -167,15 +168,9 @@ class QuerySet(object):
                     yield obj
     
     def __iter__(self):
-        if self._seq is not None:
-            for item in self._seq:
-                yield item
-        else:
-            seq  = []
-            self._seq = seq
-            for item in self.items():
-                seq.append(item)
-                yield item
+        if self._seq is None:
+            self._seq = list(self.items())
+        return self._seq.__iter__()
                 
     def _unwind(self):
         if not self._seq:
@@ -235,7 +230,7 @@ class RelatedManager(Manager):
         return self.__class__(self.fieldname,self.related)
 
 
-class ManyToManyRelatedManager(RelatedManager):
+class MultiRelatedManager(RelatedManager):
     
     def __init__(self, fieldname, related):
         self.related    = related

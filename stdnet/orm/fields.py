@@ -1,8 +1,10 @@
 from copy import copy
 import time
 from datetime import date, datetime
-from stdnet.exceptions import FieldError
+
 from query import RelatedManager
+from stdnet.exceptions import *
+
 
 
 __all__ = ['Field',
@@ -56,6 +58,8 @@ class Field(object):
         self.obj  = obj
         self.name = name
         self.meta = obj._meta
+        if not self.meta.cursor:
+            raise ModelNotRegistered('Model %s is not registered with backend database' % self.meta.name)
         if value is not _novalue:
             self._value = value
         return self._value
@@ -88,15 +92,16 @@ class Field(object):
         if self.primary_key:
             setattr(obj,name,value)
         return True
-            
-    def savevalue(self, commit, value = None):
-        pass
     
     def add(self, *args, **kwargs):
         raise NotImplementedError("Cannot add to field")
     
     def delete(self):
         pass
+    
+    def __deepcopy__(self, memodict):
+        '''Nothing to deepcopy here'''
+        return copy(self)
             
 
 class AtomField(Field):
@@ -147,27 +152,15 @@ class DateField(Field):
         if not isinstance(value,date):
             value = datetime.fromtimestamp(0.001*value).date()
         self._value = value
-    
-
-
-def register_field_related(field, name, related):
-    #Class registration as a ForeignKey labelled *name* within model *related*
-    if field.model == 'self':
-        field.model = related
-    model = field.model
-    meta  = model._meta
-    related_name = field.related_name or '%s_set' % related._meta.name
-    if related_name not in meta.related:
-        meta.related[related_name] = RelatedManager(name,related)
-    else:
-        raise FieldError("Duplicated related name %s in model %s and field %s" % (related_name,related,name))
 
 
 class RelatedField(Field):
     
-    def __init__(self, model = None, related_name = None, **kwargs):
+    def __init__(self, model = None, related_name = None,
+                 relmanager = None, **kwargs):
         self.model = model
         self.related_name = related_name
+        self.relmanager = relmanager
         if self.model:
             kwargs['index'] = True
         super(RelatedField,self).__init__(**kwargs)
@@ -181,7 +174,7 @@ class RelatedField(Field):
         meta  = model._meta
         related_name = self.related_name or '%s_set' % related._meta.name
         if related_name not in meta.related:
-            meta.related[related_name] = RelatedManager(name,related)
+            meta.related[related_name] = self.relmanager(name,related)
         else:
             raise FieldError("Duplicated related name %s in model %s and field %s" % (related_name,related,name))
 
@@ -209,7 +202,9 @@ back to self. For example::
         if not model:
             raise ValueError('Model not specified')
         self.__value_obj = _novalue
-        super(ForeignKey,self).__init__(model = model, **kwargs)
+        super(ForeignKey,self).__init__(model = model,
+                                        relmanager = RelatedManager,
+                                        **kwargs)
     
     def set_value(self, name, obj, value):
         value = super(ForeignKey,self).set_value(name,obj,value)

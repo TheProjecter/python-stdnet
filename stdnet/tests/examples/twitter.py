@@ -15,8 +15,7 @@ class User(orm.StdModel):
     password  = orm.AtomField()
     updates   = orm.ListField(model = Post)
     following = orm.SetField(model = 'self',
-                             related_name = 'followers',
-                             required = False)
+                             related_name = 'followers')
     
     def __str__(self):
         return self.username

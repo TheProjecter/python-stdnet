@@ -8,7 +8,7 @@ from stdnet.utils import populate
 from random import randint
 
 
-NUM_USERS = 50
+NUM_USERS = 100
 MIN_FOLLOWERS = 10
 MAX_FOLLOWERS = 30
 
@@ -20,30 +20,30 @@ class TestTwitter(TestBase):
 
     def setUp(self):
         for username,password in izip(usernames,passwords):
-            User(username = username, password = password).save()
+            User(username = username, password = password).save(False)
+        User.commit()
     
     def testFollowers(self):
         '''Add followers to a user'''
         users = User.objects.all()
-        N = len(users)
+        N = users.count()
+        
         # Follow users
         for user in users:
             n = randint(MIN_FOLLOWERS,MAX_FOLLOWERS)
-            i = 0
-            while i<n:
-                id = randint(1,N)
-                if id != user.id:
-                    u = User.objects.get(id = id)
-                    user.following.add(u)
-                    i += 1
-            user.save()
+            for tofollow in populate('choice',n, choice_from = users):
+                if tofollow.id != user.id:
+                    user.following.add(tofollow)
+            n = user.following.save()
+            self.assertEqual(user.following.size(),n)
+        
         # Get a random user
-        id = randint(1,N)
-        user = User.objects.get(id = id)
+        #id = randint(1,N)
+        #user = User.objects.get(id = id)
         # loop over its followers and access user is in the following set of its followers
-        for id in user.followers:
-            u = User.objects.get(id = id)
-            self.assertTrue(user in u.following)
+        #for id in user.followers:
+        #    u = User.objects.get(id = id)
+        #    self.assertTrue(user in u.following)
             
     def testMessages(self):
         users = User.objects.all()
@@ -52,7 +52,7 @@ class TestTwitter(TestBase):
         user = User.objects.get(id = id)
         user.newupdate('this is my first message')
         user.newupdate('and this is another one')
-        user.save()
+        user.updates.save()
         self.assertEqual(user.updates.size(),2)
             
         
