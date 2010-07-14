@@ -145,7 +145,7 @@ class DateField(Field):
     def set_value(self, name, obj, value):
         value = super(DateField,self).set_value(name,obj,value)
         if not isinstance(value,date):
-            value = datetime.fromtimestamp(0.0001*value).date()
+            value = datetime.fromtimestamp(0.001*value).date()
         self._value = value
     
 

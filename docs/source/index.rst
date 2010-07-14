@@ -3,8 +3,8 @@
 Python StdNet
 =========================================
 
-.. rubric:: An object relational mapper library for remote data-structures.
-Simple to use and configure. It uses several back-end databases including Redis and CouchDB.
+.. rubric:: An object relational mapper library for remote data-structures. Design to work with Redis__ key-datastructure store, but implemented so that other key-value storage systems can be supported in the future.
+CReate a model, register a model to the back-end database and create objects. Simple to use and configure.
 
 Dive In
 ============
@@ -36,4 +36,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+__ http://code.google.com/p/redis/
 
