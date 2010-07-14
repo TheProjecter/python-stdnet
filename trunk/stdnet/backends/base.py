@@ -2,38 +2,41 @@ from stdnet.exceptions import ImproperlyConfigured, BadCacheDataStructure
 
 novalue = object()
 
-class ObjectCache(object):
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
+#default_pickler = jsonPickler()
+default_pickler = pickle
+
+class NoPickle(object):
     
-    def __init__(self, meta):
-        self.meta    = meta
-        self.objs    = {}
-        self.indexes = {}
-        self.keys    = {}
-        if meta.timeout:
-            self.needtimeout = True
-        else:
-            self.needtimeout = False
-            
-    def addindex(self, key, value):
-        s = self.indexes.get(key,None)
-        if s is None:
-            s = set()
-            self.indexes[key] = s
-        s.add(value)
-        
-    def clear(self):
-        self.objs.clear()
-        self.indexes.clear()
-        self.keys.clear()
-            
+    def loads(self, s):
+        return s
+    
+    def dumps(self, obj):
+        return obj
+
+nopickle = NoPickle()
+
+
+class Pipeline(object):
+    
+    def __init__(self, pipe, method):
+        self.pipe   = pipe
+        self.method = method
+
 
 class BaseBackend(object):
     '''Generic interface for a backend database:
     
     * *name* name of database, such as **redis**, **couchdb**, etc..
     * *params* dictionary of configuration parameters
+    * *pickler* calss for serializing and unserializing data. It must implement the *loads* and *dumps* methods.
     '''
-    def __init__(self, name, params):
+    def __init__(self, name, params, pickler = default_pickler):
         self.__name = name
         timeout = params.get('timeout', 0)
         try:
@@ -42,6 +45,10 @@ class BaseBackend(object):
             timeout = 0
         self.default_timeout = timeout
         self._cachepipe = {}
+        self._keys      = {}
+        self.fields     = []
+        self.params     = params
+        self.pickler    = pickler 
 
     @property
     def name(self):
@@ -56,6 +63,11 @@ class BaseBackend(object):
     def createdb(self, name):
         pass
     
+    def get_object(self, meta, name, value):
+        if name != 'id':
+            value = self.get(meta.basekey(name,value))
+        return self.hash(meta.basekey()).get(value)
+    
     def add_object(self, obj, commit = True):
         '''Add a model object to the database:
         
@@ -67,20 +79,45 @@ class BaseBackend(object):
         cache  = self._cachepipe
         cvalue = cache.get(id,None)
         if cvalue is None:
-            cvalue = ObjectCache(meta)
+            cvalue = Pipeline({},'hash')
             cache[id] = cvalue
+        hash = self.hash(id, meta.timeout, cvalue.pipe)
+        objid = obj.id
+        hash.add(objid, obj)
         
-        objid = obj.id        
-        cvalue.objs[objid] = obj
-        
+        # Create indexes if possible
         for name,field in meta.fields.items():
-            if name is not 'id' and field.index:
+            if name is 'id':
+                continue
+            if field.index:
                 value   = field.hash(field.serialize())
                 key     = meta.basekey(field.name,value)
                 if field.unique:
-                    cvalue.keys[key] = objid
+                    self._keys[key] = objid
+                elif field.ordered:                    
+                    cvalue = cache.get(key,None)
+                    if cvalue is None:
+                        cvalue = Pipeline(set(),'ordered_set')
+                        cache[key] = cvalue
+                    index = self.ordered_set(key,
+                                             timeout  = meta.timeout,
+                                             pipeline = cvalue.pipe,
+                                             pickler  = nopickle)
+                    index.add(objid)
                 else:
-                    cvalue.addindex(key,objid)
+                    cvalue = cache.get(key,None)
+                    if cvalue is None:
+                        cvalue = Pipeline(set(),'unordered_set')
+                        cache[key] = cvalue
+                    index = self.unordered_set(key,
+                                               timeout  = meta.timeout,
+                                               pipeline = cvalue.pipe,
+                                               pickler  = nopickle)
+                    index.add(objid)
+            
+            savefield = getattr(field,'save',None)
+            if savefield:
+                self.fields.append(savefield)
                 
         if commit:
             self.commit()
@@ -88,19 +125,15 @@ class BaseBackend(object):
     def commit(self):
         '''Commit cache objects to backend database'''
         for id,cvalue in self._cachepipe.iteritems():
-            if not cvalue.objs:
-                continue
-            hash = self.hash(id)
-            hash.update(cvalue.objs)
-            self.commit_indexes(cvalue)
-            if cvalue.needtimeout:
-                #TODO: add timeout if needed
-                cvalue.needtimeout = False
-            cvalue.clear()
+            el = getattr(self,cvalue.method)(id, pipeline = cvalue.pipe)
+            el.save()
+        if self._keys:
+            self._set_keys()
+            self._keys.clear()
+        for save in self.fields:
+            save()
+        self.fields = []            
             
-    def commit_indexes(self, cvalue):
-        pass
-    
     def delete_object(self, obj):
         '''Delete an object from the database'''
         meta   = obj.meta
@@ -169,17 +202,7 @@ class BaseBackend(object):
         # if a subclass overrides it.
         return self.has_key(key)
 
-    def set_many(self, data, timeout=None):
-        """
-        Set a bunch of values in the cache at once from a dict of key/value
-        pairs.  For certain backends (memcached), this is much more efficient
-        than calling set() multiple times.
 
-        If timeout is given, that timeout will be used for the key; otherwise
-        the default cache timeout will be used.
-        """
-        for key, value in data.items():
-            self.set(key, value, timeout)
 
     def delete_many(self, keys):
         """
@@ -194,19 +217,29 @@ class BaseBackend(object):
         """Remove *all* values from the database at once."""
         raise NotImplementedError
 
-    def list(self, id, timeout = 0):
+    # VIRTUAL METHODS
+    
+    def _set_keys(self):
+        raise NotImplementedError
+            
+    # DATASTRUCTURES
+    
+    def list(self, *args, **kwargs):
         '''Return an instance of :ref:`List <list-structure>`
         for a given *id*.'''
         raise NotImplementedError
     
-    def hash(self, id, timeout = 0):
+    def hash(self, *args, **kwargs):
         '''Return an instance of :ref:`HashTable <hash-structure>`
         for a given *id*.'''
         raise NotImplementedError
     
-    def unordered_set(self, key, timeout = 0):
+    def unordered_set(self, *args, **kwargs):
         raise NotImplementedError
     
-    def map(self, key, timeout = 0):
+    def ordered_set(self, *args, **kwargs):
+        raise NotImplementedError
+    
+    def map(self, *args, **kwargs):
         raise NotImplementedError
 

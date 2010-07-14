@@ -1,4 +1,5 @@
 '''Interfaces for supported data-structures'''
+from orm import StdModel
 
 class Structure(object):
     '''Remote structure base class.
@@ -6,11 +7,13 @@ class Structure(object):
         * *cursor* instance of backend database.
         * *id* structure unique id.
         * *timeout* optional timeout.'''
-    def __init__(self, cursor, id, timeout):
-        self.cursor  = cursor
-        self.timeout = timeout
-        self.id      = id
-        self._cache  = None
+    def __init__(self, cursor, id, timeout = 0, pipeline = None, pickler = None):
+        self.cursor    = cursor
+        self.pickler   = pickler or cursor.pickler
+        self.id        = id
+        self.timeout   = timeout
+        self._cache    = None
+        self._pipeline = pipeline
     
     def __repr__(self):
         base = '%s:%s' % (self.__class__.__name__,self.id)
@@ -24,15 +27,18 @@ class Structure(object):
     
     def size(self):
         '''Number of elements in structure'''
-        raise NotImplementedError
-
-    def __contains__(self, val):
-        raise NotImplementedError
+        if self._cache is None:
+            return self._size()
+        else:
+            return len(self._cache)
     
     def __iter__(self):
-        return self._unwind().__iter__()
+        raise NotImplementedError()
     
     def _all(self):
+        raise NotImplementedError
+    
+    def _size(self):
         raise NotImplementedError
     
     def delete(self):
@@ -47,16 +53,93 @@ class Structure(object):
             self._cache = self._all()
         return self._cache
     
+    def save(self):
+        if self._pipeline:
+            s = self._save()
+            self._pipeline.clear()
+            return s
+        else:
+            return 0
+        
+    def _save(self):
+        raise NotImplementedError("Could not save")
+
+
+class Set(Structure):
+    '''An unordered set structure'''
+    
+    def __iter__(self):
+        if not self._cache:
+            cache = []
+            loads = self.pickler.loads
+            for item in self._all():
+                item = loads(item)
+                cache.append(item)
+                yield item
+            self.cache = cache
+        else:
+            for item in self.cache:
+                yield item
+                
+    def add(self, value):
+        '''Add *value* to the set'''
+        self._pipeline.add(self.pickler.dumps(value))
+
+    def update(self, values):
+        '''Add iterable *values* to the set'''
+        pipeline = self._pipeline
+        for value in values:
+            pipeline.add(self.pickler.dumps(value))
+
+
+class OrderedSet(Set):
+    '''An ordered set structure'''
+    
+    def __iter__(self):
+        if not self._cache:
+            cache = []
+            loads = self.pickler.loads
+            for item in self._all():
+                item = loads(item)
+                cache.append(item)
+                yield item
+            self.cache = cache
+        else:
+            for item in self.cache:
+                yield item
+                
+    def add(self, value):
+        '''Add *value* to the set'''
+        self._pipeline.add((value.score(),self.pickler.dumps(value)))
     
 class List(Structure):
+
+    def __iter__(self):
+        if not self._cache:
+            cache = []
+            loads = self.pickler.loads
+            for item in self._all():
+                item = loads(item)
+                cache.append(item)
+                yield item
+            self.cache = cache
+        else:
+            for item in self.cache:
+                yield item
+    
+    def pop_back(self):
+        raise NotImplementedError
+    
+    def pop_front(self):
+        raise NotImplementedError
     
     def push_back(self, value):
         '''Appends a copy of *value* to the end of the remote list.'''
-        raise NotImplementedError
+        self._pipeline.push_back(self.pickler.dumps(value))
     
     def push_front(self, value):
         '''Appends a copy of *value* to the beginning of the remote list.'''
-        raise NotImplementedError
+        self._pipeline.push_front(self.pickler.dumps(value))
     
     
 class HashTable(Structure):
@@ -64,11 +147,14 @@ class HashTable(Structure):
     
     def add(self, key, value):
         '''Add *key* - *value* pair to hashtable.'''
-        raise NotImplementedError
+        self._pipeline[key] = self.pickler.dumps(value)
+    __setitem__ = add
     
     def update(self, mapping):
         '''Add *mapping* dictionary to hashtable. Equivalent to python dictionary update method.'''
-        raise NotImplementedError
+        p = self._pipeline
+        for k,value in mapping:
+            p[key] = self.pickler.dumps(value)
     
     def get(self, key):
         raise NotImplementedError
@@ -88,12 +174,4 @@ class HashTable(Structure):
     def __iter__(self):
         return self.keys().__iter__()
 
-
-class Set(Structure):
-    
-    def add(self, value):
-        raise NotImplementedError
-
-    def update(self, sset):
-        raise NotImplementedError
     

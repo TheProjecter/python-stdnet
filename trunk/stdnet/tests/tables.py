@@ -8,38 +8,7 @@ from stdnet import orm
 from stdnet.utils import populate
 from stdnet.exceptions import QuerySetError
 
-
-# Create some models for testing
-
-class Base(orm.StdModel):
-    name = orm.AtomField(unique = True)
-    ccy  = orm.AtomField()
-    
-    def __str__(self):
-        return str(self.name)
-    
-    class Meta:
-        abstract = True
-
-class Instrument(Base):
-    type = orm.AtomField()
-    
-class Fund(Base):
-    pass
-
-class Position(orm.StdModel):
-    instrument = orm.ForeignKey(Instrument, related_name = 'positions')
-    fund       = orm.ForeignKey(Fund)
-    dt         = orm.DateField()
-    
-    def __str__(self):
-        return '%s: %s @ %s' % (self.fund,self.instrument,self.dt)
-    
-    def __init__(self, size = 1, price = 1, **kwargs):
-        self.size  = size
-        self.price = price
-        super(Position,self).__init__(**kwargs)
-    
+from examples.portfolio import Instrument, Fund, Position
 
 orm.register(Instrument)
 orm.register(Fund)
@@ -95,12 +64,6 @@ class TestORM(TestBase):
         self.assertTrue(obj.name)
         obj2 = Instrument.objects.get(name = obj.name)
         self.assertEqual(obj,obj2)
-        try:
-            result = Instrument.objects.get(type = 'equity')
-        except QuerySetError:
-            pass
-        else:
-            self.fail('get query on non-unique field should have failed')
         
     def testLen(self):
         '''Simply test len of objects greater than zero'''
@@ -109,6 +72,12 @@ class TestORM(TestBase):
     
     def testFilter(self):
         '''Test filtering on a model without foreignkeys'''
+        try:
+            result = Instrument.objects.get(type = 'equity')
+        except QuerySetError:
+            pass
+        else:
+            self.fail('get query on non-unique field should have failed')
         tot = 0
         for t in insts_types:
             fs = Instrument.objects.filter(type = t)

@@ -6,87 +6,91 @@ from stdnet import structures
 
 class List(structures.List):
     
-    def size(self):
+    def _size(self):
         '''Size of map'''
         return self.cursor.execute_command('LLEN', self.id)
     
     def delete(self):
         return self.cursor.execute_command('DEL', self.id)
     
-    def push_back(self, values):
-        for value in values:
-            self.cursor.execute_command('RPUSH', self.id, self.cursor._res_to_val(value))
-    
-    def push_front(self, values):
-        for value in values:
-            self.cursor.execute_command('LPUSH', self.id, self.cursor._res_to_val(value))
-    
     def pop_back(self):
-        return self.cursor._res_to_val(self.cursor.execute_command('RPOP', self.id))
+        return self.pickler.loads(self.cursor.execute_command('RPOP', self.id))
     
     def pop_front(self):
-        return self.cursor._res_to_val(self.cursor.execute_command('LPOP', self.id))
+        return self.pickler.loads(self.cursor.execute_command('LPOP', self.id))
     
     def _all(self):
         return self.cursor.execute_command('LRANGE', self.id, 0, -1)
+    
+    def _save(self):
+        id = self.id
+        s  = 0
+        for value in self._pipeline.back:
+            s = self.cursor.execute_command('RPUSH', id, value)
+        for value in self._pipeline.front:
+            s = self.cursor.execute_command('LPUSH', id, value)
+        return s
         
 
 class Set(structures.Set):
     
-    def size(self):
+    def _size(self):
         '''Size of set'''
         return self.cursor.execute_command('SCARD', self.id)
     
     def delete(self):
         return self.cursor.execute_command('DEL', self.id)
     
-    def add(self, value):
-        return self.cursor.execute_command('SADD', self.id, value)
+    def _save(self):
+        id = self.id
+        s  = 0
+        for value in self._pipeline:
+            s += self.cursor.execute_command('SADD', id, value)
+        return s
     
     def __contains__(self, value):
         return self.cursor.execute_command('SISMEMBER', self.id, value)
     
-    def update(self, sset):
-        r = 0
-        for value in sset:
-            r += self.add(value)
-        return r
-    
     def _all(self):
         return self.cursor.execute_command('SMEMBERS', self.id)
     
+    
+class OrderedSet(structures.OrderedSet):
+    
+    def _size(self):
+        '''Size of set'''
+        return self.cursor.execute_command('ZCARD', self.id)
+    
+    def _all(self):
+        return self.cursor.redispy.zrange(self.id, 0, -1)
+    
+    def _save(self):
+        id = self.id
+        s  = 0
+        for score,value in self._pipeline:
+            s += self.cursor.execute_command('ZADD', id, score, value)
+        return s
+
 
 class HashTable(structures.HashTable):
     
-    def size(self):
+    def _size(self):
         return self.cursor.execute_command('HLEN', self.id)
     
     def delete(self):
         return self.cursor.execute_command('DEL', self.id)
     
     def get(self, key):
-        c = self.cursor
-        return c._res_to_val(c.execute_command('HGET', self.id, key))
+        return self.pickler.loads(self.cursor.execute_command('HGET', self.id, key))
     
     def mget(self, keys):
         '''Get multiple keys'''
         if not keys:
             raise StopIteration
         objs = self.cursor.execute_command('HMGET', self.id, *keys)
-        loads = self.cursor._res_to_val
+        loads = self.pickler.loads
         for obj in objs:
             yield loads(obj)
-    
-    def add(self, key, value):
-        c = self.cursor
-        return c.execute_command('HSET', self.id, key, c._val_to_store_info(value))
-    
-    def update(self, mapping):
-        items = []
-        ser   = self.cursor._val_to_store_info
-        [items.extend((key,ser(value))) for key,value in mapping.iteritems()]
-        return self.cursor.execute_command('HMSET',self.id,*items)
-        #return self.cursor.hmset(self.id,mapping)
     
     def delete(self, key):
         return self.cursor.execute_command('HDEL', self.id, key)
@@ -96,13 +100,18 @@ class HashTable(structures.HashTable):
     
     def items(self):
         result = self.cursor.execute_command('HGETALL', self.id)
-        loads  = self.cursor._res_to_val
+        loads  = self.pickler.loads
         for key,val in result.iteritems():
             yield key,loads(val)
 
     def values(self):
         for ky,val in self.items():
             yield val
+            
+    def _save(self):
+        items = []
+        [items.extend(item) for item in self._pipeline.iteritems()]
+        return self.cursor.execute_command('HMSET',self.id,*items)
     
     
 class Map(HashTable):

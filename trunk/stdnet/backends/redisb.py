@@ -1,42 +1,29 @@
 from stdnet.utils import jsonPickler
 from stdnet.backends.base import BaseBackend, ImproperlyConfigured, novalue
-from stdnet.backends.structures.structredis import List,Set,HashTable,Map
+from stdnet.backends.structures.structredis import List,Set,OrderedSet,HashTable,Map
 
 try:
     import redis
 except:
     raise ImproperlyConfigured("Redis cache backend requires the 'redis' library. Do easy_install redis")
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-
-#default_pickler = jsonPickler()
-default_pickler = pickle
-
 
 class BackEnd(BaseBackend):
     
-    def __init__(self, name, server, params, pickler = default_pickler):
-        super(BackEnd,self).__init__(name,params)
+    def __init__(self, name, server, params, **kwargs):
+        super(BackEnd,self).__init__(name, params, **kwargs)
         servs = server.split(':')
         server = servs[0]
         port   = 6379
         if len(server) == 2:
             port = int(servs[1])
-        self.pickler         = pickler
-        self.params          = params
-        self.db              = params.pop('db',0)
-        cache                = redis.Redis(host = server, port = port, db = self.db)
-        self._cache          = cache
-        self.execute_command = cache.execute_command
-        self.incr      = cache.incr
-        self.sismember = cache.sismember
-        self.smembers  = cache.smembers
-        self.zlen      = cache.zcard
-        self.clear     = cache.flushdb
-        self.sinter    = cache.sinter
+        self.db              = self.params.pop('db',0)
+        redispy              = redis.Redis(host = server, port = port, db = self.db)
+        self.redispy         = redispy
+        self.execute_command = redispy.execute_command
+        self.incr            = redispy.incr
+        self.clear           = redispy.flushdb
+        self.sinter          = redispy.sinter
     
     def set_timeout(self, id, timeout):
         timeout = timeout or self.default_timeout
@@ -53,22 +40,7 @@ class BackEnd(BaseBackend):
         return r
     
     def get(self, id):
-        res = self.execute_command('GET', id)
-        return self._res_to_val(res)        
-    
-    def commit_indexes(self, cvalue):
-        '''Commit indexes to redis'''
-        # unique indexes
-        if cvalue.keys:
-            items = []
-            ser   = self._val_to_store_info
-            [items.extend((key,ser(value))) for key,value in cvalue.keys.iteritems()]
-            self.execute_command('MSET', *items)
-        # loop over sets
-        for id,s in cvalue.indexes.iteritems():
-            uset = self.unordered_set(id)
-            uset.update(s)
-        
+        return self.execute_command('GET', id)
             
     def delete_indexes(self, obj):
         '''Delete an object from the database'''
@@ -88,11 +60,6 @@ class BackEnd(BaseBackend):
                         raise Exception('could not delete index at set %s' % fid)
             field.delete()
         return 1
-    
-    def get_object(self, meta, name, value):
-        if name != 'id':
-            value = self.get(meta.basekey(name,value))
-        return self.hash(meta.basekey()).get(value)
             
     def query(self, meta, fargs, eargs):
         '''Query a model table'''
@@ -112,30 +79,25 @@ class BackEnd(BaseBackend):
             else:
                 return qset
     
-    # Serializers
-    
-    def _val_to_store_info(self, value):
-        return self.pickler.dumps(value)
-    
-    def _res_to_val(self, res):
-        if not res:
-            return res
-        try:
-            return self.pickler.loads(res)
-        except:
-            return res
+    def _set_keys(self):
+        items = []
+        [items.extend(item) for item in self._keys.iteritems()]
+        self.execute_command('MSET', *items)
         
     # Data structures
     
-    def list(self, id, timeout = 0):
-        return List(self,id,timeout)
+    def list(self, *args, **kwargs):
+        return List(self, *args, **kwargs)
     
-    def unordered_set(self, id, timeout = 0):
-        return Set(self,id,timeout)
+    def unordered_set(self, *args, **kwargs):
+        return Set(self, *args, **kwargs)
     
-    def hash(self, id, timeout = 0):
-        return HashTable(self,id,timeout)
+    def ordered_set(self, *args, **kwargs):
+        return OrderedSet(self, *args, **kwargs)
     
-    def map(self, id, timeout = 0):
-        return Map(self,id,timeout)
+    def hash(self, *args, **kwargs):
+        return HashTable(self, *args, **kwargs)
+    
+    def map(self, *args, **kwargs):
+        return Map(self, *args, **kwargs)
     

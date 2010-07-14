@@ -6,7 +6,14 @@
 Data-structure Fields
 ============================
 
-These fields are remote data-structures.
+These fields are remote data-structures such as list, sets and hash tables.
+They can be bound to models so that
+many-to-many objects relationship can be established. All the data-structure
+fields derives from MultiField.
+
+.. autoclass:: stdnet.orm.std.MultiField
+   :members:
+
 
 
 .. _listfield:
@@ -24,6 +31,14 @@ SetField
 ==============================
 
 .. autoclass:: stdnet.orm.std.SetField
+   :members:
+   
+.. _orderedsetfield:
+
+OrederedSetField
+==============================
+
+.. autoclass:: stdnet.orm.std.OrderedSetField
    :members:
    
    
