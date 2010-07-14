@@ -18,7 +18,7 @@ dates = populate('date', NUM_DATES, start=datetime.date(2010,5,1), end=datetime.
 
 
 
-class TestdateField(TestBase):
+class TestDateField(TestBase):
     
     def setUp(self):
         for dt in dates:
@@ -29,9 +29,26 @@ class TestdateField(TestBase):
         all = TestDateModel.objects.all()
         self.assertEqual(len(dates),all.count())
         N = 0
+        done_dates = set()
         for dt in dates:
-            elems = TestDateModel.objects.filter(dt = dt)
-            N += elems.count()
+            if dt not in done_dates:
+                done_dates.add(dt)
+                elems = TestDateModel.objects.filter(dt = dt)
+                N += elems.count()
+                for elem in elems:
+                    self.assertEqual(elem.dt,dt)
         self.assertEqual(all.count(),N)
+        
+    def testDelete(self):
+        N = 0
+        done_dates = set()
+        for dt in dates:
+            if dt not in done_dates:
+                done_dates.add(dt)
+                objs = TestDateModel.objects.filter(dt = dt)
+                N += objs.count()
+                objs.delete()
+        all = TestDateModel.objects.all()
+        self.assertEqual(all.count(),0)
         
             

@@ -184,7 +184,7 @@ class TestORM(TestBase):
         self.assertEqual(Ni,instruments.delete())
         self.assertEqual(Nf,funds.delete())
         
-    def _testDelete(self):
+    def testDelete(self):
         '''Test delete on models with related models'''
         # Create Positions which hold foreign keys to Instruments
         Np = self.makePositions()
