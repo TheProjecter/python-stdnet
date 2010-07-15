@@ -19,7 +19,8 @@ class Structure(object):
         * *cursor* instance of backend database.
         * *id* structure unique id.
         * *timeout* optional timeout.'''
-    def __init__(self, cursor, id, timeout = 0, pipeline = None, pickler = None):
+    def __init__(self, cursor, id, timeout = 0, pipeline = None,
+                 pickler = None, **kwargs):
         self.cursor    = cursor
         self.pickler   = pickler or cursor.pickler
         self.id        = id
@@ -153,6 +154,14 @@ class List(Structure):
         '''Appends a copy of *value* to the beginning of the remote list.'''
         self._pipeline.push_front(self.pickler.dumps(value))
     
+
+
+def itemcmp(x,y):
+    if x[0] > y[0]:
+        return 1
+    else:
+        return -1
+
     
 class HashTable(Structure):
     '''Interface class for a remote hash-table.'''
@@ -207,6 +216,18 @@ class HashTable(Structure):
     
     def __iter__(self):
         return self.keys()
+    
+    def sortedkeys(self, desc = True):
+        keys = sorted(self.keys())
+        if not desc:
+            keys = reversed(keys)
+        return keys
+            
+    def sorteditems(self, desc = True):
+        items = sorted(self.items(),cmp = itemcmp)
+        if not desc:
+            items = reversed(items)
+        return items
     
     # PURE VIRTUAL METHODS
     

@@ -8,4 +8,4 @@ from listfield import *
 from ordered_set import *
 from hashfield import *
 from twitter import *
-#from stdnet.contrib.timeserie.tests import *
+from stdnet.contrib.timeserie.tests import *

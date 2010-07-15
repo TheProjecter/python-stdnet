@@ -5,7 +5,7 @@ python-stdnet 0.3.0
  * Added ListField and OrderedSetField with Redis implementation.
  * StdModel raise AttributError when method/attribute not available. Previously it returned None.
  * StdModel raise ModelNotRegistered when trying to save an instance of a non-registered model.
- * 21 tests.
+ * 24 tests.
 
 python-stdnet 0.2.2 - 2010 July 7
 ========================================

@@ -1,6 +1,6 @@
 from stdnet.utils import jsonPickler
 from stdnet.backends.base import BaseBackend, ImproperlyConfigured, novalue
-from stdnet.backends.structures.structredis import List,Set,OrderedSet,HashTable,Map
+from stdnet.backends.structures.structredis import List,Set,OrderedSet,HashTable
 
 try:
     import redis
@@ -98,6 +98,4 @@ class BackEnd(BaseBackend):
     def hash(self, *args, **kwargs):
         return HashTable(self, *args, **kwargs)
     
-    def map(self, *args, **kwargs):
-        return Map(self, *args, **kwargs)
     

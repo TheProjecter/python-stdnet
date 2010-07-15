@@ -46,6 +46,7 @@ class MultiField(RelatedField):
                  model = None,
                  related_name = None,
                  pickler = None,
+                 converter = None,
                  **kwargs):
         super(MultiField,self).__init__(model = model,
                                         required = False,
@@ -54,13 +55,15 @@ class MultiField(RelatedField):
         self.index       = False
         self.unique      = False
         self.pickler     = pickler
+        self.converter   = converter
         
     def get_full_value(self):
         id = self.meta.basekey('id',self.obj.id,self.name)
         return self.structure(id,
                               timeout = self.meta.timeout,
                               pipeline = self._pipeline,
-                              pickler = self.pickler)
+                              pickler = self.pickler,
+                              converter = self.converter)
     
     def set_value(self, name, obj, value):
         v = super(MultiField,self).set_value(name, obj, value)
@@ -176,10 +179,4 @@ Keys are string while values are string/numeric. It accepts to optional argument
 '''
     backend_structure = 'hash'
     _pipeline = dict
-            
-
-class MapField(HashField):
-    '''A map is a sorted key-value container'''
-    backend_structure = 'map'
-
- 
+    
