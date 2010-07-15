@@ -81,28 +81,20 @@ class HashTable(structures.HashTable):
         return self.cursor.execute_command('DEL', self.id)
     
     def get(self, key):
+        key = self.converter.tokey(key)
         return self.pickler.loads(self.cursor.execute_command('HGET', self.id, key))
     
-    def mget(self, keys):
-        '''Get multiple keys'''
-        if not keys:
-            raise StopIteration
-        objs = self.cursor.execute_command('HMGET', self.id, *keys)
-        loads = self.pickler.loads
-        for obj in objs:
-            yield loads(obj)
+    def _mget(self, keys):
+        return self.cursor.execute_command('HMGET', self.id, *keys)
     
     def delete(self, key):
         return self.cursor.execute_command('HDEL', self.id, key)
     
-    def keys(self):
+    def _keys(self):
         return self.cursor.execute_command('HKEYS', self.id)
     
-    def items(self):
-        result = self.cursor.execute_command('HGETALL', self.id)
-        loads  = self.pickler.loads
-        for key,val in result.iteritems():
-            yield key,loads(val)
+    def _items(self):
+        return self.cursor.execute_command('HGETALL', self.id)
 
     def values(self):
         for ky,val in self.items():

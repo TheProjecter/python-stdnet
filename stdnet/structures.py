@@ -1,6 +1,18 @@
 '''Interfaces for supported data-structures'''
 from orm import StdModel
 
+
+class keyconverter(object):
+    
+    @classmethod
+    def tokey(cls, value):
+        return value
+
+    @classmethod
+    def tovalue(cls, value):
+        return value
+
+
 class Structure(object):
     '''Remote structure base class.
         
@@ -145,33 +157,66 @@ class List(Structure):
 class HashTable(Structure):
     '''Interface class for a remote hash-table.'''
     
+    def __init__(self, *args, **kwargs):
+        self.converter = kwargs.pop('converter',None) or keyconverter
+        super(HashTable,self).__init__(*args, **kwargs)
+        
     def add(self, key, value):
         '''Add *key* - *value* pair to hashtable.'''
-        self._pipeline[key] = self.pickler.dumps(value)
+        self.update({key:value})
     __setitem__ = add
     
     def update(self, mapping):
         '''Add *mapping* dictionary to hashtable. Equivalent to python dictionary update method.'''
-        p = self._pipeline
-        for k,value in mapping:
-            p[key] = self.pickler.dumps(value)
+        tokey = self.converter.tokey
+        dumps = self.pickler.dumps
+        p     = self._pipeline
+        for key,value in mapping.iteritems():
+            p[tokey(key)] = dumps(value)
     
     def get(self, key):
         raise NotImplementedError
     
     def mget(self, keys):
-        raise NotImplementedError
+        '''Return a generator of key-value pairs for the keys requested'''
+        if not keys:
+            raise StopIteration
+        tokey = self.converter.tokey
+        ckeys = [tokey(key) for key in keys]
+        objs  = self._mget(ckeys)
+        loads = self.pickler.loads
+        for obj in objs:
+            yield loads(obj)
     
     def keys(self, desc = False):
-        raise NotImplementedError
-    
-    def values(self, desc = False):
-        raise NotImplementedError
+        tovalue  = self.converter.tovalue
+        for key in self._keys():
+            yield tovalue(key)
 
-    def items(self, desc = False):
-        raise NotImplementedError
+    def items(self):
+        '''Generator over key-value items'''
+        result   = self._items()
+        loads    = self.pickler.loads
+        tovalue  = self.converter.tovalue
+        for key,val in result.iteritems():
+            yield tovalue(key),loads(val)
+            
+    def values(self):
+        for key,value in self.items():
+            yield value
     
     def __iter__(self):
-        return self.keys().__iter__()
+        return self.keys()
+    
+    # PURE VIRTUAL METHODS
+    
+    def _keys(self):
+        raise NotImplementedError
+    
+    def _items(self):
+        raise NotImplementedError
+    
+    def _mget(self, keys):
+        raise NotImplementedError
 
     

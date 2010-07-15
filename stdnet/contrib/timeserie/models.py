@@ -2,14 +2,23 @@ from stdnet import orm
 from stdnet.utils import date2timestamp, timestamp2date
 from stdnet.contrib.timeserie.utils import default_parse_interval
 
+class Converter(object):
+    
+    @classmethod
+    def tokey(cls, value):
+        return date2timestamp(value)
+    
+    @classmethod
+    def todate(cls, value):
+        return timestamp2date(value)
+
 
 class TimeSerieField(orm.HashField):
-    '''A timeserie filed hold a key-ordered hash table with'''
-    def __init__(self, converter = date2timestamp,
-                 inverse = timestamp2date, **kwargs):
-        super(TimeSerieField,self).__init__(converter=converter,
-                                            inverse=inverse,
-                                            **kwargs)
+    '''A timeserie filed specializes :ref:`HashField <hashfield>` by
+    providing support for keys given by instances of ``datetime.date``'''
+    def __init__(self, converter = None, **kwargs):
+        self.converter = converter or Converter
+        super(TimeSerieField,self).__init__(**kwargs)
 
 
 class TimeSerie(orm.StdModel):
