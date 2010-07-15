@@ -19,6 +19,11 @@ class BadCacheDataStructure(StdNetException):
     pass
 
 class FieldError(StdNetException):
+    '''Generic Field error'''
+    pass
+
+class FieldValueError(FieldError):
+    '''Raised when passing a wrong value to a field method'''
     pass
 
 class QuerySetError(StdNetException):

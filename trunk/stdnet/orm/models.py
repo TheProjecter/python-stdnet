@@ -33,7 +33,7 @@ database Hash-table.'''
         
         for name,related in meta.related.iteritems():
             related.obj = self
-            setattr(self,name,related)
+            #setattr(self,name,related)
         
     def __setattr__(self,name,value):
         field = self._meta.fields.get(name,None)
@@ -47,7 +47,10 @@ database Hash-table.'''
             try:
                 return self.__dict__[name]
             except KeyError:
-                raise AttributeError("object '%s' has not attribute %s" % (self,name))
+                try:
+                    return self._meta.related[name]
+                except KeyError:
+                    raise AttributeError("object '%s' has not attribute %s" % (self,name))
             
     def __set_field(self, name, field, value):
         if field:

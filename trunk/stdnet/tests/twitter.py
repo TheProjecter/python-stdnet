@@ -38,16 +38,12 @@ class TestTwitter(TestBase):
             for tofollow in populate('choice',n, choice_from = users):
                 if tofollow.id != user.id:
                     user.following.add(tofollow)
-            n = user.following.save()
-            self.assertEqual(user.following.size(),n)
+            user.save()
+            self.assertTrue(user.following.size()>0)
         
-        # Get a random user
-        #id = randint(1,N)
-        #user = User.objects.get(id = id)
-        # loop over its followers and access user is in the following set of its followers
-        #for id in user.followers:
-        #    u = User.objects.get(id = id)
-        #    self.assertTrue(user in u.following)
+        for user in users:
+            for following in user.following:
+                self.assertTrue(user in following.followers)
             
     def testMessages(self):
         users = User.objects.all()
