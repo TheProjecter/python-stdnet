@@ -14,7 +14,16 @@ Dive In
 Examples
 
 :ref:`Timeseries <intro-example>` | :ref:`Tagging <tag-example>` |
-:ref:`Twitter Clone<twitter-example>`  
+:ref:`Twitter Clone<twitter-example>`
+
+Get StdNet
+=============
+
+StdNet is available as an easy-installable package on the `Python Package Index <http://pypi.python.org/pypi?:action=display&name=python-stdnet>`_. ::
+	
+	easy_install python-stdnet
+
+The code can be found at google code repository http://code.google.com/p/python-stdnet/.  
 
 
 .. _contents:
@@ -29,6 +38,7 @@ Contents
    backends/index
    utility/index
    contrib/index
+   
 
 Indices and tables
 ==================
