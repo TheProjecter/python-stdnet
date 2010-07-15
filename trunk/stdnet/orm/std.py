@@ -38,6 +38,20 @@ class MultiField(RelatedField):
     
     * *model* optional :ref:`StdModel <model-model>` class. If specified, the field maintains a many-to-many object relationship.
     * *related_name* same as :ref:`ForeignKey <foreignkey>` Field.
+    * *pickler* a module/class/objects used to serialize values.
+    * *converter* a module/class/objects used to convert keys to suitable string to use as keys in :ref:`HashTables <hash-structure>`.
+        It must implement two methods, ``tokey`` to convert key to a suitable key
+        for the database backend and ``tovalue`` the inverse operation. By default
+        is the class::
+        
+            class keyconverter(object):
+                @classmethod
+                def tokey(cls, value):
+                    return value
+                @classmethod
+                def tovalue(cls, value):
+                    return value
+            
     '''
     backend_structure = None
     _pipeline = None
