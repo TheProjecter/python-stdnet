@@ -1,11 +1,15 @@
-'''A twitter'''
 from datetime import datetime
 from itertools import izip
-from examples.twitter import User
+from random import randint
+
 from stdnet import orm
 from stdnet.stdtest import TestBase
 from stdnet.utils import populate
-from random import randint
+
+from examples.twitter import User, Post
+
+orm.register(User)
+orm.register(Post)
 
 
 NUM_USERS = 100
