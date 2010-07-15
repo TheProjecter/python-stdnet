@@ -12,6 +12,9 @@ from stdnet.utils import populate
 class TimeSerie(models.TimeSerie):
     data    = models.TimeSerieField(converter = models.DateConverter)
     ticker  = orm.AtomField(unique = True)
+    
+    def __str__(self):
+        return '%s: %s' % (self.ticker,self.data.size())
 
 orm.register(TimeSerie)
 

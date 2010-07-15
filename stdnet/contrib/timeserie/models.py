@@ -34,6 +34,11 @@ class TimeSerieField(orm.HashField):
 class TimeSerie(orm.StdModel):
     data  = TimeSerieField()
     
+    def __init__(self, start = None, end = None, **kwargs):
+        super(TimeSerie,self).__init__(**kwargs)
+        self.start = start
+        self.end   = end
+    
     def fromto(self):
         if self.start:
             return '%s - %s' % (self.start.strftime('%Y %m %d'),self.end.strftime('%Y %m %d'))
@@ -42,17 +47,6 @@ class TimeSerie(orm.StdModel):
         
     def __str__(self):
         return self.fromto()
-    
-    def converter(self, key):
-        return date2timestamp(key)
-    
-    def inverse(self, key):
-        return timestamp2date(key)
-    
-    def __init__(self, start = None, end = None, **kwargs):
-        super(TimeSerie,self).__init__(**kwargs)
-        self.start = start
-        self.end   = end
 
     def storestartend(self):
         '''Store the start/end date of the timeseries'''
