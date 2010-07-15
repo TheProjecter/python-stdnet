@@ -7,6 +7,7 @@ from importlib import *
 from anyjson import *
 from odict import *
 from populate import populate
+from fields import *
 
 
 def date2timestamp(dte):

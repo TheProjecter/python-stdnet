@@ -1,3 +1,4 @@
+from copy import copy
 from stdnet.exceptions import QuerySetError
 
 
@@ -210,7 +211,7 @@ class Manager(object):
     
 class RelatedManager(Manager):
     
-    def __init__(self, fieldname, related):
+    def __init__(self, related, fieldname):
         self.related    = related
         self.fieldname  = fieldname
         self.obj        = None
@@ -227,20 +228,8 @@ class RelatedManager(Manager):
     
     def __deepcopy__(self, memodict):
         # We only copy here
-        return self.__class__(self.fieldname,self.related)
+        return copy(self)
 
-
-class MultiRelatedManager(RelatedManager):
-    
-    def __init__(self, fieldname, related):
-        self.related    = related
-        self.fieldname  = fieldname
-        self.obj        = None
-        
-    def filter(self, **kwargs):
-        if self.obj:
-            kwargs[self.fieldname] = self.obj.id
-            return QuerySet(self.related._meta, kwargs)
     
     
     

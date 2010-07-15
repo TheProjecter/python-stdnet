@@ -49,3 +49,14 @@ HashField
 
 .. autoclass:: stdnet.orm.std.HashField
    :members:
+
+
+.. _manytomanyfield:
+
+ManyToManyField
+==============================
+
+.. autoclass:: stdnet.orm.std.ManyToManyField
+   :members:
+
+   

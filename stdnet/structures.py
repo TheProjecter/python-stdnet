@@ -74,59 +74,14 @@ class Structure(object):
         else:
             return 0
         
+    # PURE VIRTUAL METHODS
+        
     def _save(self):
         raise NotImplementedError("Could not save")
 
 
-class Set(Structure):
-    '''An unordered set structure'''
-    
-    def __iter__(self):
-        if not self._cache:
-            cache = []
-            loads = self.pickler.loads
-            for item in self._all():
-                item = loads(item)
-                cache.append(item)
-                yield item
-            self.cache = cache
-        else:
-            for item in self.cache:
-                yield item
-                
-    def add(self, value):
-        '''Add *value* to the set'''
-        self._pipeline.add(self.pickler.dumps(value))
-
-    def update(self, values):
-        '''Add iterable *values* to the set'''
-        pipeline = self._pipeline
-        for value in values:
-            pipeline.add(self.pickler.dumps(value))
-
-
-class OrderedSet(Set):
-    '''An ordered set structure'''
-    
-    def __iter__(self):
-        if not self._cache:
-            cache = []
-            loads = self.pickler.loads
-            for item in self._all():
-                item = loads(item)
-                cache.append(item)
-                yield item
-            self.cache = cache
-        else:
-            for item in self.cache:
-                yield item
-                
-    def add(self, value):
-        '''Add *value* to the set'''
-        self._pipeline.add((value.score(),self.pickler.dumps(value)))
-    
 class List(Structure):
-
+    '''A list structure'''
     def __iter__(self):
         if not self._cache:
             cache = []
@@ -153,7 +108,67 @@ class List(Structure):
     def push_front(self, value):
         '''Appends a copy of *value* to the beginning of the remote list.'''
         self._pipeline.push_front(self.pickler.dumps(value))
+
+
+
+class Set(Structure):
+    '''An unordered set structure'''
     
+    def __iter__(self):
+        if not self._cache:
+            cache = []
+            loads = self.pickler.loads
+            for item in self._all():
+                item = loads(item)
+                cache.append(item)
+                yield item
+            self.cache = cache
+        else:
+            for item in self.cache:
+                yield item
+    
+    def __contains__(self, value):
+        value = self.pickler.dumps(value)
+        if self._cache is None:
+            return self._contains(value)
+        else:
+            return value in self._cache
+                    
+    def add(self, value):
+        '''Add *value* to the set'''
+        self._pipeline.add(self.pickler.dumps(value))
+
+    def update(self, values):
+        '''Add iterable *values* to the set'''
+        pipeline = self._pipeline
+        for value in values:
+            pipeline.add(self.pickler.dumps(value))
+            
+    # PURE VIRTUAL METHODS
+    
+    def _contains(self, value):
+        raise NotImplementedError
+
+
+class OrderedSet(Set):
+    '''An ordered set structure'''
+    
+    def __iter__(self):
+        if not self._cache:
+            cache = []
+            loads = self.pickler.loads
+            for item in self._all():
+                item = loads(item)
+                cache.append(item)
+                yield item
+            self.cache = cache
+        else:
+            for item in self.cache:
+                yield item
+                
+    def add(self, value):
+        '''Add *value* to the set'''
+        self._pipeline.add((value.score(),self.pickler.dumps(value)))
 
 
 def itemcmp(x,y):
@@ -169,6 +184,13 @@ class HashTable(Structure):
     def __init__(self, *args, **kwargs):
         self.converter = kwargs.pop('converter',None) or keyconverter
         super(HashTable,self).__init__(*args, **kwargs)
+        
+    def __contains__(self, key):
+        value = self.converter.tokey(key)
+        if self._cache is None:
+            return self._contains(value)
+        else:
+            return value in self._cache
         
     def add(self, key, value):
         '''Add *key* - *value* pair to hashtable.'''
@@ -230,6 +252,9 @@ class HashTable(Structure):
         return items
     
     # PURE VIRTUAL METHODS
+    
+    def _contains(self, value):
+        raise NotImplementedError
     
     def _keys(self):
         raise NotImplementedError

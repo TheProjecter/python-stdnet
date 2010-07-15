@@ -14,8 +14,8 @@ class User(orm.StdModel):
     username  = orm.AtomField(unique = True)
     password  = orm.AtomField()
     updates   = orm.ListField(model = Post)
-    following = orm.SetField(model = 'self',
-                             related_name = 'followers')
+    following = orm.ManyToManyField(model = 'self',
+                                    related_name = 'followers')
     
     def __str__(self):
         return self.username

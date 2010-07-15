@@ -1,42 +1,13 @@
-from fields import Field, RelatedField, _novalue
-from query import MultiRelatedManager
+from fields import Field, RelatedObject, _novalue
+
+from stdnet.exceptions import *
+from stdnet.utils import ModelFieldPickler, listPipeline, many2manyPipeline
 
 
-class ModelFieldPickler(object):
-    
-    def __init__(self, model):
-        self.model = model
-        self.get   = model.objects.get
-        
-    def loads(self, s):
-        return self.get(id = s)
-    
-    def dumps(self, obj):
-        return obj.id
-    
-
-class listPipeline(object):
-    def __init__(self):
-        self.clear()
-        
-    def push_front(self, value):
-        self.front.append(value)
-        
-    def push_back(self, value):
-        self.back.append(value)
-        
-    def clear(self):
-        self.back = []
-        self.front = []
-        
-    def __len__(self):
-        return len(self.back) + len(self.front)
-    
-
-class MultiField(RelatedField):
+class MultiField(Field):
     '''Base virtual class for data-structure fields:
     
-    * *model* optional :ref:`StdModel <model-model>` class. If specified, the field maintains a many-to-many object relationship.
+    * *model* optional :ref:`StdModel <model-model>` class.
     * *related_name* same as :ref:`ForeignKey <foreignkey>` Field.
     * *pickler* a module/class/objects used to serialize values.
     * *converter* a module/class/objects used to convert keys to suitable string to use as keys in :ref:`HashTables <hash-structure>`.
@@ -58,18 +29,22 @@ class MultiField(RelatedField):
     
     def __init__(self,
                  model = None,
-                 related_name = None,
                  pickler = None,
                  converter = None,
                  **kwargs):
-        super(MultiField,self).__init__(model = model,
-                                        required = False,
-                                        relmanager = MultiRelatedManager,
+        self.model       = model
+        super(MultiField,self).__init__(required = False,
                                         **kwargs)
         self.index       = False
         self.unique      = False
         self.pickler     = pickler
         self.converter   = converter
+        
+    def register_with_model(self, name, related):
+        if not self.model:
+            return
+        if self.model == 'self':
+            self.model = related
         
     def get_full_value(self):
         id = self.meta.basekey('id',self.obj.id,self.name)
@@ -81,10 +56,14 @@ class MultiField(RelatedField):
     
     def set_value(self, name, obj, value):
         v = super(MultiField,self).set_value(name, obj, value)
-        self.structure = getattr(self.meta.cursor,self.backend_structure,None)
+        self.set_structure()
+        return v
+        
+    def set_structure(self):
+        meta = self.meta
+        self.structure = getattr(meta.cursor,self.backend_structure,None)
         if self.model and not self.pickler:
             self.pickler = ModelFieldPickler(self.model)
-        return v
     
     def serialize(self):
         return None
@@ -194,3 +173,85 @@ Keys are string while values are string/numeric. It accepts to optional argument
     backend_structure = 'hash'
     _pipeline = dict
     
+
+class ManyToManyField(SetField, RelatedObject):
+    '''A many-to-many relationship. It accepts **related_name** as extra argument.
+It is the name to use for the relation from the related object
+back to self. For example::
+    
+    class User(orm.StdModel):
+        name      = orm.AtomField(unique = True)
+        following = orm.ManyToManyField(model = 'self',
+                                        related_name = 'followers')
+'''
+    _pipeline = many2manyPipeline
+    
+    def __init__(self, model, related_name = None, **kwargs):
+        SetField.__init__(self, **kwargs)
+        RelatedObject.__init__(self,
+                               model,
+                               relmanager = self.__class__,
+                               related_name = related_name)
+        self.index = False
+        
+    def register_with_model(self, name, related):
+        related_manager = self.register_related_model(name, related)
+        related_manager.name = self.related_name
+        
+    def set_value(self, name, obj, value):
+        v = SetField.set_value(self, name, obj, value)
+        related_manager = self.model._meta.related[self.related_name]
+        related_manager.meta = related_manager.model._meta
+        related_manager.set_structure()
+        return v
+    
+    def get_full_value(self):
+        return self
+    
+    def _id(self):
+        return self.meta.basekey('id',self.obj.id,self.name)
+        
+    def _relid(self, rel):
+        return self.meta.basekey('id',rel.id,self.related_name)
+    
+    def add(self, value):
+        if not isinstance(value,self.model):
+            raise FieldValueError('%s is not an instance of %s' % (value,self.model._meta.name))
+        if value is self:
+            raise FieldValueError('Cannot add self')
+        self._add(self.obj,self.name,value)
+        self._add(value,self.related_name,self.obj)
+    
+    def _structure(self, obj, name):
+        meta = obj.meta
+        id   = meta.basekey('id',obj.id,name)
+        return self.structure(id,
+                              timeout = meta.timeout,
+                              pipeline = self._pipeline[id],
+                              pickler = self.pickler,
+                              converter = self.converter)
+        
+    def _add(self, obj, name, value):
+        s = self._structure(obj,name)
+        s.add(value)
+    
+    def save(self):
+        for id,pipeline in self._pipeline:
+            s    = self.structure(id,
+                                  pipeline = pipeline,
+                                  pickler = self.pickler,
+                                  converter = self.converter)
+            s.save()
+        self._pipeline.clear()
+        
+    def __iter__(self):
+        return self._structure(self.obj, self.name).__iter__()
+    
+    def __contains__(self, item):
+        return self._structure(self.obj, self.name).__contains__(item)
+    
+    def size(self):
+        return self._structure(self.obj, self.name).size()
+    
+    def count(self):
+        return self.size()        

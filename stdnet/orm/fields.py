@@ -4,6 +4,7 @@ from datetime import date, datetime
 
 from query import RelatedManager
 from stdnet.exceptions import *
+from stdnet.utils import timestamp2date, date2timestamp
 
 
 
@@ -140,7 +141,7 @@ class DateField(Field):
     '''
     def hash(self, value):
         if isinstance(value,date):
-            return int(1000*time.mktime(value.timetuple()))
+            return date2timestamp(value)
         else:
             return value
         
@@ -150,22 +151,23 @@ class DateField(Field):
     def set_value(self, name, obj, value):
         value = super(DateField,self).set_value(name,obj,value)
         if not isinstance(value,date):
-            value = datetime.fromtimestamp(0.001*value).date()
+            value = timestamp2date(value).date()
         self._value = value
 
 
-class RelatedField(Field):
+class RelatedObject(object):
     
-    def __init__(self, model = None, related_name = None,
-                 relmanager = None, **kwargs):
-        self.model = model
+    def __init__(self,
+                 model,
+                 related_name = None,
+                 relmanager = None):
+        if not model:
+            raise ValueError('Model not specified')
+        self.model        = model
         self.related_name = related_name
-        self.relmanager = relmanager
-        if self.model:
-            kwargs['index'] = True
-        super(RelatedField,self).__init__(**kwargs)
+        self.relmanager   = relmanager
     
-    def register_with_model(self, name, related):
+    def register_related_model(self, name, related):
         if not self.model:
             return
         if self.model == 'self':
@@ -173,13 +175,16 @@ class RelatedField(Field):
         model = self.model
         meta  = model._meta
         related_name = self.related_name or '%s_set' % related._meta.name
-        if related_name not in meta.related:
-            meta.related[related_name] = self.relmanager(name,related)
+        if related_name not in meta.related and related_name not in meta.fields:
+            self.related_name = related_name
+            manager = self.relmanager(related,name)
+            meta.related[related_name] = manager
+            return manager
         else:
             raise FieldError("Duplicated related name %s in model %s and field %s" % (related_name,related,name))
 
 
-class ForeignKey(RelatedField):
+class ForeignKey(Field, RelatedObject):
     '''A field defining a one-to-many objects relationship.
 The StdNet equivalent to `django ForeignKey <http://docs.djangoproject.com/en/dev/ref/models/fields/#foreignkey>`_.
 Requires a positional argument: the class to which the model is related.
@@ -198,13 +203,17 @@ back to self. For example::
         folder = orm.ForeignKey(Folder, related_name = 'files')
         
 '''        
-    def __init__(self, model, **kwargs):
-        if not model:
-            raise ValueError('Model not specified')
+    def __init__(self, model, related_name = None, **kwargs):
+        Field.__init__(self, **kwargs)
+        RelatedObject.__init__(self,
+                               model,
+                               relmanager = RelatedManager,
+                               related_name = related_name)
         self.__value_obj = _novalue
-        super(ForeignKey,self).__init__(model = model,
-                                        relmanager = RelatedManager,
-                                        **kwargs)
+        self.index = True
+        
+    def register_with_model(self, name, related):
+        self.register_related_model(name, related)
     
     def set_value(self, name, obj, value):
         value = super(ForeignKey,self).set_value(name,obj,value)

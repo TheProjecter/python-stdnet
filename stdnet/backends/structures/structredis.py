@@ -48,7 +48,7 @@ class Set(structures.Set):
             s += self.cursor.execute_command('SADD', id, value)
         return s
     
-    def __contains__(self, value):
+    def _contains(self, value):
         return self.cursor.execute_command('SISMEMBER', self.id, value)
     
     def _all(self):
@@ -60,6 +60,9 @@ class OrderedSet(structures.OrderedSet):
     def _size(self):
         '''Size of set'''
         return self.cursor.execute_command('ZCARD', self.id)
+    
+    def _contains(self):
+        return self.cursor.execute_command('ZSCORE', self.id, value) is not None
     
     def _all(self):
         return self.cursor.redispy.zrange(self.id, 0, -1)
