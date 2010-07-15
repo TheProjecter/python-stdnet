@@ -95,7 +95,7 @@ setup(
         cmdclass     = cmdclasses,
         data_files   = data_files,
         classifiers = [
-            'Development Status :: 2 - Pre-Alpha',
+            'Development Status :: 3 - Alpha',
             'Environment :: Plugins',
             'Intended Audience :: Developers',
             'License :: OSI Approved :: BSD License',

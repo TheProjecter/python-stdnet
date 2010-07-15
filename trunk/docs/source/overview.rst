@@ -60,7 +60,7 @@ launch redis and type::
 __ http://en.wikipedia.org/wiki/Object-relational_mapping
 __ http://www.djangoproject.com/
 __ http://packages.python.org/python-stdnet/
-__
+__ http://pypi.python.org/pypi?:action=display&name=python-stdnet
 __ http://code.google.com/p/redis/
 __ http://github.com/andymccurdy/redis-py
 __ http://couchdb.apache.org/
