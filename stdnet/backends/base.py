@@ -235,11 +235,11 @@ class BaseBackend(object):
         raise NotImplementedError
     
     def unordered_set(self, *args, **kwargs):
+        '''Return an instance of :ref:`Set <set-structure>`'''
         raise NotImplementedError
     
     def ordered_set(self, *args, **kwargs):
+        '''Return an instance of :ref:`Ordered Set <orderedset-structure>`'''
         raise NotImplementedError
     
-    def map(self, *args, **kwargs):
-        raise NotImplementedError
 

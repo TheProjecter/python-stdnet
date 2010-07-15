@@ -7,33 +7,40 @@ from stdnet import orm
 from stdnet.contrib.timeserie import models
 from stdnet.contrib.timeserie.utils import dategenerator, default_parse_interval
 from stdnet.utils import populate
-
-class Ticker(orm.StdModel):
-    code    = orm.AtomField(unique = True)
     
-class Field(orm.StdModel):
-    code    = orm.AtomField(unique = True)
 
 class TimeSerie(models.TimeSerie):
-    '''A timeserie model'''
-    ticker  = orm.ForeignKey(Ticker)
-    field   = orm.ForeignKey(Field)
-        
+    data    = models.TimeSerieField(converter = models.DateConverter)
+    ticker  = orm.AtomField(unique = True)
 
-orm.register(Ticker)
-orm.register(Field)
 orm.register(TimeSerie)
 
+NUM_DATES = 300
+
+dates    = populate('date',NUM_DATES)
+values   = populate('float',NUM_DATES, start = 10, end = 400)
+alldata  = list(izip(dates,values))
+testdata = dict(alldata)
 
 class TestTimeSerie(TestBase):
     
     def setUp(self):
-        self.ticker = Ticker(code = 'GOOG').save()
-        self.field = Field(code = 'CLOSE').save()
-        self.ts = TimeSerie(ticker = self.ticker, field = self.field).save()
+        TimeSerie(ticker = 'GOOG').save()
+        
+    def get(self, ticker = 'GOOG'):
+        return TimeSerie.objects.get(ticker = ticker)
+        
+    def filldata(self):
+        d = self.get()
+        d.data.update(testdata)
+        self.assertEqual(d.data.size(),0)
+        d.save()
+        data = d.data
+        self.assertEqual(data.size(),len(testdata))
+        return self.get()
 
-    def fill(self, a, b, targets, C, D):
-        ts = self.ts
+    def interval(self, a, b, targets, C, D):
+        ts = self.get()
         intervals = ts.intervals(a,b)
         self.assertEqual(len(intervals),len(targets))
         for interval,target in izip(intervals,targets):
@@ -47,19 +54,38 @@ class TestTimeSerie(TestBase):
         self.assertEqual(ts.start,C)
         self.assertEqual(ts.end,D)
         
+    def testkeys(self):
+        ts = self.filldata()
+        keyp = None
+        data = testdata.copy()
+        for key in ts.data.sortedkeys():
+            if keyp:
+                self.assertTrue(key,keyp)
+            keyp = key
+            data.pop(key)
+        self.assertEqual(len(data),0)
+        
+    def testitems(self):
+        ts = self.filldata()
+        keyp = None
+        data = testdata.copy()
+        for key,value in ts.data.sorteditems():
+            if keyp:
+                self.assertTrue(key,keyp)
+            keyp = key
+            self.assertEqual(data.pop(key),value)
+        self.assertEqual(len(data),0)
+        
     def testInterval(self):
         '''Test interval handling'''
-        ts = self.ts
+        ts = self.get()
         self.assertEqual(ts.start,None)
         self.assertEqual(ts.end,None)
-        obj = TimeSerie.objects.get(id = 1)
-        self.assertEqual(obj.start,None)
-        self.assertEqual(obj.end,None)
         #
         #
         A1   = date(2010,5,10)
         B1   = date(2010,5,12)
-        self.fill(A1,B1,[[A1,B1]],A1,B1)
+        self.interval(A1,B1,[[A1,B1]],A1,B1)
         #
         #  original ->      A1      B1
         #  request  -> A2      B2
@@ -67,7 +93,7 @@ class TestTimeSerie(TestBase):
         #  range    -> A2          B1
         A2   = date(2010,5,6)
         B2   = date(2010,5,11)
-        self.fill(A2,B2,[[A2,default_parse_interval(A1,-1)]],A2,B1)
+        self.interval(A2,B2,[[A2,default_parse_interval(A1,-1)]],A2,B1)
         #
         #  original ->      A2      B1
         #  request  -> A3                B3
@@ -75,14 +101,14 @@ class TestTimeSerie(TestBase):
         #  range    -> A3                B3
         A3   = date(2010,5,4)
         B3   = date(2010,5,14)
-        self.fill(A3,B3,[[A3,default_parse_interval(A2,-1)],
-                         [default_parse_interval(B1,1),B3]],A3,B3)
+        self.interval(A3,B3,[[A3,default_parse_interval(A2,-1)],
+                             [default_parse_interval(B1,1),B3]],A3,B3)
         #
         # original -> A3                B3
         # request  ->      A2     B2
         # interval -> empty
         # range    -> A3                B3
-        self.fill(A2,B2,[],A3,B3)
+        self.interval(A2,B2,[],A3,B3)
         #
         # original ->          A3                B3
         # request  -> A4  B4
@@ -90,14 +116,14 @@ class TestTimeSerie(TestBase):
         # range    -> A4                         B3
         A4   = date(2010,4,20)
         B4   = date(2010,5,1)
-        self.fill(A4,B4,[[A4,default_parse_interval(A3,-1)]],A4,B3)
+        self.interval(A4,B4,[[A4,default_parse_interval(A3,-1)]],A4,B3)
         #
         # original -> A4                         B3
         # request  ->                A2                  B5
         # interval ->                             B3+    B5
         # range    -> A4                                 B5
         B5   = date(2010,6,1)
-        self.fill(A2,B5,[[default_parse_interval(B3,1),B5]],A4,B5)
+        self.interval(A2,B5,[[default_parse_interval(B3,1),B5]],A4,B5)
         #
         # original -> A4                                 B5
         # request  ->                                        A6    B6
@@ -105,24 +131,5 @@ class TestTimeSerie(TestBase):
         # range    -> A4                                           B6
         A6   = date(2010,7,1)
         B6   = date(2010,8,1)
-        self.fill(A6,B6,[[default_parse_interval(B5,1),B6]],A4,B6)
+        self.interval(A6,B6,[[default_parse_interval(B5,1),B6]],A4,B6)
         
-        
-        
-    def testAdd(self):
-        ts = self.ts
-        dates  = populate('date',100)
-        values = populate('float',100, start = 10, end = 400)
-        for d,v in izip(dates,values):
-            ts.data.add(d,v)
-        ts.save()
-        obj = TimeSerie.objects.get(id = ts.id)
-        data = obj.data.items()
-        data = list(data)
-        self.assertTrue(len(data)>0)
-        #d = None
-        #for dt,value in data:
-        #    if d:
-        #        self.assertTrue(dt>d)
-        #    d = dt
-    

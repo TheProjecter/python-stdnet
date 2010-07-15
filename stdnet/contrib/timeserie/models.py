@@ -2,23 +2,33 @@ from stdnet import orm
 from stdnet.utils import date2timestamp, timestamp2date
 from stdnet.contrib.timeserie.utils import default_parse_interval
 
-class Converter(object):
+class DateTimeConverter(object):
     
     @classmethod
     def tokey(cls, value):
         return date2timestamp(value)
     
     @classmethod
-    def todate(cls, value):
+    def tovalue(cls, value):
         return timestamp2date(value)
+    
+class DateConverter(object):
+    
+    @classmethod
+    def tokey(cls, value):
+        return date2timestamp(value)
+    
+    @classmethod
+    def tovalue(cls, value):
+        return timestamp2date(value).date()
 
 
 class TimeSerieField(orm.HashField):
     '''A timeserie filed specializes :ref:`HashField <hashfield>` by
     providing support for keys given by instances of ``datetime.date``'''
-    def __init__(self, converter = None, **kwargs):
-        self.converter = converter or Converter
-        super(TimeSerieField,self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        kwargs['converter'] = kwargs.pop('converter',None) or DateConverter
+        super(TimeSerieField,self).__init__(*args, **kwargs)      
 
 
 class TimeSerie(orm.StdModel):
@@ -46,11 +56,11 @@ class TimeSerie(orm.StdModel):
 
     def storestartend(self):
         '''Store the start/end date of the timeseries'''
-        dates = self.data.keys()
+        self.save()
+        dates = self.data.sortedkeys()
         if dates:
-            dates.sort()
-            self.start = self.inverse(dates[0])
-            self.end   = self.inverse(dates[-1])
+            self.start = dates[0]
+            self.end   = dates[-1]
         else:
             self.start = None
             self.end   = None

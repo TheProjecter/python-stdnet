@@ -21,6 +21,24 @@ List
    :members:
 
 
+.. _set-structure:
+
+Set
+==============================
+
+.. autoclass:: stdnet.structures.Set
+   :members:
+
+
+.. _orderedset-structure:
+
+OrderedSet
+==============================
+
+.. autoclass:: stdnet.structures.OrderedSet
+   :members:
+
+
 .. _hash-structure:   
    
 HashTable

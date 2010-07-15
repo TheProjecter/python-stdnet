@@ -105,25 +105,3 @@ class HashTable(structures.HashTable):
         [items.extend(item) for item in self._pipeline.iteritems()]
         return self.cursor.execute_command('HMSET',self.id,*items)
     
-    
-class Map(HashTable):
-    
-    def _keys(self, keys, desc):
-        ks = [int(v) for v in keys]
-        ks.sort()
-        if desc:
-            return reversed(ks)
-        else:
-            return ks
-        
-    def keys(self, desc = False):
-        ks = super(Map,self).keys()
-        return self._keys(ks,desc)
-
-    def items(self, desc = False):
-        kv   = self.cursor.execute_command('HGETALL', self.id)
-        keys = self._keys(kv.keys(),desc)
-        loads = self.cursor._res_to_val
-        for key in keys:
-            yield key,loads(kv[str(key)])
-    
