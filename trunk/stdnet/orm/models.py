@@ -88,7 +88,7 @@ database Hash-table.'''
     def delete(self):
         '''Delete an instance from database. If the instance is not available (it does not have an id) and
 ``StdNetException`` exception will raise.'''
-        meta = self.meta
+        meta = self._meta
         if not meta.has_pk():
             raise StdNetException('Cannot delete object. It was never saved.')
         # Gather related objects to delete
@@ -111,12 +111,7 @@ database Hash-table.'''
                 else:
                     odict.pop(name,None)
         return odict
-    
-    @property
-    def meta(self):
-        '''Return an instance of :ref:`Database Metaclass <database-metaclass>`'''
-        return self._meta
-    
+        
     @classmethod
     def commit(cls):
         return cls._meta.cursor.commit()

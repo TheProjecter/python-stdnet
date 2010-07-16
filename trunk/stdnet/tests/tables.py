@@ -2,21 +2,25 @@ import datetime
 import unittest
 import logging
 from itertools import izip
+from random import randint
 
 from stdnet.stdtest import TestBase
 from stdnet import orm
 from stdnet.utils import populate
 from stdnet.exceptions import QuerySetError
 
-from examples.portfolio import Instrument, Fund, Position
+from examples.portfolio import Instrument, Fund, Position, PortfolioView, UserDefaultView
 
 orm.register(Instrument)
 orm.register(Fund)
 orm.register(Position)
+orm.register(PortfolioView)
+orm.register(UserDefaultView)
 
 INST_LEN    = 100
 FUND_LEN    = 10
 POS_LEN     = 30
+NUM_USERS   = 10
 NUM_DATES   = 2
 
 ccys_types  = ['EUR','GBP','AUD','USD','CHF','JPY']
@@ -28,6 +32,9 @@ inst_ccys  = populate('choice',INST_LEN, choice_from = ccys_types)
 
 fund_names = populate('string',FUND_LEN, min_len = 5, max_len = 20)
 fund_ccys  = populate('choice',FUND_LEN, choice_from = ccys_types)
+
+users      = populate('string', NUM_USERS, min_len = 8, max_len = 14)
+view_names = populate('string', 4*FUND_LEN, min_len = 10, max_len = 20)
 
 dates = populate('date',NUM_DATES,start=datetime.date(2009,6,1),end=datetime.date(2010,6,6))
 
@@ -162,5 +169,28 @@ class TestORM(TestBase):
         T = instruments.delete()
         self.assertEqual(T,Np+Ni)
         
+    def __testNestedLookUp(self):
+        # Create Portfolio views
+        funds = Fund.objects.all()
+        N     = funds.count()
+        for name in view_names:
+            fund = funds[randint(0,N-1)] 
+            PortfolioView(name = name, portfolio = fund).save(False)
+        PortfolioView.commit()
+        views = PortfolioView.objects.all()
+        N = views.count()
+        for user in users:
+            for i in range(0,FUND_LEN): 
+                view = views[randint(0,N-1)]
+                user = UserDefaultView(user = user, view = view).save()
+        UserDefaultView.commit()
+        #
+        #Finally do the filtering
+        N = 0
+        for fund in funds:
+            res = UserDefaultView.objects.filter(view__portfolio = fund)
+            N += res.count()
+            
         
+         
 

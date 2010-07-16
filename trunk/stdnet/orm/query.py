@@ -88,18 +88,39 @@ class QuerySet(object):
             self.qset = self._meta.cursor.query(meta, fargs, eargs)
         
     def aggregate(self, kwargs, filter = True):
-        '''Aggregate query results'''
+        '''Aggregate lookup parameters. '''
         unique  = False
         meta    = self._meta
         result  = {}
+        # Loop over 
         for name,value in kwargs.items():
             unique = True
             if name is not 'id':
-                field = meta.fields.get(name,None)
-                if not field:
-                    raise QuerySetError("Could not filter. Field %s not defined." % name)
-                value = field.hash(value)
-                unique = field.unique
+                names = name.split('__')
+                if len(names) == 1:
+                    field = meta.fields.get(name,None)
+                    if not field:
+                        raise QuerySetError("Could not filter. Field %s not defined." % name)
+                    value = field.hash(value)
+                    unique = field.unique
+                else:
+                    # Nested lookup. Not available yet!
+                    raise NotIMplementedError("Nested lookup is not yet available")
+                    fields = []
+                    metf = meta
+                    for subname in names:
+                        if not metf:
+                            raise QuerySetError("Could not filter. Nested queryset %s has no model %s." % (name,subname))
+                        field = metf.fields.get(subname,None)
+                        if self.model:
+                            metf = field.model._meta
+                        else:
+                            metf = None
+                        if not field:
+                            raise QuerySetError("Could not filter. Field %s not defined." % name)
+                        fields.append((model,subname))
+                    value = field.hash(value)
+                    
             if unique:
                 result[name] = value
                 if filter:
@@ -110,31 +131,6 @@ class QuerySet(object):
                     result[name] = value   
             elif field.index:
                 result[name] = value
-            else:
-                raise ValueError("Field %s is not an index" % name)
-        return unique, result
-    
-    def aggregate_(self, kwargs):
-        '''Aggregate query results'''
-        unique  = False
-        meta    = self._meta
-        result  = []
-        for name,value in kwargs.items():
-            if name == 'id':
-                unique = True
-                result = self.getid(value)
-                break
-            field = meta.fields.get(name,None)
-            if not field:
-                raise QuerySetError("Could not filter. Field %s not defined." % name)
-            value = field.get_value(value)
-            if field.unique:
-                unique = True
-                id = meta.cursor.get(meta.basekey(name,value))
-                result = self.getid(id)
-                break
-            elif field.index:
-                result.append(meta.basekey(name,value))
             else:
                 raise ValueError("Field %s is not an index" % name)
         return unique, result

@@ -74,7 +74,7 @@ class BaseBackend(object):
         * *obj* instance of :ref:`StdModel <model-model>` to add to database
         * *commit* If True, *obj* is saved to database, otherwise it remains in local cache.
         '''
-        meta   = obj.meta
+        meta   = obj._meta
         id     = meta.basekey()
         cache  = self._cachepipe
         cvalue = cache.get(id,None)
@@ -136,7 +136,7 @@ class BaseBackend(object):
             
     def delete_object(self, obj):
         '''Delete an object from the database'''
-        meta   = obj.meta
+        meta   = obj._meta
         id     = meta.basekey()
         hash   = self.hash(id)
         if not hash.delete(obj.id):
