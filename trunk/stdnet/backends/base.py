@@ -1,4 +1,4 @@
-from stdnet.exceptions import ImproperlyConfigured, BadCacheDataStructure
+from stdnet.exceptions import *
 
 novalue = object()
 
@@ -66,6 +66,8 @@ class BaseBackend(object):
     def get_object(self, meta, name, value):
         if name != 'id':
             value = self.get(meta.basekey(name,value))
+        if value is None:
+            raise ObjectNotFund
         return self.hash(meta.basekey()).get(value)
     
     def add_object(self, obj, commit = True):

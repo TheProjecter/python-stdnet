@@ -50,8 +50,12 @@ database Hash-table.'''
                 try:
                     return self._meta.related[name]
                 except KeyError:
-                    raise AttributeError("object '%s' has not attribute %s" % (self,name))
-            
+                    return self.customAttribute(name)
+        
+    def customAttribute(self, name):
+        '''Override this function to provide custom attributes'''
+        raise AttributeError("object '%s' has not attribute %s" % (self,name))
+    
     def __set_field(self, name, field, value):
         if field:
             field.set_value(name,self,value)

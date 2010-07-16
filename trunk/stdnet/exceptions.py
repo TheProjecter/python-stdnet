@@ -27,4 +27,9 @@ class FieldValueError(FieldError):
     pass
 
 class QuerySetError(StdNetException):
+    '''Raised when queryset is malformed.'''
+    pass
+
+class ObjectNotFund(QuerySetError):
+    '''Raised when a get queryset has no result.'''
     pass

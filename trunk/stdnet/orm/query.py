@@ -94,7 +94,6 @@ class QuerySet(object):
         result  = {}
         # Loop over 
         for name,value in kwargs.items():
-            unique = True
             if name is not 'id':
                 names = name.split('__')
                 if len(names) == 1:
