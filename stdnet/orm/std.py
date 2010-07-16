@@ -223,7 +223,7 @@ back to self. For example::
         self._add(value,self.related_name,self.obj)
     
     def _structure(self, obj, name):
-        meta = obj.meta
+        meta = obj._meta
         id   = meta.basekey('id',obj.id,name)
         return self.structure(id,
                               timeout = meta.timeout,

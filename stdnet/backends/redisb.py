@@ -44,7 +44,7 @@ class BackEnd(BaseBackend):
             
     def delete_indexes(self, obj):
         '''Delete an object from the database'''
-        meta  = obj.meta
+        meta  = obj._meta
         objid = obj.id
         for field in meta.fields.itervalues():
             if field.primary_key:

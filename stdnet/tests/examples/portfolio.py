@@ -32,3 +32,11 @@ class Position(orm.StdModel):
         self.price = price
         super(Position,self).__init__(**kwargs)
 
+
+class PortfolioView(orm.StdModel):
+    name      = orm.AtomField()
+    portfolio = orm.ForeignKey(Fund)
+    
+class UserDefaultView(orm.StdModel):
+    user = orm.AtomField()
+    view = orm.ForeignKey(PortfolioView)

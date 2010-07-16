@@ -50,6 +50,7 @@ class Field(object):
         self.obj      = None
         self.meta     = None
         self.name     = None
+        self.model    = None
         
     def register_with_model(self, fieldname, model):
         pass
