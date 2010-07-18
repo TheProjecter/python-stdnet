@@ -88,37 +88,36 @@ class QuerySet(object):
             self.qset = self._meta.cursor.query(meta, fargs, eargs)
         
     def aggregate(self, kwargs, filter = True):
-        '''Aggregate lookup parameters. '''
+        '''Aggregate lookup parameters.'''
         unique  = False
         meta    = self._meta
         result  = {}
         # Loop over 
         for name,value in kwargs.items():
-            if name is not 'id':
-                names = name.split('__')
-                if len(names) == 1:
-                    field = meta.fields.get(name,None)
+            names = name.split('__')
+            if len(names) == 1:
+                field = meta.fields.get(name,None)
+                if not field:
+                    raise QuerySetError("Could not filter. Field %s not defined." % name)
+                value = field.hash(value)
+                unique = field.unique
+            else:
+                # Nested lookup. Not available yet!
+                raise NotIMplementedError("Nested lookup is not yet available")
+                fields = []
+                metf = meta
+                for subname in names:
+                    if not metf:
+                        raise QuerySetError("Could not filter. Nested queryset %s has no model %s." % (name,subname))
+                    field = metf.fields.get(subname,None)
+                    if self.model:
+                        metf = field.model._meta
+                    else:
+                        metf = None
                     if not field:
                         raise QuerySetError("Could not filter. Field %s not defined." % name)
-                    value = field.hash(value)
-                    unique = field.unique
-                else:
-                    # Nested lookup. Not available yet!
-                    raise NotIMplementedError("Nested lookup is not yet available")
-                    fields = []
-                    metf = meta
-                    for subname in names:
-                        if not metf:
-                            raise QuerySetError("Could not filter. Nested queryset %s has no model %s." % (name,subname))
-                        field = metf.fields.get(subname,None)
-                        if self.model:
-                            metf = field.model._meta
-                        else:
-                            metf = None
-                        if not field:
-                            raise QuerySetError("Could not filter. Field %s not defined." % name)
-                        fields.append((model,subname))
-                    value = field.hash(value)
+                    fields.append((model,subname))
+                value = field.hash(value)
                     
             if unique:
                 result[name] = value

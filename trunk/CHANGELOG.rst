@@ -1,5 +1,8 @@
+python-stdnet 0.3.1
+========================================
+ 
 
-python-stdnet 0.3.0
+python-stdnet 0.3.0 - 2010 July 15
 ========================================
  * Overall code refactoring.
  * Added ListField and OrderedSetField with Redis implementation.
