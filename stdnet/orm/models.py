@@ -71,7 +71,7 @@ database Hash-table.'''
         if meta.isvalid():
             meta.cursor.add_object(self, commit = commit)
         else:
-            raise ObjectNotValidated('Object %s is not validated')
+            raise ObjectNotValidated('Object %s did not validate. Cannot save to database.' % self)
         return self
     
     def isvalid(self):
