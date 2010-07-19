@@ -14,9 +14,12 @@ http://packages.python.org/python-stdnet/
 Downloads at
 http://pypi.python.org/pypi?:action=display&name=python-stdnet
 
-Install
+Install::
 
 	easy_install python-stdnet
+	
+or::
+
 	pip install python-stdnet
 
 

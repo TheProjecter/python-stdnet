@@ -64,11 +64,20 @@ class BaseBackend(object):
         pass
     
     def get_object(self, meta, name, value):
+        '''Retrive an object from the database. If object is not available, it raise
+and :ref:`ObjectNotFund <utility-exceptions>` exception.
+
+    * *meta* :ref:`database metaclass <database-metaclass>` or model
+    * *name* name of field (must be unique)
+    * *value* value of field to search.'''
         if name != 'id':
             value = self._get(meta.basekey(name,value))
         if value is None:
             raise ObjectNotFund
-        return self.hash(meta.basekey()).get(value)
+        value = self.hash(meta.basekey()).get(value)
+        if value is None:
+            raise ObjectNotFund
+        return value
     
     def add_object(self, obj, commit = True):
         '''Add a model object to the database:
