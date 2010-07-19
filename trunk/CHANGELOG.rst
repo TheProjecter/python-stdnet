@@ -1,4 +1,4 @@
-python-stdnet 0.3.1 
+python-stdnet 0.3.1 - 2010 July 19
 ========================================
  * Bug fixes.
  * 27 tests.
