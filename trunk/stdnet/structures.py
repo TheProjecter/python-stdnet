@@ -205,8 +205,20 @@ class HashTable(Structure):
         for key,value in mapping.iteritems():
             p[tokey(key)] = dumps(value)
     
-    def get(self, key):
-        raise NotImplementedError
+    def get(self, key, default = None):
+        kv = self.converter.tokey(key)
+        value = self._get(kv)
+        if value is not None:
+            return self.pickler.loads(value)
+        else:
+            return default
+    
+    def __getitem__(self, key):
+        v = self.get(key)
+        if v is None:
+            raise KeyError('%s not available' % key)
+        else:
+            return v
     
     def mget(self, keys):
         '''Return a generator of key-value pairs for the keys requested'''
@@ -254,6 +266,9 @@ class HashTable(Structure):
     # PURE VIRTUAL METHODS
     
     def _contains(self, value):
+        raise NotImplementedError
+    
+    def _get(self, key):
         raise NotImplementedError
     
     def _keys(self):

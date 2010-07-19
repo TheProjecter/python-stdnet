@@ -1,5 +1,7 @@
-python-stdnet 0.3.1
+python-stdnet 
 ========================================
+ * Bug fix in get/set for strings.
+ * 27 tests.
  
 
 python-stdnet 0.3.0 - 2010 July 15

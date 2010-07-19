@@ -33,13 +33,13 @@ class BackEnd(BaseBackend):
     def has_key(self, id):
         return self.execute_command('EXISTS', id)
     
-    def set(self, id, value, timeout = None):
-        value = self._val_to_store_info(value)
-        r = self._cache.set(id,value)
-        self.set_timeout(id,timeout)
-        return r
+    def _set(self, id, value, timeout):
+        if timeout:
+            return self.execute_command('SETEX', id, timeout, value)
+        else:
+            return self.execute_command('SET', id, value)
     
-    def get(self, id):
+    def _get(self, id):
         return self.execute_command('GET', id)
             
     def delete_indexes(self, obj):

@@ -1,5 +1,5 @@
 from copy import copy
-from stdnet.exceptions import QuerySetError
+from stdnet.exceptions import QuerySetError, ObjectNotFund
 
 
 class svset(object):
@@ -187,11 +187,15 @@ class Manager(object):
         return qs.get()
     
     def get_or_create(self, **kwargs):
-        res = self.get(**kwargs)
-        if not res:
+        '''Get an object. If it does not exists, it creates one'''
+        try:
+            res = self.get(**kwargs)
+            created = False
+        except ObjectNotFund:
             res = self.model(**kwargs)
             res.save()
-        return res
+            created = True
+        return res,created
     
     def filter(self, **kwargs):
         return QuerySet(self._meta, fargs = kwargs)
