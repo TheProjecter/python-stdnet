@@ -83,9 +83,8 @@ class HashTable(structures.HashTable):
     def delete(self):
         return self.cursor.execute_command('DEL', self.id)
     
-    def get(self, key):
-        key = self.converter.tokey(key)
-        return self.pickler.loads(self.cursor.execute_command('HGET', self.id, key))
+    def _get(self, key):
+        return self.cursor.execute_command('HGET', self.id, key)
     
     def _mget(self, keys):
         return self.cursor.execute_command('HMGET', self.id, *keys)

@@ -136,3 +136,19 @@ class TestTimeSerie(TestBase):
         B6   = date(2010,8,1)
         self.interval(A6,B6,[[default_parse_interval(B5,1),B6]],A4,B6)
         
+    def testGetSet(self):
+        ts = self.get()
+        dt = date(2010,7,1)
+        dt2 = date(2010,4,1)
+        ts.data.add(dt,56)
+        ts.data[dt2] = 78
+        ts.save()
+        self.assertEqual(ts.data.get(dt),56)
+        self.assertEqual(ts.data[dt2],78)
+        try:
+            ts.data[date(2010,3,1)]
+        except KeyError:
+            pass
+        else:
+            self.fail('KeyError')
+        self.assertEqual(ts.data.get(date(2010,3,1)),None)

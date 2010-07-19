@@ -39,7 +39,7 @@ def parse_backend_uri(backend_uri):
     return scheme, host, params
 
 
-def getdb(backend_uri):
+def getdb(backend_uri, pickler = None):
     if not backend_uri:
         return None
     scheme, host, params = parse_backend_uri(backend_uri)
@@ -48,4 +48,4 @@ def getdb(backend_uri):
     else:
         name = scheme
     module = import_module(name)
-    return getattr(module, 'BackEnd')(scheme, host, params)
+    return getattr(module, 'BackEnd')(scheme, host, params, pickler = pickler)

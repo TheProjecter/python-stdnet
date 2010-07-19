@@ -1,5 +1,5 @@
 import copy
-from stdnet.main import getdb
+from stdnet.main import getdb as _getdb
 from stdnet.conf import settings
 
 from query import Manager    
@@ -27,12 +27,16 @@ def register(model, backend = None, keyprefix = None, timeout = 0):
     else:
         objects = copy.copy(objects)
     model.objects    = objects
-    meta.cursor      = getdb(backend)
+    meta.cursor      = _getdb(backend)
     objects.model    = model
     objects._meta    = meta
     objects.cursor   = meta.cursor
     _registry[model] = meta
     return meta.cursor.name
+
+
+def getdb(backend = None, pickler = None):
+    return _getdb(backend or settings.DEFAULT_BACKEND, pickler = pickler)
     
 
 _registry = {}

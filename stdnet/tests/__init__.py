@@ -1,6 +1,8 @@
 #from odict import *
 #from backend_tests import *
 
+from strings import *
+from manager import *
 from tables import *
 from fktest import *
 from datefield import *

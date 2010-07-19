@@ -36,7 +36,7 @@ class BaseBackend(object):
     * *params* dictionary of configuration parameters
     * *pickler* calss for serializing and unserializing data. It must implement the *loads* and *dumps* methods.
     '''
-    def __init__(self, name, params, pickler = default_pickler):
+    def __init__(self, name, params, pickler = None):
         self.__name = name
         timeout = params.get('timeout', 0)
         try:
@@ -48,7 +48,7 @@ class BaseBackend(object):
         self._keys      = {}
         self.fields     = []
         self.params     = params
-        self.pickler    = pickler 
+        self.pickler    = pickler or default_pickler
 
     @property
     def name(self):
@@ -65,7 +65,7 @@ class BaseBackend(object):
     
     def get_object(self, meta, name, value):
         if name != 'id':
-            value = self.get(meta.basekey(name,value))
+            value = self._get(meta.basekey(name,value))
         if value is None:
             raise ObjectNotFund
         return self.hash(meta.basekey()).get(value)
@@ -148,13 +148,17 @@ class BaseBackend(object):
     
     def delete_indexes(self, obj):
         pass
-            
-    def get(self, key, default=None):
-        """
-        Fetch a given key from the cache. If the key does not exist, return
-        default, which itself defaults to None.
-        """
-        raise NotImplementedError
+    
+    def set(self, id, value, timeout = None):
+        value = self.pickler.dumps(value)
+        return self._set(id,value,timeout)
+    
+    def get(self, id, default = None):
+        v = self._get(id)
+        if v:
+            return self.pickler.loads(v)
+        else:
+            return default
 
     def get_many(self, keys):
         """
@@ -220,6 +224,12 @@ class BaseBackend(object):
         raise NotImplementedError
 
     # VIRTUAL METHODS
+    
+    def _set(self, id, value, timeout):
+        raise NotImplementedError
+    
+    def _get(self, id):
+        raise NotImplementedError
     
     def _set_keys(self):
         raise NotImplementedError

@@ -34,6 +34,12 @@ exits.  If any code block or function marked with timethis() is
 executed more than once, timing measurements are collected 
 and used to calculate a mean and standard deviation.
 """
+import sys
+
+if sys.version_info < (2,6):
+    if sys.version_info < (2,5):
+        raise ImportWarning('with statement not available for Python %s' % sys.version)
+    from __future__ import with_statement
 
 import atexit
 import time
