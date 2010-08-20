@@ -104,8 +104,8 @@ tuples.'''
                 end = end1
 
         # Set values in the cache in order to avoid duplicate calculations
-        self.start = start
-        self.end   = end
-        self.save()
+        #self.start = start
+        #self.end   = end
+        #self.save()
         return calc_intervals 
 
