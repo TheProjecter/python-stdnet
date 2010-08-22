@@ -38,6 +38,7 @@ Contents
    backends/index
    utility/index
    contrib/index
+   changelog
    
 
 Indices and tables
