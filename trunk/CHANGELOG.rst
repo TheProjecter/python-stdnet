@@ -4,7 +4,7 @@
 Changelog
 =============================
 
-version 0.3.2 - trunk
+version 0.3.2 - 2010 August 23
 ========================================
 * Fixed a bug on ``orm.DateField`` when ``required`` is set to ``False``.
 * ``Changelog`` included in documentation.
