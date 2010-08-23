@@ -1,0 +1,1 @@
+/home/lsbardel/workspace/python-stdnet/CHANGELOG.rst
