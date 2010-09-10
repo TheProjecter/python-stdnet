@@ -1,1 +1,7 @@
-/home/lsbardel/workspace/python-stdnet/CHANGELOG.rst
+hangelog:
+
+=====================
+Overview
+=====================
+
+.. include:: ../../CHANGELOG.rst

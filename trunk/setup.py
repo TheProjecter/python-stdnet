@@ -94,6 +94,7 @@ setup(
         packages     = packages,
         cmdclass     = cmdclasses,
         data_files   = data_files,
+        install_requires = ['redis>=2.0'],
         classifiers = [
             'Development Status :: 3 - Alpha',
             'Environment :: Plugins',
