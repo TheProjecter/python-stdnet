@@ -4,9 +4,10 @@ from distutils.command.install import INSTALL_SCHEMES
 import os
 import sys
 
-package_name = 'stdnet'
-root_dir     = os.path.split(os.path.abspath(__file__))[0]
-package_dir  = os.path.join(root_dir, package_name)
+package_name     = 'stdnet'
+package_fullname = 'python-%s' % package_name
+root_dir         = os.path.split(os.path.abspath(__file__))[0]
+package_dir      = os.path.join(root_dir, package_name)
 
 
 class osx_install_data(install_data):
@@ -84,7 +85,7 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
         
 
 setup(
-        name         = package_name,
+        name         = package_fullname,
         version      = mod.__version__,
         author       = mod.__author__,
         author_email = mod.__contact__,
