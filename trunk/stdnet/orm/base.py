@@ -1,6 +1,7 @@
 import copy
 from fields import Field, AutoField
 from stdnet.exceptions import *
+from query import UnregisteredManager 
 
 def get_fields(bases, attrs):
     fields = {}
@@ -113,7 +114,6 @@ class Metaclass(object):
         return obj
 
 
-
 class DataMetaClass(type):
     '''StdModel python metaclass'''
     def __new__(cls, name, bases, attrs):
@@ -133,6 +133,9 @@ class DataMetaClass(type):
         else:
             kwargs   = {}
         Metaclass(new_class,fields,**kwargs)
+        objects = getattr(new_class,'objects',None)
+        if objects is None:
+            new_class.objects = UnregisteredManager(new_class)
         return new_class
     
 
