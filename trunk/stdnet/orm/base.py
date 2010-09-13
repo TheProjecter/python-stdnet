@@ -91,12 +91,15 @@ class Metaclass(object):
         return self.cursor.hash(self.basekey())
     
     def isvalid(self):
+        validation_errors = {}
         valid = True
         for field in self.fields.itervalues():
             try:
                 valid = valid & field.isvalid()
-            except FieldError:
+            except FieldError, e:
                 valid = False
+                validation_errors[field.name] = str(e)
+        self.validation_errors = validation_errors 
         return valid
     
     def related_objects(self):
