@@ -1,5 +1,5 @@
 
-stdnet 0.3.3
+stdnet 0.3.3 - 2010 September 13
 ========================================
 * If a model is not registered and the manager method is accessed, it raises ``ModelNotRegistered``
 * Changed the way tests are run. See documentation
