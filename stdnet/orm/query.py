@@ -1,5 +1,5 @@
 from copy import copy
-from stdnet.exceptions import QuerySetError, ObjectNotFund
+from stdnet.exceptions import *
 
 
 class svset(object):
@@ -229,5 +229,13 @@ class RelatedManager(Manager):
         return copy(self)
 
     
+class UnregisteredManager(object):
     
+    def __init__(self, model):
+        self.model = model
+        
+    def __getattr__(self, name):
+        raise ModelNotRegistered('Model %s is not registered with a backend' % self.model.__name__)
+
+
     

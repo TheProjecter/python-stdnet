@@ -11,3 +11,4 @@ from ordered_set import *
 from hashfield import *
 from twitter import *
 from stdnet.contrib.timeserie.tests import *
+from testme import *

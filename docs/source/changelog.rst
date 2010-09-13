@@ -1,7 +1,1 @@
-hangelog:
-
-=====================
-Overview
-=====================
-
-.. include:: ../../CHANGELOG.rst
+ahngelog:=========================Changelog=========================.. include:: ../../CHANGELOG.rst

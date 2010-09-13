@@ -1,7 +1,7 @@
 import copy
 from stdnet.main import getdb as _getdb
 
-from query import Manager    
+from query import Manager, UnregisteredManager
 
 def clear(backend = None):
     from stdnet.conf import settings
@@ -23,7 +23,7 @@ def register(model, backend = None, keyprefix = None, timeout = 0):
     meta.keyprefix = prefix
     meta.timeout   = timeout or 0
     objects = getattr(model,'objects',None)
-    if not objects:
+    if objects is None or isinstance(objects,UnregisteredManager):
         objects = Manager()
     else:
         objects = copy.copy(objects)
