@@ -2,7 +2,7 @@ import unittest
 from itertools import izip
 from timeit import default_timer as timer
 
-from stdnet.main import get_cache
+from stdnet.main import getdb
 from stdnet.utils import populate, date2timestamp, OrderedDict
 from stdnet import settings_test
 
