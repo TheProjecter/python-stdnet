@@ -95,15 +95,23 @@ class QuerySet(object):
         # Loop over 
         for name,value in kwargs.items():
             names = name.split('__')
-            if len(names) == 1:
+            N = len(names)
+            # simple lookup for example filter(name = 'pippo')
+            if N == 1:
                 field = meta.fields.get(name,None)
                 if not field:
                     raise QuerySetError("Could not filter. Field %s not defined." % name)
                 value = field.hash(value)
                 unique = field.unique
-            else:
+            # group lookup filter(name_in ['pippo','luca'])
+            elif N == 2 and names[1] == 'in':
+                field = meta.fields.get(names[0],None)
+                if not field:
+                    raise QuerySetError("Could not filter. Field %s not defined." % names[0])
+                value = field.hash(value)
+            else: 
                 # Nested lookup. Not available yet!
-                raise NotIMplementedError("Nested lookup is not yet available")
+                raise NotImplementedError("Nested lookup is not yet available")
                 fields = []
                 metf = meta
                 for subname in names:
