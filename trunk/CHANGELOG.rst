@@ -1,3 +1,7 @@
+stdnet Development
+=================================
+* Added a new module ``stdnet.contrib.monitor`` for monitoring objects on the web. The module requires djpcms_.
+
 
 stdnet 0.3.3 - 2010 September 13
 ========================================
@@ -42,3 +46,6 @@ stdnet 0.2.0  - 2010 June 21
 * ``Redis`` backend
 * Initial ``ORM`` with ``AtomField``, ``DateField`` and ``ForeignKey``
 * **8 tests**
+
+
+.. _djpcms: http://djpcms.com
