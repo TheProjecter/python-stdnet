@@ -1,3 +1,4 @@
+import sys
 import copy
 from fields import Field, AutoField
 from stdnet.exceptions import *
@@ -54,6 +55,12 @@ class Metaclass(object):
         self.cursor = None
         self.keys  = None
         
+    def __repr__(self):
+        return '%s.%s' % (self.app_label,self.name)
+    
+    def __str__(self):
+        return self.__repr__()
+    
     @property
     def pk(self):
         '''primary key field'''
@@ -128,14 +135,19 @@ class DataMetaClass(type):
         # remove the Meta class if present
         meta      = attrs.pop('Meta', None)
         # remove and build field list
-        fields    = get_fields(bases, attrs)
+        fields    = get_fields(bases, attrs)        
         # create the new class
         new_class = super_new(cls, name, bases, attrs)
         if meta:
             kwargs   = meta_options(**meta.__dict__)
         else:
             kwargs   = {}
-        Metaclass(new_class,fields,**kwargs)
+        meta = Metaclass(new_class,fields,**kwargs)
+        if getattr(meta, 'app_label', None) is None:
+            # Figure out the app_label a-la django
+            model_module = sys.modules[new_class.__module__]
+            setattr(meta,'app_label',model_module.__name__.split('.')[-2])
+            
         objects = getattr(new_class,'objects',None)
         if objects is None:
             new_class.objects = UnregisteredManager(new_class)
