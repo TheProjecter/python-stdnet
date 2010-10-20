@@ -39,6 +39,10 @@ class TimeSerie(orm.StdModel):
         self.start = start
         self.end   = end
     
+    def size(self):
+        '''number of dates in timeseries'''
+        return self.data.size()
+        
     def fromto(self):
         if self.start:
             return '%s - %s' % (self.start.strftime('%Y %m %d'),self.end.strftime('%Y %m %d'))
