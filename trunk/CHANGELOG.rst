@@ -1,5 +1,6 @@
 stdnet Development
 =================================
+* Added ``app_label`` attribute to :class:`stdnet.orm.DataMetaClass`.
 * Added a new module ``stdnet.contrib.monitor`` for monitoring objects on the web. The module requires djpcms_.
 
 
