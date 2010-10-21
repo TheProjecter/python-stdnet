@@ -1,8 +1,8 @@
 from stdnet import orm
 
 class Base(orm.StdModel):
-    name = orm.AtomField(unique = True)
-    ccy  = orm.AtomField()
+    name = orm.SymbolField(unique = True)
+    ccy  = orm.SymbolField()
     
     def __str__(self):
         return str(self.name)
@@ -12,11 +12,11 @@ class Base(orm.StdModel):
 
 
 class Instrument(Base):
-    type = orm.AtomField()
+    type = orm.SymbolField()
 
     
 class Fund(Base):
-    pass
+    description = orm.CharField()
 
 
 class Position(orm.StdModel):

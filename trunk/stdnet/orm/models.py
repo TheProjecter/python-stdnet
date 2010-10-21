@@ -1,5 +1,5 @@
 import copy
-from base import DataMetaClass
+from base import StdNetType
 from fields import _novalue
 from stdnet.exceptions import *
 
@@ -7,10 +7,16 @@ from stdnet.exceptions import *
 class StdModel(object):
     '''A model is the single, definitive source of data
 about your data. It contains the essential fields and behaviors
-of the data you're storing. Each model maps to a single
-database Hash-table.'''
+of the data you're storing. Each model class
+maps to a single :class:`stdnet.HashTable` structure. via
+the :attr:`StdModel._meta` attribute.
 
-    __metaclass__ = DataMetaClass
+.. attribute:: _meta
+
+    Instance of :class:`stdnet.orm.base.Metaclass`
+    
+'''
+    __metaclass__ = StdNetType
     
     def __init__(self, **kwargs):
         self._load(kwargs)
@@ -58,13 +64,14 @@ database Hash-table.'''
     
     def __set_field(self, name, field, value):
         if field:
-            field.set_value(name,self,value)
+            field._set_value(name,self,value)
         else:
             self.__dict__[name] = value
     
     def save(self, commit = True):
-        '''Save the instance to the back-end database. The model must be registered with a backend
-    otherwise a ``ModelNotRegistered`` exception will be raised.'''
+        '''Save the instance in the remote :class:`stdnet.HashTable`
+The model must be registered with a backend
+otherwise a ``ModelNotRegistered`` exception will be raised.'''
         meta = self._meta
         if not meta.cursor:
             raise ModelNotRegistered('Model %s is not registered with a backend database. Cannot save any instance.' % meta.name)

@@ -7,13 +7,19 @@ StdNet Models
 ============================
 
 The StdNet Object Relational Mapper presents a method of
-associating user-defined Python classes with
-a database :ref:`backends <backends>` data. These python classes
+associating user-defined Python classes, referred as **models**,
+with :class:`stdnet.HashTable` structures in
+a :class:`stdnet.BackendDataServer`.
+These python classes
 are referred as **models** and are subclasses of
 :class:`stdnet.orm.StdModel`.
 
+Each instance of model represents a key-value
+in the corresponding :class:`stdnet.HashTable`.
+
 .. autoclass:: stdnet.orm.StdModel
    :members:
+   :member-order: bysource
 
 
 .. _creating-models:
@@ -54,8 +60,9 @@ the database number (very useful for separating data on the same redis instance)
  
 .. _database-metaclass:
 
-Database Metaclass
+Data Server Metaclass
 ==========================
 
 .. autoclass:: stdnet.orm.base.Metaclass
    :members:
+   :member-order: bysource

@@ -1,5 +1,16 @@
 '''Interfaces for supported data-structures'''
 
+from stdnet.utils import listPipeline, many2manyPipeline
+
+
+__all__ = ['PipeLine',
+           'pipelines',
+           'Structure',
+           'List',
+           'Set',
+           'OrderedSet',
+           'HashTable']
+
 class keyconverter(object):
     
     @classmethod
@@ -9,6 +20,49 @@ class keyconverter(object):
     @classmethod
     def tovalue(cls, value):
         return value
+    
+    
+class PipeLine(object):
+    '''Struicture pipeline'''
+    def __init__(self, pipe, method, timeout):
+        self.pipe = pipe
+        self.method = method
+        self.timeout = timeout
+        
+    def __repr__(self):
+        return self.pipe.__repr__()
+        
+class HashPipe(PipeLine):
+    def __init__(self, timeout):
+        super(HashPipe,self).__init__({},'hash',timeout)
+
+class SetPipe(PipeLine):
+    def __init__(self, timeout):
+        super(SetPipe,self).__init__(set(),'unordered_set',timeout)
+        
+class OsetPipe(PipeLine):
+    def __init__(self, timeout):
+        super(OsetPipe,self).__init__(set(),'ordered_set',timeout)        
+
+class ListPipe(PipeLine):
+    def __init__(self, timeout):
+        super(ListPipe,self).__init__(listPipeline(),'list',timeout)
+        
+class Many2Many(PipeLine):
+    def __init__(self, timeout):
+        super(Many2Many,self).__init__(many2manyPipeline(),'unordered_set',timeout)
+
+_pipelines = {'list':ListPipe,
+              'hash': HashPipe,
+              'set': SetPipe,
+              'oset': OsetPipe,
+              'many2many': Many2Many}
+
+
+def pipelines(typ, timeout):
+    global _pipelines
+    pip = _pipelines[typ]
+    return pip(timeout)
 
 
 class Structure(object):
@@ -25,15 +79,21 @@ class Structure(object):
 .. attribute:: timeout
 
     Expiry timeout. If different from zero it represents the number of seconds
-    after which the structure is deleted from the data server. Default ``0``.'''
-    def __init__(self, cursor, id, timeout = 0, pipeline = None,
+    after which the structure is deleted from the data server. Default ``0``.
+    
+.. attribute:: _pipeline
+
+    An instance :class:`PipeLine`
+
+    '''
+    
+    def __init__(self, cursor, id, pipeline = None,
                  pickler = None, **kwargs):
         self.cursor    = cursor
         self.pickler   = pickler or cursor.pickler
         self.id        = id
-        self.timeout   = timeout
-        self._cache    = None
         self._pipeline = pipeline
+        self._cache    = None
     
     def __repr__(self):
         base = '%s:%s' % (self.__class__.__name__,self.id)

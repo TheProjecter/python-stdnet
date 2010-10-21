@@ -61,7 +61,8 @@ class QuerySet(object):
     #    return meta.cursor.hash(meta.basekey()).get(id)
     
     def count(self):
-        '''Return the number of objects in the queryset without fetching objects'''
+        '''Return the number of objects in ``self`` without
+fetching objects.'''
         self.buildquery()
         if self.qset == 'all':
             meta = self._meta
@@ -154,10 +155,10 @@ class QuerySet(object):
             raise QuerySetError('Get query yielded non unique results')
         
     def items(self):
-        '''Generator of queryset objects'''
+        '''Generator of instances in queryset.'''
         self.buildquery()
         meta = self._meta
-        ids = self.qset
+        ids  = self.qset
         if isinstance(ids,svset):
             yield ids.result
         else:

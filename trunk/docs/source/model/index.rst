@@ -26,6 +26,7 @@ Contents:
    models
    fields
    structure
+   query
 
 __ http://www.sqlalchemy.org/   
 __ http://docs.djangoproject.com/en/dev/ref/models/instances/

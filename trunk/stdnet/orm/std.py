@@ -1,11 +1,12 @@
 from fields import Field, RelatedObject, _novalue
 
 from stdnet.exceptions import *
-from stdnet.utils import ModelFieldPickler, listPipeline, many2manyPipeline
+from stdnet import pipelines
+from stdnet.utils import ModelFieldPickler
 
 
 class MultiField(Field):
-    '''Base virtual class for data-structure fields:
+    '''Virtual class for data-structure fields:
     
     * *model* optional :ref:`StdModel <model-model>` class.
     * *related_name* same as :ref:`ForeignKey <foreignkey>` Field.
@@ -24,7 +25,6 @@ class MultiField(Field):
                     return value
             
     '''
-    backend_structure = None
     _pipeline = None
     
     def __init__(self,
@@ -47,21 +47,22 @@ class MultiField(Field):
             self.model = related
         
     def get_full_value(self):
-        id = self.meta.basekey('id',self.obj.id,self.name)
+        meta = self.meta
+        id = meta.basekey('id',self.obj.id,self.name)
         return self.structure(id,
-                              timeout = self.meta.timeout,
-                              pipeline = self._pipeline,
+                              timeout = meta.timeout,
                               pickler = self.pickler,
                               converter = self.converter)
     
-    def set_value(self, name, obj, value):
-        v = super(MultiField,self).set_value(name, obj, value)
+    def _set_value(self, name, obj, value):
+        v = super(MultiField,self)._set_value(name, obj, value)
         self.set_structure()
         return v
         
     def set_structure(self):
         meta = self.meta
-        self.structure = getattr(meta.cursor,self.backend_structure,None)
+        pipe = pipelines(self.get_pipeline(),meta.timeout)
+        self.structure = getattr(meta.cursor,pipe.method,None)
         if self.model and not self.pickler:
             self.pickler = ModelFieldPickler(self.model)
     
@@ -78,13 +79,8 @@ class MultiField(Field):
                     related.add(self.obj)
                     related.save(commit)
     
-    def save(self):
-        return self.get_full_value().save()
-        
-    def __deepcopy__(self, memodict):
-        obj = super(MultiField,self).__deepcopy__(memodict)
-        obj._pipeline = self.__class__._pipeline()
-        return obj
+    #def save(self):
+    #    return self.get_full_value().save()
 
 
 class SetField(MultiField):
@@ -110,8 +106,8 @@ It can be used in the following way::
     True
     >>> _
     '''
-    backend_structure = 'unordered_set'
-    _pipeline = set
+    def get_pipeline(self):
+        return 'oset' if self.ordered else 'set'
     
 
 class ListField(MultiField):
@@ -129,62 +125,45 @@ Can be used as::
     >>> m.messages.push_back("ciao")
     >>> m.save()
     '''
-    backend_structure = 'list'
-    _pipeline = listPipeline                
-
-
-class OrderedSetField(SetField):
-    '''A field maintaining an ordered set of values. It is initiated without any argument.
-For example::
-    
-    import time
-    from datetime import date
-    from stdnet import orm
-    
-    class DateValue(object):
-        def __init__(self, dt, value):
-            self.dt = dt
-            self.value = value
-    
-        def score(self):
-            "implement the score function for sorting in the ordered set"
-            return int(1000*time.mktime(self.dt.timetuple()))
-    
-    class TimeSerie(orm.StdModel):
-        ticker = orm.AtomField()
-        data   = orm.OrderedSetField()
-    
-    
-And to use it::
-
-    >>> m = TimeSerie(ticker = 'GOOG')
-    >>> m.data.add(DateValue(date(2010,6,1), 482.37))
-    >>> m.data.add(DateValue(date(2010,6,2), 493.37))
-    >>> m.data.add(DateValue(date(2010,6,3), 505.06))
-    >>> m.save()
-    '''
-    backend_structure = 'ordered_set'
+    def get_pipeline(self):
+        return 'list'          
 
 
 class HashField(MultiField):
     '''A Hash table field, the networked equivalent of a python dictionary.
 Keys are string while values are string/numeric. It accepts to optional arguments:
 '''
-    backend_structure = 'hash'
-    _pipeline = dict
+    def get_pipeline(self):
+        return 'list'
     
 
 class ManyToManyField(SetField, RelatedObject):
     '''A many-to-many relationship. It accepts **related_name** as extra argument.
-It is the name to use for the relation from the related object
-back to self. For example::
+
+.. attribute:: related_name
+
+    Optional name to use for the relation from the related object
+    back to ``self``.
+    
+    
+For example::
     
     class User(orm.StdModel):
-        name      = orm.AtomField(unique = True)
+        name      = orm.SymbolField(unique = True)
         following = orm.ManyToManyField(model = 'self',
                                         related_name = 'followers')
+    
+To use it::
+
+    >>> u = User(name = 'luca').save()
+    >>> u.following.add(User(name = 'john').save())
+    >>> u.following.add(User(name = 'mark').save())
+    
+    
+This field is implemented as a double Set field.
 '''
-    _pipeline = many2manyPipeline
+    def get_pipeline(self):
+        return 'many2many'
     
     def __init__(self, model, related_name = None, **kwargs):
         SetField.__init__(self, **kwargs)
@@ -198,8 +177,8 @@ back to self. For example::
         related_manager = self.register_related_model(name, related)
         related_manager.name = self.related_name
         
-    def set_value(self, name, obj, value):
-        v = SetField.set_value(self, name, obj, value)
+    def _set_value(self, name, obj, value):
+        v = SetField._set_value(self, name, obj, value)
         related_manager = self.model._meta.related[self.related_name]
         related_manager.meta = related_manager.model._meta
         related_manager.set_structure()
@@ -208,17 +187,17 @@ back to self. For example::
     def get_full_value(self):
         return self
     
-    def _id(self):
-        return self.meta.basekey('id',self.obj.id,self.name)
+    #def _id(self):
+    #    return self.meta.basekey('id',self.obj.id,self.name)
         
-    def _relid(self, rel):
-        return self.meta.basekey('id',rel.id,self.related_name)
+    #def _relid(self, rel):
+    #    return self.meta.basekey('id',rel.id,self.related_name)
     
     def add(self, value):
         if not isinstance(value,self.model):
             raise FieldValueError('%s is not an instance of %s' % (value,self.model._meta.name))
         if value is self:
-            raise FieldValueError('Cannot add self')
+            return
         self._add(self.obj,self.name,value)
         self._add(value,self.related_name,self.obj)
     
@@ -227,22 +206,12 @@ back to self. For example::
         id   = meta.basekey('id',obj.id,name)
         return self.structure(id,
                               timeout = meta.timeout,
-                              pipeline = self._pipeline[id],
                               pickler = self.pickler,
                               converter = self.converter)
         
     def _add(self, obj, name, value):
         s = self._structure(obj,name)
         s.add(value)
-    
-    def save(self):
-        for id,pipeline in self._pipeline:
-            s    = self.structure(id,
-                                  pipeline = pipeline,
-                                  pickler = self.pickler,
-                                  converter = self.converter)
-            s.save()
-        self._pipeline.clear()
         
     def __iter__(self):
         return self._structure(self.obj, self.name).__iter__()

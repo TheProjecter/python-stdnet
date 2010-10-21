@@ -64,6 +64,15 @@ or ``pip``::
 	pip install python-stdnet
 	
 
+Version Check
+======================
+To know whech version you have installed::
+
+	>>> import stdnet
+	>>> stdnet.__version__
+	'0.3.2'
+
+
 Running Tests
 ======================
 At the moment, only redis back-end is available, so to run tests you need to install redis.
@@ -75,12 +84,20 @@ Once done that, launch redis and type::
 otherwise from the package directory::
 
 	python runtests.py
+
 	
 Default settings
 =========================
-StdNet comes with few default settings. To run
-tests with the above commands assume your Redis_ server
-is running on the same machine. If this is not the case,
+Running tests with the above commands assumes your Redis_ server
+is running on the same machine.
+
+StdNet comes with two default settings.
+
+	>>> from stdnet.conf import settings
+	>>> settings.__dict__
+	{'DEFAULT_BACKEND': 'redis://127.0.0.1:6379/?db=7', 'DEFAULT_KEYPREFIX': 'stdnet'}
+
+If your redis server runs on a different machine,
 you need to setup a	script file along these lines::
 	
 	if __name__ == '__main__':
