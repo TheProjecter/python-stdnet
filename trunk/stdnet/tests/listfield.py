@@ -3,19 +3,20 @@ from itertools import izip
 
 from stdnet.test import TestCase
 from stdnet.utils import populate
-from stdnet import orm
+
+from examples.models import SimpleList
 
 elems = populate('string', 200)
 
-class SimpleList(orm.StdModel):
-    names = orm.ListField()
-
-orm.register(SimpleList)
 
 class TestLListField(TestCase):
     
+    def setUp(self):
+        self.orm.register(SimpleList)
+        
     def testPushBackPopBack(self):
         li = SimpleList()
+        self.assertTrue(li.id)
         names = li.names
         for elem in elems:
             names.push_back(elem)

@@ -4,14 +4,9 @@ import logging
 from itertools import izip
 
 from stdnet.test import TestCase
-from stdnet import orm
 from stdnet.utils import populate
 
-
-class TestDateModel(orm.StdModel):
-    dt = orm.DateField()
-    
-orm.register(TestDateModel)
+from examples.models import TestDateModel
 
 NUM_DATES = 1000
 dates = populate('date', NUM_DATES, start=datetime.date(2010,5,1), end=datetime.date(2010,6,1))
@@ -21,6 +16,7 @@ dates = populate('date', NUM_DATES, start=datetime.date(2010,5,1), end=datetime.
 class TestDateField(TestCase):
     
     def setUp(self):
+        self.orm.register(TestDateModel)
         for dt in dates:
             TestDateModel(dt = dt).save(False)
         TestDateModel.commit()

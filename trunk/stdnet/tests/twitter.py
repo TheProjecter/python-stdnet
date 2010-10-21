@@ -2,15 +2,10 @@ from datetime import datetime
 from itertools import izip
 from random import randint
 
-from stdnet import orm
 from stdnet.test import TestCase
 from stdnet.utils import populate
 
-from examples.twitter import User, Post
-
-orm.register(User)
-orm.register(Post)
-
+from examples.models import User, Post
 
 NUM_USERS = 100
 MIN_FOLLOWERS = 10
@@ -23,6 +18,8 @@ passwords = populate('string',NUM_USERS, min_len = 8, max_len = 20)
 class TestTwitter(TestCase):
 
     def setUp(self):
+        self.orm.register(User)
+        self.orm.register(Post)
         for username,password in izip(usernames,passwords):
             User(username = username, password = password).save(False)
         User.commit()

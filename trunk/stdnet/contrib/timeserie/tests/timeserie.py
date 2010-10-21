@@ -3,20 +3,11 @@ from datetime import date
 from random import uniform
 
 from stdnet.test import TestCase
-from stdnet import orm
-from stdnet.contrib.timeserie import models
 from stdnet.contrib.timeserie.utils import dategenerator, default_parse_interval
 from stdnet.utils import populate
-    
 
-class TimeSerie(models.TimeSerie):
-    data    = models.TimeSerieField(converter = models.DateConverter)
-    ticker  = orm.AtomField(unique = True)
-    
-    def __str__(self):
-        return '%s: %s' % (self.ticker,self.data.size())
+from models import TimeSerie
 
-orm.register(TimeSerie)
 
 NUM_DATES = 300
 
@@ -25,9 +16,11 @@ values   = populate('float',NUM_DATES, start = 10, end = 400)
 alldata  = list(izip(dates,values))
 testdata = dict(alldata)
 
+
 class TestTimeSerie(TestCase):
     
     def setUp(self):
+        self.orm.register(TimeSerie)
         TimeSerie(ticker = 'GOOG').save()
         
     def get(self, ticker = 'GOOG'):
@@ -152,3 +145,4 @@ class TestTimeSerie(TestCase):
         else:
             self.fail('KeyError')
         self.assertEqual(ts.data.get(date(2010,3,1)),None)
+        

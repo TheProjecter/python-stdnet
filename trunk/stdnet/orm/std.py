@@ -37,6 +37,7 @@ class MultiField(Field):
                                         **kwargs)
         self.index       = False
         self.unique      = False
+        self.primary_key = False
         self.pickler     = pickler
         self.converter   = converter
         
@@ -47,7 +48,7 @@ class MultiField(Field):
             self.model = related
         
     def get_full_value(self):
-        meta = self.meta
+        meta  = self.meta
         id = meta.basekey('id',self.obj.id,self.name)
         return self.structure(id,
                               timeout = meta.timeout,
@@ -134,7 +135,7 @@ class HashField(MultiField):
 Keys are string while values are string/numeric. It accepts to optional arguments:
 '''
     def get_pipeline(self):
-        return 'list'
+        return 'hash'
     
 
 class ManyToManyField(SetField, RelatedObject):

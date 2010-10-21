@@ -103,9 +103,9 @@ Each field is specified as a :class:`stdnet.orm.StdModel` class attribute.
     
     def get_full_value(self):
         '''Return the expanded value of the field. For standard fields this is the
-        same as the field value, while for more complex fields, such as ForeignKey, it
-        retrives extra data from the database. This function is called by the model when accessing
-        fields values.'''
+same as the field value, while for more complex fields, such as ForeignKey, it
+get extra data from the database. This function is called by the model when accessing
+fields values.'''
         return self._value
     
     def get_value(self, value):
@@ -213,11 +213,16 @@ need to use this directly;
 a primary key field will automatically be added to your model
 if you don't specify otherwise.
     '''
-    def serialize(self):
-        if not self._value:
+    def get_full_value(self):
+        v = self._value
+        if not v:
             meta = self.meta
-            self._value = meta.cursor.incr(meta.basekey('ids'))
-        return self._value
+            v = meta.cursor.incr(meta.basekey('ids'))
+            self._value = v
+        return v
+            
+    def serialize(self):
+        return self.get_full_value()
 
 
 class FloatField(Field):
