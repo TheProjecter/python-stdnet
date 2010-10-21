@@ -1,10 +1,13 @@
-stdnet Development
+Ver. 0.4 - Development
 =================================
+* Made clear that :class:`stdnet.orm.StdModel` classes are mapped to :class:`stdnet.HashTable`
+  structures in a :class:`stdnet.BackendDataServer`. 
+* Moved ``structures`` module into ``backends`` directory. Internal reorganisation of several modules.
 * Added ``app_label`` attribute to :class:`stdnet.orm.DataMetaClass`.
 * Added a new module ``stdnet.contrib.monitor`` for monitoring objects on the web. The module requires djpcms_.
+* **29 tests**
 
-
-stdnet 0.3.3 - 2010 September 13
+Ver. 0.3.3 - 2010 Sep 13
 ========================================
 * If a model is not registered and the manager method is accessed, it raises ``ModelNotRegistered``
 * Changed the way tests are run. See documentation
@@ -12,7 +15,7 @@ stdnet 0.3.3 - 2010 September 13
 * **29 tests**
 
 
-stdnet 0.3.2 - 2010 August 24
+Ver. 0.3.2 - 2010 Aug 24
 ========================================
 * Bug fixes
 * Fixed a bug on ``orm.DateField`` when ``required`` is set to ``False``
@@ -20,13 +23,13 @@ stdnet 0.3.2 - 2010 August 24
 * **27 tests**
 
 
-stdnet 0.3.1 - 2010 July 19
+Ver. 0.3.1 - 2010 Jul 19
 ========================================
 * Bug fixes
 * **27 tests**
 
 
-stdnet 0.3.0 - 2010 July 15
+Ver. 0.3.0 - 2010 Jul 15
 ========================================
 * Overall code refactoring
 * Added ListField and OrderedSetField with Redis implementation
@@ -35,13 +38,13 @@ stdnet 0.3.0 - 2010 July 15
 * **24 tests**
 
 
-stdnet 0.2.2 - 2010 July 7
+Ver. 0.2.2 - 2010 Jul 7
 ========================================
 * ``RelatedManager`` is derived by ``Manager`` and therefore implements both all and filter methods
 * **10 tests**
 
 
-stdnet 0.2.0  - 2010 June 21
+Ver. 0.2.0  - 2010 Jun 21
 ========================================
 * First official release in pre-alpha
 * ``Redis`` backend

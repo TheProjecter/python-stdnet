@@ -19,13 +19,31 @@ def get_fields(bases, attrs):
 
 
 class Metaclass(object):
-    '''A database model metaclass contains all the information which relates a python class to a database model.
-    An instance is initiated when registering a new model with a database backend:
+    '''Utility class used for storing all information
+which maps a :class:`stdnet.orm.StdModel` model
+into a :class:`stdnet.HashTable` structure in a :class:`stdnet.BackendDataServer`.
+An instance is initiated when registering a model with a
+:class:`stdnet.BackendDataServer`:
 
-    * *model* a subclass of :ref:`StdModel <model-model>`
-    * *fields* dictionary of field instances
-    * *abstract* if True, it represents an abstract model and no database elements are created.
-    * *keyprefix* prefix for the database table (by default 'stdnet')
+.. attribute:: model
+
+    a subclass of :class:`stdnet.orm.StdModel`.
+    
+.. attribute:: fields
+
+    dictionary of :class:`stdnet.orm.Field` instances.
+    
+.. attribute:: abstract
+
+    if ``True``, it represents an abstract model and no database elements are created.
+
+.. attribute:: keyprefix
+
+    prefix for the database table. By default it is given by ``settings.DEFAULT_KEYPREFIX``,
+    where ``settings`` is obtained by::
+    
+        from dynts.conf import settings
+
 '''
     def __init__(self, model, fields, abstract = False, keyprefix = None):
         self.abstract  = abstract
@@ -72,6 +90,7 @@ class Metaclass(object):
         return self.pk.get_value()
     
     def has_pk(self):
+        '''``True`` if :attr:`pk` has a value'''
         return self.pk._value
         
     def basekey(self, *args):
@@ -93,9 +112,9 @@ class Metaclass(object):
         return self.basekey(self.id)
     
     def table(self):
-        '''Return an instance of :ref:`HashTable <hash-structure>` holding
-        the model table'''
-        return self.cursor.hash(self.basekey())
+        '''Return an instance of :class:`stdnet.HashTable` holding
+the model table'''
+        return self.cursor.hash(self.basekey(),self.timeout)
     
     def isvalid(self):
         validation_errors = {}
@@ -124,11 +143,11 @@ class Metaclass(object):
         return obj
 
 
-class DataMetaClass(type):
+class StdNetType(type):
     '''StdModel python metaclass'''
     def __new__(cls, name, bases, attrs):
-        super_new = super(DataMetaClass, cls).__new__
-        parents = [b for b in bases if isinstance(b, DataMetaClass)]
+        super_new = super(StdNetType, cls).__new__
+        parents = [b for b in bases if isinstance(b, StdNetType)]
         if not parents:
             return super_new(cls, name, bases, attrs)
         

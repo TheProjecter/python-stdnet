@@ -8,7 +8,8 @@ from stdnet import orm
 from stdnet.utils import populate
 from stdnet.exceptions import QuerySetError
 
-from examples.portfolio import Instrument, Fund, Position, PortfolioView, UserDefaultView
+from examples.portfolio import Instrument, Fund
+from examples.portfolio import Position, PortfolioView, UserDefaultView
 
 orm.register(Instrument)
 orm.register(Fund)
@@ -43,6 +44,11 @@ class TestORM(TestCase):
     
     def setUp(self):
         '''Create Instruments and Funds commiting at the end for speed'''
+        orm.register(Instrument)
+        orm.register(Fund)
+        orm.register(Position)
+        orm.register(PortfolioView)
+        orm.register(UserDefaultView)
         for name,typ,ccy in izip(inst_names,inst_types,inst_ccys):
             Instrument(name = name, type = typ, ccy = ccy).save(False)
         Instrument.commit()

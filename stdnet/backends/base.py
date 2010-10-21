@@ -1,4 +1,5 @@
 from stdnet.exceptions import *
+from structures import pipelines, Structure
 
 novalue = object()
 
@@ -22,12 +23,16 @@ class NoPickle(object):
 nopickle = NoPickle()
 
 
-class Pipeline(object):
+class Keys(object):
     
-    def __init__(self, pipe, method):
-        self.pipe   = pipe
-        self.method = method
-
+    def __init__(self,id,timeout,pipeline):
+        self.timeout = timeout
+        self.value = None
+        pipeline[id] = self
+        
+    def add(self, value):
+        self.value = value
+    
 
 class BackendDataServer(object):
     '''Generic interface for a backend database:
@@ -36,6 +41,7 @@ class BackendDataServer(object):
     * *params* dictionary of configuration parameters
     * *pickler* calss for serializing and unserializing data. It must implement the *loads* and *dumps* methods.
     '''
+    structure_module = None
     def __init__(self, name, params, pickler = None):
         self.__name = name
         timeout = params.get('timeout', 0)
@@ -79,20 +85,24 @@ and :ref:`ObjectNotFund <utility-exceptions>` exception.
             raise ObjectNotFund
         return value
     
+    def _get_pipe(self, id, typ, timeout):
+        cache  = self._cachepipe
+        cvalue = cache.get(id,None)
+        if cvalue is None:
+            cvalue = pipelines(typ, timeout)
+            cache[id] = cvalue
+        return cvalue
+            
     def add_object(self, obj, commit = True):
         '''Add a model object to the database:
         
         * *obj* instance of :ref:`StdModel <model-model>` to add to database
         * *commit* If True, *obj* is saved to database, otherwise it remains in local cache.
         '''
-        meta   = obj._meta
-        id     = meta.basekey()
-        cache  = self._cachepipe
-        cvalue = cache.get(id,None)
-        if cvalue is None:
-            cvalue = Pipeline({},'hash')
-            cache[id] = cvalue
-        hash = self.hash(id, meta.timeout, cvalue.pipe)
+        meta  = obj._meta
+        timeout = meta.timeout
+        cache = self._cachepipe
+        hash  = meta.table()
         objid = obj.id
         hash.add(objid, obj)
         
@@ -104,46 +114,38 @@ and :ref:`ObjectNotFund <utility-exceptions>` exception.
                 value   = field.hash(field.serialize())
                 key     = meta.basekey(field.name,value)
                 if field.unique:
-                    self._keys[key] = objid
-                elif field.ordered:                    
-                    cvalue = cache.get(key,None)
-                    if cvalue is None:
-                        cvalue = Pipeline(set(),'ordered_set')
-                        cache[key] = cvalue
-                    index = self.ordered_set(key,
-                                             timeout  = meta.timeout,
-                                             pipeline = cvalue.pipe,
-                                             pickler  = nopickle)
-                    index.add(objid)
+                    index = self.index_keys(key, timeout)
                 else:
-                    cvalue = cache.get(key,None)
-                    if cvalue is None:
-                        cvalue = Pipeline(set(),'unordered_set')
-                        cache[key] = cvalue
-                    index = self.unordered_set(key,
-                                               timeout  = meta.timeout,
-                                               pipeline = cvalue.pipe,
-                                               pickler  = nopickle)
-                    index.add(objid)
+                    if field.ordered:
+                        index = self.ordered_set(key, timeout, pickler = nopickle)
+                    else:
+                        index = self.unordered_set(key, timeout, pickler = nopickle)
+                index.add(objid)
             
-            savefield = getattr(field,'save',None)
-            if savefield:
-                self.fields.append(savefield)
+            #savefield = getattr(field,'save',None)
+            #if savefield:
+            #    self.fields.append(savefield)
                 
         if commit:
             self.commit()
             
     def commit(self):
-        '''Commit cache objects to backend database'''
-        for id,cvalue in self._cachepipe.iteritems():
-            el = getattr(self,cvalue.method)(id, pipeline = cvalue.pipe)
+        '''Commit cache objects to database'''
+        cache = self._cachepipe
+        keys = self._keys
+        fields = self.fields
+        # flush cache
+        self._cachepipe = {}
+        self._keys = {}
+        self.fields = []
+        # commit
+        for id,pipe in cache.iteritems():
+            el = getattr(self,pipe.method)(id, pipeline = pipe)
             el.save()
-        if self._keys:
-            self._set_keys()
-            self._keys.clear()
-        for save in self.fields:
-            save()
-        self.fields = []            
+        if keys: 
+            self._set_keys(keys)
+        #for save in fields:
+        #    save()
             
     def delete_object(self, obj):
         '''Delete an object from the database'''
@@ -217,8 +219,6 @@ and :ref:`ObjectNotFund <utility-exceptions>` exception.
         # if a subclass overrides it.
         return self.has_key(key)
 
-
-
     def delete_many(self, keys):
         """
         Set a bunch of values in the cache at once.  For certain backends
@@ -245,22 +245,31 @@ and :ref:`ObjectNotFund <utility-exceptions>` exception.
             
     # DATASTRUCTURES
     
-    def list(self, *args, **kwargs):
-        '''Return an instance of :ref:`List <list-structure>`
-        for a given *id*.'''
-        raise NotImplementedError
+    def index_keys(self, id, timeout):
+        return Keys(id,timeout,self._keys)
     
-    def hash(self, *args, **kwargs):
-        '''Return an instance of :ref:`HashTable <hash-structure>`
-        for a given *id*.'''
-        raise NotImplementedError
+    def list(self, id, timeout = 0, pipeline = None, **kwargs):
+        '''Return an instance of :class:`stdnet.List`
+for a given *id*.'''
+        pip = pipeline if pipeline is not None else self._get_pipe(id,'list',timeout)
+        return self.structure_module.List(self, id, pip.pipe, **kwargs)
     
-    def unordered_set(self, *args, **kwargs):
-        '''Return an instance of :ref:`Set <set-structure>`'''
-        raise NotImplementedError
+    def hash(self, id, timeout = 0, pipeline = None, **kwargs):
+        '''Return an instance of :class:`stdnet.HashTable` structure
+for a given *id*.'''
+        pip = pipeline if pipeline is not None else self._get_pipe(id,'hash',timeout)
+        return self.structure_module.HashTable(self, id, pip.pipe, **kwargs)
     
-    def ordered_set(self, *args, **kwargs):
-        '''Return an instance of :ref:`Ordered Set <orderedset-structure>`'''
-        raise NotImplementedError
+    def unordered_set(self, id, timeout = 0, pipeline = None, **kwargs):
+        '''Return an instance of :class:`stdnet.Set` structure
+for a given *id*.'''
+        pip = pipeline if pipeline is not None else self._get_pipe(id,'set',timeout)
+        return self.structure_module.Set(self, id, pip.pipe, **kwargs)
+    
+    def ordered_set(self, id, timeout = 0, pipeline = None, **kwargs):
+        '''Return an instance of :class:`stdnet.OrderedSet` structure
+for a given *id*.'''
+        pip = pipeline if pipeline is not None else self._get_pipe(id,'oset',timeout)
+        return self.structure_module.OrderedSet(self, id, pip.pipe, **kwargs)
     
 

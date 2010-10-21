@@ -1,8 +1,7 @@
 import stdnet
 from stdnet.utils import jsonPickler
 from stdnet import BackendDataServer, ImproperlyConfigured, novalue
-#from stdnet.backends.base import BaseBackend, ImproperlyConfigured, novalue
-from stdnet.backends.structures.structredis import List,Set,OrderedSet,HashTable
+from stdnet.backends.structures import structredis
 
 try:
     import redis
@@ -11,9 +10,12 @@ except:
 
 
 class BackendDataServer(stdnet.BackendDataServer):
-    
+
+    structure_module = structredis
     def __init__(self, name, server, params, **kwargs):
-        super(BackendDataServer,self).__init__(name, params, **kwargs)
+        super(BackendDataServer,self).__init__(name,
+                                               params,
+                                               **kwargs)
         servs = server.split(':')
         server = servs[0]
         port   = 6379
@@ -81,23 +83,18 @@ class BackendDataServer(stdnet.BackendDataServer):
             else:
                 return qset
     
-    def _set_keys(self):
+    def _set_keys(self, keys):
         items = []
-        [items.extend(item) for item in self._keys.iteritems()]
+        timeouts = {}
+        for key,val in keys.iteritems():
+            timeout = val.timeout
+            if timeout:
+                timeouts[key] = timeout
+            items.append(key)
+            items.append(val.value)
         self.execute_command('MSET', *items)
+        for key,timeout in timeouts.iteritems():
+            self.execute_command('EXPIRE', key, timeout)
         
-    # Data structures
-    
-    def list(self, *args, **kwargs):
-        return List(self, *args, **kwargs)
-    
-    def unordered_set(self, *args, **kwargs):
-        return Set(self, *args, **kwargs)
-    
-    def ordered_set(self, *args, **kwargs):
-        return OrderedSet(self, *args, **kwargs)
-    
-    def hash(self, *args, **kwargs):
-        return HashTable(self, *args, **kwargs)
     
     

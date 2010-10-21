@@ -11,52 +11,49 @@ They can be bound to models so that
 many-to-many objects relationship can be established. All the data-structure
 fields derives from MultiField.
 
-.. autoclass:: stdnet.orm.std.MultiField
+.. autoclass:: stdnet.orm.MultiField
    :members:
+   :member-order: bysource
 
 
-
-.. _listfield:
 
 ListField
 ==============================
 
-.. autoclass:: stdnet.orm.std.ListField
+.. autoclass:: stdnet.orm.ListField
    :members:
+   :member-order: bysource
    
-   
-.. _setfield:
 
 SetField
 ==============================
 
-.. autoclass:: stdnet.orm.std.SetField
+.. autoclass:: stdnet.orm.SetField
    :members:
+   :member-order: bysource
    
-.. _orderedsetfield:
 
 OrederedSetField
 ==============================
 
-.. autoclass:: stdnet.orm.std.OrderedSetField
+.. autoclass:: stdnet.orm.OrderedSetField
    :members:
+   :member-order: bysource
    
    
-.. _hashfield:
-
 HashField
 ==============================
 
-.. autoclass:: stdnet.orm.std.HashField
+.. autoclass:: stdnet.orm.HashField
    :members:
+   :member-order: bysource
 
-
-.. _manytomanyfield:
 
 ManyToManyField
 ==============================
 
-.. autoclass:: stdnet.orm.std.ManyToManyField
+.. autoclass:: stdnet.orm.ManyToManyField
    :members:
+   :member-order: bysource
 
    

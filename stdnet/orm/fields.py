@@ -11,7 +11,12 @@ from stdnet.utils import timestamp2date, date2timestamp
 __all__ = ['Field',
            'AutoField',
            'AtomField',
+           'IntegerField',
+           'BooleanField',
+           'FloatField',
            'DateField',
+           'CharField',
+           'SymbolField',
            'ForeignKey',
            '_novalue']
 
@@ -22,15 +27,47 @@ _novalue = NoValue()
 
 
 class Field(object):
-    '''This is the base class of of StdNet Fields. The following arguments
-    are available to all field types. All are optional.
+    '''This is the base class of of StdNet Fields.
+Each field is specified as a :class:`stdnet.orm.StdModel` class attribute.
     
-    * **index** If True, the field will create indexes for fast search.
-    * **unique** If True, this field must be unique throughout the model. If True index is also True. Enforced at database level.
-    * **ordered** If True, the field is ordered (if unique is True this has no effect).
-    * **primary_key** If True, this field is the primary key for the model. In this case the Field is also unique.
-    * **required** If False, the field is allowed to be null.
-    '''
+.. attribute:: index
+
+    If ``True``, the field will create indexes for fast search.
+    An index is implemented as a :class:`stdnet.Set`
+    in the :class:`stdnet.BackendDataServer`. If you don't need to search
+    the field you should set this value to ``False``.
+    
+    Default ``True``.
+    
+.. attribute:: unique
+
+    If ``True``, the field must be unique throughout the model.
+    In this case :attr:`Field.index` is also ``True``.
+    Enforced at :class:`stdnet.BackendDataServer` level.
+    
+    Default ``False``.
+
+.. attribute:: ordered
+
+    If ``True``, the field is ordered (if :attr:`Field.unique` is ``True`` this has no effect).
+    Represented by a :class:`stdnet.OrderedSet`
+    in the :class:`stdnet.BackendDataServer`.
+    
+    Default ``False``.
+    
+.. attribute:: primary_key
+
+    If ``True``, this field is the primary key for the model.
+    In this case :attr:`Field.unique` is also ``True``.
+    
+    Default ``False``.
+    
+.. attribute:: required
+
+    If ``False``, the field is allowed to be null.
+    
+    Default ``True``.
+'''
     def __init__(self, unique = False, ordered = False, primary_key = False,
                  required = True, index = True):
         self.primary_key = primary_key
@@ -55,13 +92,11 @@ class Field(object):
     def register_with_model(self, fieldname, model):
         pass
     
-    def set_value(self, name, obj, value):
+    def _set_value(self, name, obj, value):
         # Called by constructor in the model
         self.obj  = obj
         self.name = name
         self.meta = obj._meta
-        if not self.meta.cursor:
-            raise ModelNotRegistered('Model %s is not registered with backend database' % self.meta.name)
         if value is not _novalue:
             self._value = value
         return self._value
@@ -114,6 +149,7 @@ class AtomField(Field):
     * floating point
     * string
     '''
+    type = 'text'
     def hash(self, value):
         if isinstance(value,basestring):
             return hash(value)
@@ -124,17 +160,82 @@ class AtomField(Field):
         pass
 
 
-class AutoField(Field):
-    '''An integer only field that automatically increments. You usually won't
-    need to use this directly;
-    a primary key field will automatically be added to your model
-    if you don't specify otherwise.
+class SymbolField(AtomField):
+    '''A text :class:`AtomField`.'''
+    def hash(self, value):
+        return hash(value)
+
+
+class CharField(AtomField):
+    '''A text :class:`AtomField` which is never an index.
+It contains strings and by default :attr:`Field.required`
+is set to ``False``.'''
+    def __init__(self, *args, **kwargs):
+        kwargs['index'] = False
+        kwargs['unique'] = False
+        kwargs['primary_key'] = False
+        kwargs['ordered'] = False
+        required = kwargs.get('required',None)
+        if required is None:
+            kwargs['required'] = False
+        super(CharField,self).__init__(*args, **kwargs)
+        
+    def hash(self, value):
+        return hash(value)
+
+
+class IntegerField(Field):
+    '''An integer only :class:`AtomField`
+    '''
+    type = 'integer'
+    def hash(self, value):
+        return value
+    
+    def set(self,obj,value):
+        pass
+    
+    
+class BooleanField(Field):
+    '''An boolean only :class:`AtomField`
+    '''
+    type = 'bool'
+    def hash(self, value):
+        return 1 if value else 0
+    
+    def set(self,obj,value):
+        pass
+    
+    
+    
+class AutoField(IntegerField):
+    '''An :class:`IntegerField` that automatically increments. You usually won't
+need to use this directly;
+a primary key field will automatically be added to your model
+if you don't specify otherwise.
     '''
     def serialize(self):
         if not self._value:
             meta = self.meta
             self._value = meta.cursor.incr(meta.basekey('ids'))
         return self._value
+
+
+class FloatField(Field):
+    '''An floating point :class:`AtomField`. By default 
+its :attr:`Field.index` is set to ``False``.
+    '''
+    type = 'float'
+    def __init__(self,*args,**kwargs):
+        index = kwargs.get('index',None)
+        if index is None:
+            kwargs['index'] = False
+        super(FloatField,self).__init__(*args,**kwargs)
+        
+    def hash(self, value):
+        return value
+    
+    def set(self,obj,value):
+        pass    
     
     
 class DateField(Field):
@@ -149,8 +250,8 @@ class DateField(Field):
     def serialize(self):
         return self.hash(self._value)
     
-    def set_value(self, name, obj, value):
-        value = super(DateField,self).set_value(name,obj,value)
+    def _set_value(self, name, obj, value):
+        value = super(DateField,self)._set_value(name,obj,value)
         if value and not isinstance(value,date):
             value = timestamp2date(value).date()
         self._value = value

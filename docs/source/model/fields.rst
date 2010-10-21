@@ -16,8 +16,9 @@ the equivalent of columns in a traditional relational databases.
 Field Base Class
 ==============================
 
-.. autoclass:: stdnet.orm.fields.Field
+.. autoclass:: stdnet.orm.Field
    :members:
+   :member-order: bysource
 
 
 .. _atomfield:
@@ -25,33 +26,73 @@ Field Base Class
 AtomField
 ==============================
 
-.. autoclass:: stdnet.orm.fields.AtomField
+.. autoclass:: stdnet.orm.AtomField
    :members:
+   :member-order: bysource
 
 
-.. _autofield:
-   
-AutoField
+IntegerField
 ==============================
 
-.. autoclass:: stdnet.orm.fields.AutoField
+.. autoclass:: stdnet.orm.IntegerField
    :members:
+   :member-order: bysource
+
+
+BooleanField
+==============================
+
+.. autoclass:: stdnet.orm.BooleanField
+   :members:
+   :member-order: bysource
+
    
+AutoField
+========================
+
+.. autoclass:: stdnet.orm.AutoField
+   :members:
+   :member-order: bysource
+
+
+FloatField
+==============================
+
+.. autoclass:: stdnet.orm.FloatField
+   :members:
+   :member-order: bysource   
    
 .. _datefield:
    
 DateField
 ==============================
 
-.. autoclass:: stdnet.orm.fields.DateField
+.. autoclass:: stdnet.orm.DateField
    :members:
+   :member-order: bysource
    
+
+SymbolField
+==============================
+
+.. autoclass:: stdnet.orm.SymbolField
+   :members:
+   :member-order: bysource
+   
+   
+CharField
+==============================
+
+.. autoclass:: stdnet.orm.CharField
+   :members:
+   :member-order: bysource
 
 .. _foreignkey:
    
 ForeignKey
 ==============================
 
-.. autoclass:: stdnet.orm.fields.ForeignKey
+.. autoclass:: stdnet.orm.ForeignKey
    :members:
+   :member-order: bysource
    
