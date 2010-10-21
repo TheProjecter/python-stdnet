@@ -9,16 +9,18 @@ Remote Structures
 Structure
 ==============================
 
-.. autoclass:: stdnet.structures.Structure
+.. autoclass:: stdnet.Structure
    :members:
+   :member-order: bysource
 
 .. _list-structure:
 
 List
 ==============================
 
-.. autoclass:: stdnet.structures.List
+.. autoclass:: stdnet.List
    :members:
+   :member-order: bysource
 
 
 .. _set-structure:
@@ -26,8 +28,9 @@ List
 Set
 ==============================
 
-.. autoclass:: stdnet.structures.Set
+.. autoclass:: stdnet.Set
    :members:
+   :member-order: bysource
 
 
 .. _orderedset-structure:
@@ -35,8 +38,9 @@ Set
 OrderedSet
 ==============================
 
-.. autoclass:: stdnet.structures.OrderedSet
+.. autoclass:: stdnet.OrderedSet
    :members:
+   :member-order: bysource
 
 
 .. _hash-structure:   
@@ -44,5 +48,6 @@ OrderedSet
 HashTable
 ==============================
 
-.. autoclass:: stdnet.structures.HashTable
+.. autoclass:: stdnet.HashTable
    :members:
+   :member-order: bysource

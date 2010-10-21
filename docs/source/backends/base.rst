@@ -4,6 +4,7 @@
 Database backend interface
 ============================
 
-.. autoclass:: stdnet.backends.base.BaseBackend
+.. autoclass:: stdnet.BackendDataServer
    :members:
+   :member-order: bysource
 

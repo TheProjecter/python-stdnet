@@ -76,19 +76,18 @@ otherwise from the package directory::
 
 	python runtests.py
 	
-.. admonition:: The settings file:
-
-	Running tests with the above commands assume your Redis_ server is running on
-	the same machine. If this is not the case, you need to setup a
-	script file along these lines (only for Python 2.6)::
+Default settings
+=========================
+StdNet comes with few default settings. To run
+tests with the above commands assume your Redis_ server
+is running on the same machine. If this is not the case,
+you need to setup a	script file along these lines::
 	
-		if __name__ == '__main__':
-		    import os
-		    import json
-		    sett = json.dumps({'DEFAULT_BACKEND':'redis://your.server.url:6379/?db=10'})
-		    os.environ['STDNET_SETTINGS_MODULE'] = sett
-		    import stdnet
-		    stdnet.runtests()
+	if __name__ == '__main__':
+	    from stdnet.conf import settings
+	    settings.DEFAULT_BACKEND = 'redis://your.server.url:6379/?db=10'
+	    import stdnet
+	    stdnet.runtests()
 
 
 .. _Redis: http://code.google.com/p/redis/

@@ -1,7 +1,7 @@
 '''Two different implementation of a redis::map, a networked
 ordered associative container
 '''
-from stdnet import structures
+import base as structures
 
 
 class List(structures.List):

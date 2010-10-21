@@ -17,6 +17,8 @@ __homepage__ = "http://code.google.com/p/python-stdnet/"
 
 from exceptions import *
 
+from backends import *
+
 def add2path():
     import os
     import sys

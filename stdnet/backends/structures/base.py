@@ -1,6 +1,4 @@
 '''Interfaces for supported data-structures'''
-from orm import StdModel
-
 
 class keyconverter(object):
     
@@ -14,11 +12,20 @@ class keyconverter(object):
 
 
 class Structure(object):
-    '''Remote structure base class.
+    '''Base class for remote data-structures.
         
-        * *cursor* instance of backend database.
-        * *id* structure unique id.
-        * *timeout* optional timeout.'''
+.. attribute:: cursor
+
+    instance of a :class:`stdnet.BackendDataServer`.
+    
+.. attribute:: id
+
+    unique *id* for the structure
+    
+.. attribute:: timeout
+
+    Expiry timeout. If different from zero it represents the number of seconds
+    after which the structure is deleted from the data server. Default ``0``.'''
     def __init__(self, cursor, id, timeout = 0, pipeline = None,
                  pickler = None, **kwargs):
         self.cursor    = cursor
@@ -81,7 +88,7 @@ class Structure(object):
 
 
 class List(Structure):
-    '''A list structure'''
+    '''A linked-list :class:`stdnet.Structure`.'''
     def __iter__(self):
         if not self._cache:
             cache = []
@@ -112,7 +119,7 @@ class List(Structure):
 
 
 class Set(Structure):
-    '''An unordered set structure'''
+    '''An unordered set :class:`stdnet.Structure`.'''
     
     def __iter__(self):
         if not self._cache:
@@ -151,7 +158,7 @@ class Set(Structure):
 
 
 class OrderedSet(Set):
-    '''An ordered set structure'''
+    '''An ordered set :class:`stdnet.Structure`.'''
     
     def __iter__(self):
         if not self._cache:
@@ -179,7 +186,7 @@ def itemcmp(x,y):
 
     
 class HashTable(Structure):
-    '''Interface class for a remote hash-table.'''
+    '''An hash-table :class:`stdnet.Structure`.'''
     
     def __init__(self, *args, **kwargs):
         self.converter = kwargs.pop('converter',None) or keyconverter

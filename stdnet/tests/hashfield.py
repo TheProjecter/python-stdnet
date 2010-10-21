@@ -1,6 +1,6 @@
 from itertools import izip
 
-from stdnet.stdtest import TestBase
+from stdnet.test import TestCase
 from stdnet.utils import populate
 from stdnet import orm
 
@@ -15,7 +15,7 @@ class Dictionary(orm.StdModel):
 orm.register(Dictionary)
 
 
-class TestLHashField(TestBase):
+class TestLHashField(TestCase):
     
     def setUp(self):
         d = Dictionary(name = 'test').save()

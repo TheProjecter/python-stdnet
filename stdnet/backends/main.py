@@ -1,7 +1,9 @@
 from cgi import parse_qsl
 
+from stdnet.conf import settings
 from stdnet.utils import import_module
 from stdnet.exceptions import *
+
 
 BACKENDS = {
     'memcached': 'memcached',
@@ -39,7 +41,8 @@ def parse_backend_uri(backend_uri):
     return scheme, host, params
 
 
-def getdb(backend_uri, pickler = None):
+def getdb(backend_uri = None, pickler = None):
+    backend_uri = backend_uri or settings.DEFAULT_BACKEND
     if not backend_uri:
         return None
     scheme, host, params = parse_backend_uri(backend_uri)
@@ -48,4 +51,5 @@ def getdb(backend_uri, pickler = None):
     else:
         name = scheme
     module = import_module(name)
-    return getattr(module, 'BackEnd')(scheme, host, params, pickler = pickler)
+    return getattr(module, 'BackendDataServer')(scheme, host, params, pickler = pickler)
+

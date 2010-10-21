@@ -2,7 +2,7 @@ from itertools import izip
 from datetime import date
 from random import uniform
 
-from stdnet.stdtest import TestBase
+from stdnet.test import TestCase
 from stdnet import orm
 from stdnet.contrib.timeserie import models
 from stdnet.contrib.timeserie.utils import dategenerator, default_parse_interval
@@ -25,7 +25,7 @@ values   = populate('float',NUM_DATES, start = 10, end = 400)
 alldata  = list(izip(dates,values))
 testdata = dict(alldata)
 
-class TestTimeSerie(TestBase):
+class TestTimeSerie(TestCase):
     
     def setUp(self):
         TimeSerie(ticker = 'GOOG').save()

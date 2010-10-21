@@ -3,7 +3,7 @@ import unittest
 import random
 from itertools import izip
 
-from stdnet.stdtest import TestBase
+from stdnet.test import TestCase
 from stdnet import orm
 
 
@@ -13,7 +13,7 @@ class SimpleModel(orm.StdModel):
 orm.register(SimpleModel)
     
 
-class TestManager(TestBase):
+class TestManager(TestCase):
     
     def testGetOrCreate(self):
         v,created = SimpleModel.objects.get_or_create(code = 'test')

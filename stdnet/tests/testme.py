@@ -1,9 +1,9 @@
-import unittest
+from stdnet.test import TestCase
 
 import stdnet as me
 
 
-class TestInitFile(unittest.TestCase):
+class TestInitFile(TestCase):
 
     def test_version(self):
         self.assertTrue(me.VERSION)

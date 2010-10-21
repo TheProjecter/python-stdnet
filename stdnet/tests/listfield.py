@@ -1,7 +1,7 @@
 from copy import copy
 from itertools import izip
 
-from stdnet.stdtest import TestBase
+from stdnet.test import TestCase
 from stdnet.utils import populate
 from stdnet import orm
 
@@ -12,7 +12,7 @@ class SimpleList(orm.StdModel):
 
 orm.register(SimpleList)
 
-class TestLListField(TestBase):
+class TestLListField(TestCase):
     
     def testPushBackPopBack(self):
         li = SimpleList()

@@ -1,19 +1,14 @@
 import copy
-from stdnet.main import getdb as _getdb
+from stdnet import getdb
 
 from query import Manager, UnregisteredManager
-
-def clear(backend = None):
-    from stdnet.conf import settings
-    backend = backend or settings.DEFAULT_BACKEND
-    cursor = getdb(backend)
-    cursor.clear()
     
 def clearall():
     for meta in _registry.values():
         meta.cursor.clear()
 
 def register(model, backend = None, keyprefix = None, timeout = 0):
+    '''Register a :class:`stdnet.rom.StdNet` model with a backend data server.'''
     from stdnet.conf import settings
     backend = backend or settings.DEFAULT_BACKEND
     prefix  = keyprefix or model._meta.keyprefix or settings.DEFAULT_KEYPREFIX or ''
@@ -28,17 +23,12 @@ def register(model, backend = None, keyprefix = None, timeout = 0):
     else:
         objects = copy.copy(objects)
     model.objects    = objects
-    meta.cursor      = _getdb(backend)
+    meta.cursor      = getdb(backend)
     objects.model    = model
     objects._meta    = meta
     objects.cursor   = meta.cursor
     _registry[model] = meta
     return meta.cursor.name
 
-
-def getdb(backend = None, pickler = None):
-    from stdnet.conf import settings
-    return _getdb(backend or settings.DEFAULT_BACKEND, pickler = pickler)
-    
 
 _registry = {}
