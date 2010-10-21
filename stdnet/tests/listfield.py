@@ -1,6 +1,7 @@
 from copy import copy
 from itertools import izip
 
+from stdnet import FieldError
 from stdnet.test import TestCase
 from stdnet.utils import populate
 
@@ -16,7 +17,8 @@ class TestLListField(TestCase):
         
     def testPushBackPopBack(self):
         li = SimpleList()
-        self.assertTrue(li.id)
+        self.assertEqual(li.id,None)
+        li.save()
         names = li.names
         for elem in elems:
             names.push_back(elem)
@@ -27,7 +29,7 @@ class TestLListField(TestCase):
         self.assertEqual(li.names.size(),0)
     
     def testPushFrontPopFront(self):
-        li = SimpleList()
+        li = SimpleList().save()
         names = li.names
         for elem in reversed(elems):
             names.push_front(elem)
@@ -38,7 +40,7 @@ class TestLListField(TestCase):
         self.assertEqual(li.names.size(),0)
         
     def testPushBack(self):
-        li = SimpleList()
+        li = SimpleList().save()
         names = li.names
         for elem in elems:
             names.push_back(elem)
@@ -47,7 +49,7 @@ class TestLListField(TestCase):
             self.assertEqual(el,ne)
             
     def testPushFront(self):
-        li = SimpleList()
+        li = SimpleList().save()
         names = li.names
         for elem in reversed(elems):
             names.push_front(elem)

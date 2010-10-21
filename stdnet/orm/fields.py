@@ -212,17 +212,14 @@ class AutoField(IntegerField):
 need to use this directly;
 a primary key field will automatically be added to your model
 if you don't specify otherwise.
-    '''
-    def get_full_value(self):
+    '''            
+    def serialize(self):
         v = self._value
         if not v:
             meta = self.meta
             v = meta.cursor.incr(meta.basekey('ids'))
             self._value = v
         return v
-            
-    def serialize(self):
-        return self.get_full_value()
 
 
 class FloatField(Field):
@@ -275,11 +272,14 @@ class RelatedObject(object):
         self.relmanager   = relmanager
     
     def register_related_model(self, name, related):
-        if not self.model:
-            return
-        if self.model == 'self':
-            self.model = related
         model = self.model
+        if not model:
+            return
+        if model == 'self':
+            model = related
+        if isinstance(model,basestring):
+            raise NotImplementedError
+        self.model = model
         meta  = model._meta
         related_name = self.related_name or '%s_set' % related._meta.name
         if related_name not in meta.related and related_name not in meta.fields:

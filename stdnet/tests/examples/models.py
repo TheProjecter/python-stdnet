@@ -74,26 +74,28 @@ class Calendar(orm.StdModel):
 
 
 class Post(orm.StdModel):
+    dt   = orm.DateField(index = False)
+    data = orm.CharField()
+    #user = orm.ForeignKey("User")
     
-    def __init__(self, data = ''):
-        self.dt   = datetime.now()
-        self.data = data
-        super(Post,self).__init__()
+    def __init__(self, data = '', dt = None):
+        dt   = dt or datetime.now()
+        super(Post,self).__init__(data = data, dt = dt)
     
     
 class User(orm.StdModel):
     '''A model for holding information about users'''
-    username  = orm.AtomField(unique = True)
-    password  = orm.AtomField()
+    username  = orm.SymbolField(unique = True)
+    password  = orm.CharField(required = True)
     updates   = orm.ListField(model = Post)
-    following = orm.ManyToManyField(model = 'self',
-                                    related_name = 'followers')
+    following = orm.ManyToManyField(model = 'self', related_name = 'followers')
     
     def __str__(self):
         return self.username
     
     def newupdate(self, data):
         p  = Post(data = data).save()
+        #p  = Post(data = data, user = "self").save()
         self.updates.push_front(p)
         return p
     

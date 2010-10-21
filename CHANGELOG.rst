@@ -1,6 +1,8 @@
 Ver. 0.4 - Development
 ============================
-* :class:`stdnet.orm.AutoField` create the id when first requested. Previously only at saving time.  
+* Development status set to ``beta``.
+* Added several :class:`stdnet.orm.AtomField` subclasses. 
+* Before adding elements to a :class:`stdnet.orm.MultiField` the object needs to be saved, i.e. it needs to have a valid id.
 * Made clear that :class:`stdnet.orm.StdModel` classes are mapped to :class:`stdnet.HashTable`
   structures in a :class:`stdnet.BackendDataServer`. 
 * Moved ``structures`` module into ``backends`` directory. Internal reorganisation of several modules.
