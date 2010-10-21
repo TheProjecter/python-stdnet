@@ -3,7 +3,7 @@ from itertools import izip
 from random import randint
 
 from stdnet import orm
-from stdnet.stdtest import TestBase
+from stdnet.test import TestCase
 from stdnet.utils import populate
 
 from examples.twitter import User, Post
@@ -20,7 +20,7 @@ usernames = populate('string',NUM_USERS, min_len = 5, max_len = 20)
 passwords = populate('string',NUM_USERS, min_len = 8, max_len = 20)
 
 
-class TestTwitter(TestBase):
+class TestTwitter(TestCase):
 
     def setUp(self):
         for username,password in izip(usernames,passwords):

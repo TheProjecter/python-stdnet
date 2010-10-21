@@ -29,7 +29,7 @@ class Pipeline(object):
         self.method = method
 
 
-class BaseBackend(object):
+class BackendDataServer(object):
     '''Generic interface for a backend database:
     
     * *name* name of database, such as **redis**, **couchdb**, etc..

@@ -3,7 +3,7 @@ import unittest
 import logging
 from itertools import izip
 
-from stdnet.stdtest import TestBase
+from stdnet.test import TestCase
 from stdnet import orm
 from stdnet.utils import populate
 
@@ -18,7 +18,7 @@ dates = populate('date', NUM_DATES, start=datetime.date(2010,5,1), end=datetime.
 
 
 
-class TestDateField(TestBase):
+class TestDateField(TestCase):
     
     def setUp(self):
         for dt in dates:

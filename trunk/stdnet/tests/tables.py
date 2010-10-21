@@ -1,10 +1,9 @@
 import datetime
-import unittest
 import logging
 from itertools import izip
 from random import randint
 
-from stdnet.stdtest import TestBase
+from stdnet.test import TestCase
 from stdnet import orm
 from stdnet.utils import populate
 from stdnet.exceptions import QuerySetError
@@ -40,7 +39,7 @@ dates = populate('date',NUM_DATES,start=datetime.date(2009,6,1),end=datetime.dat
 
 
 
-class TestORM(TestBase):
+class TestORM(TestCase):
     
     def setUp(self):
         '''Create Instruments and Funds commiting at the end for speed'''

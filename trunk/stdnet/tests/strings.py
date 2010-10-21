@@ -1,16 +1,13 @@
 import time
-import unittest
 import random
-from itertools import izip
 
-from stdnet.main import getdb
-from stdnet.stdtest import TestBase
-from stdnet import orm
+import stdnet
+from stdnet.test import TestCase
 
-cache = orm.getdb()
+cache = stdnet.getdb()
 
 
-class TestString(TestBase):
+class TestString(TestCase):
     
     def testSetGet(self):
         cache.set('test',1)

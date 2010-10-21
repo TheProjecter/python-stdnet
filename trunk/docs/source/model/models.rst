@@ -1,10 +1,18 @@
 .. _model-model:
 
+.. module:: stdnet.orm.models
+
 ============================
 StdNet Models
 ============================
 
-.. autoclass:: stdnet.orm.models.StdModel
+The StdNet Object Relational Mapper presents a method of
+associating user-defined Python classes with
+a database :ref:`backends <backends>` data. These python classes
+are referred as **models** and are subclasses of
+:class:`stdnet.orm.StdModel`.
+
+.. autoclass:: stdnet.orm.StdModel
    :members:
 
 

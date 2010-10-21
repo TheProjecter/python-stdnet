@@ -3,7 +3,7 @@ from datetime import datetime
 from itertools import izip
 
 from stdnet import orm
-from stdnet.stdtest import TestBase
+from stdnet.test import TestCase
 from stdnet.utils import populate
 
 from examples.calendarevents import Calendar, DateValue
@@ -17,7 +17,7 @@ dates = populate('date',NUM_DATES)
 values = populate('string', NUM_DATES, min_len = 10, max_len = 120)
 
 
-class TestOrderedSet(TestBase):
+class TestOrderedSet(TestCase):
     
     def setUp(self):
         ts = Calendar(name = 'MyCalendar')

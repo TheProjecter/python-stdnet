@@ -3,7 +3,7 @@ import unittest
 import random
 from itertools import izip
 
-from stdnet.stdtest import TestBase
+from stdnet.test import TestCase
 from stdnet import orm
 
 # Create the model for testing.
@@ -20,7 +20,7 @@ orm.register(Node)
 
 STEPS   = 10
 
-class TestSelfForeignKey(TestBase):
+class TestSelfForeignKey(TestCase):
     
     def create(self, N, root):
         for n in range(N):

@@ -1,17 +1,19 @@
+import stdnet
 from stdnet.utils import jsonPickler
-from stdnet.backends.base import BaseBackend, ImproperlyConfigured, novalue
+from stdnet import BackendDataServer, ImproperlyConfigured, novalue
+#from stdnet.backends.base import BaseBackend, ImproperlyConfigured, novalue
 from stdnet.backends.structures.structredis import List,Set,OrderedSet,HashTable
 
 try:
     import redis
 except:
-    raise ImproperlyConfigured("Redis cache backend requires the 'redis' library. Do easy_install redis")
+    raise ImproperlyConfigured("Redis backend requires the 'redis' library. Do easy_install redis")
 
 
-class BackEnd(BaseBackend):
+class BackendDataServer(stdnet.BackendDataServer):
     
     def __init__(self, name, server, params, **kwargs):
-        super(BackEnd,self).__init__(name, params, **kwargs)
+        super(BackendDataServer,self).__init__(name, params, **kwargs)
         servs = server.split(':')
         server = servs[0]
         port   = 6379
