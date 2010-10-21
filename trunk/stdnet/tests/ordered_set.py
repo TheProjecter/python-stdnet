@@ -17,7 +17,7 @@ class TestOrderedSet(TestCase):
     def setUp(self):
         self.orm.register(Calendar)
         self.orm.register(DateValue)
-        ts = Calendar(name = 'MyCalendar')
+        ts = Calendar(name = 'MyCalendar').save()
         for dt,value in izip(dates,values):
             ts.add(dt,value)
         ts.save()

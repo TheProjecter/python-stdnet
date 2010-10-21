@@ -49,6 +49,9 @@ class MultiField(Field):
         
     def get_full_value(self):
         meta  = self.meta
+        objid = self.obj.id
+        if not objid:
+            raise FieldError('Object not saved. cannot access %s %s' % (self.__class__.__name__,self.name))
         id = meta.basekey('id',self.obj.id,self.name)
         return self.structure(id,
                               timeout = meta.timeout,
