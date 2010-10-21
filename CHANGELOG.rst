@@ -1,5 +1,6 @@
 Ver. 0.4 - Development
-=================================
+============================
+* :class:`stdnet.orm.AutoField` create the id when first requested. Previously only at saving time.  
 * Made clear that :class:`stdnet.orm.StdModel` classes are mapped to :class:`stdnet.HashTable`
   structures in a :class:`stdnet.BackendDataServer`. 
 * Moved ``structures`` module into ``backends`` directory. Internal reorganisation of several modules.

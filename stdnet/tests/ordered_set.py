@@ -1,15 +1,10 @@
-'''A twitter'''
 from datetime import datetime
 from itertools import izip
 
-from stdnet import orm
 from stdnet.test import TestCase
 from stdnet.utils import populate
 
-from examples.calendarevents import Calendar, DateValue
-
-orm.register(Calendar)
-orm.register(DateValue)
+from examples.models import Calendar, DateValue
 
 NUM_DATES = 100
 
@@ -20,6 +15,8 @@ values = populate('string', NUM_DATES, min_len = 10, max_len = 120)
 class TestOrderedSet(TestCase):
     
     def setUp(self):
+        self.orm.register(Calendar)
+        self.orm.register(DateValue)
         ts = Calendar(name = 'MyCalendar')
         for dt,value in izip(dates,values):
             ts.add(dt,value)

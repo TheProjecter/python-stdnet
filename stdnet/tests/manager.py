@@ -1,20 +1,15 @@
-import datetime
-import unittest
 import random
 from itertools import izip
 
 from stdnet.test import TestCase
-from stdnet import orm
-
-
-class SimpleModel(orm.StdModel):
-    code = orm.AtomField(unique = True)
-
-orm.register(SimpleModel)
+from examples.models import SimpleModel
     
 
 class TestManager(TestCase):
-    
+
+    def setUp(self):
+        self.orm.register(SimpleModel)
+        
     def testGetOrCreate(self):
         v,created = SimpleModel.objects.get_or_create(code = 'test')
         self.assertTrue(created)

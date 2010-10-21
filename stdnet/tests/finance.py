@@ -4,18 +4,11 @@ from itertools import izip
 from random import randint
 
 from stdnet.test import TestCase
-from stdnet import orm
 from stdnet.utils import populate
 from stdnet.exceptions import QuerySetError
 
-from examples.portfolio import Instrument, Fund
-from examples.portfolio import Position, PortfolioView, UserDefaultView
+from examples.models import Instrument, Fund, Position, PortfolioView, UserDefaultView
 
-orm.register(Instrument)
-orm.register(Fund)
-orm.register(Position)
-orm.register(PortfolioView)
-orm.register(UserDefaultView)
 
 INST_LEN    = 100
 FUND_LEN    = 10
@@ -40,10 +33,11 @@ dates = populate('date',NUM_DATES,start=datetime.date(2009,6,1),end=datetime.dat
 
 
 
-class TestORM(TestCase):
+class TestFinanceApplication(TestCase):
     
     def setUp(self):
         '''Create Instruments and Funds commiting at the end for speed'''
+        orm = self.orm
         orm.register(Instrument)
         orm.register(Fund)
         orm.register(Position)

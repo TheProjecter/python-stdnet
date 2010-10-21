@@ -2,22 +2,17 @@ from itertools import izip
 
 from stdnet.test import TestCase
 from stdnet.utils import populate
-from stdnet import orm
+
+from examples.models import Dictionary
 
 keys = populate('string', 200)
 values = populate('string', 200, min_len = 20, max_len = 300)
 
 
-class Dictionary(orm.StdModel):
-    name = orm.AtomField(unique = True)
-    data = orm.HashField()
-
-orm.register(Dictionary)
-
-
 class TestLHashField(TestCase):
     
     def setUp(self):
+        self.orm.register(Dictionary)
         d = Dictionary(name = 'test').save()
         self.data = dict(izip(keys,values))
     
