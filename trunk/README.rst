@@ -6,10 +6,10 @@
 
 --
 
-A networked standard template library for python.
+**An object relational mapper fro remote data structures.**
 
 The data is owned by different, configurable back-end databases and it is accessed using a
-light-weight Object Relational Mapping (ORM_) inspired by Django_. 
+light-weight Object Relational Mapper (ORM_) inspired by Django_ and SQLAlchemy_. 
 The source code is hosted at `google code`__ while
 Documentation__ and Downloads__ are available via PyPi.
 
@@ -151,6 +151,7 @@ file in the top distribution directory for the full license text.
 
 .. _Redis: http://code.google.com/p/redis/
 .. _Django: http://www.djangoproject.com/
+.. _SQLAlchemy: http://www.sqlalchemy.org/
 .. _redis-py: http://github.com/andymccurdy/redis-py
 .. _ORM: http://en.wikipedia.org/wiki/Object-relational_mapping
 .. _CouchDB: http://couchdb.apache.org/
