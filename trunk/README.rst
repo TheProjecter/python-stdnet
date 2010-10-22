@@ -18,35 +18,10 @@ __ http://packages.python.org/python-stdnet/
 __ http://pypi.python.org/pypi/python-stdnet/
 
 
-Backends
-====================
-Backend databases provide the backbone of the library, while the Object Relational Mapping
-is the syntactic sugar. Currently the list of back-ends is limited to
-
-* Redis_. Requires redis-py_.
-* Local memory (planned). For testing purposes.
-* CouchDB_ (planned). Requires couchdb-python_.
-* Memcached_ (maybe).
-
-Only Redis_ is fully operational.
- 
-Object-relational mapping
-================================
-The module ``stdnet.orm`` is a lightweight ORM. For example::
- 
-	from stdnet import orm
- 		
-	class Author(orm.StdModel):
-	    name = orm.AtomField()
-
-	class Book(orm.StdModel):
-	    author = orm.ForeignKey(Author)
-	    title  = orm.AtomField()
-	    
-Register models with backend::
-
-	orm.register(Author,'redis://localhost/?db=1')
-	orm.register(Book,'redis://localhost/?db=2')
+Requirements
+=================
+* You need access to a Redis_ server.
+* redis-py_ version 2.0 or higher.
 
 
 Installing 
@@ -106,6 +81,68 @@ you need to setup a	script file along these lines::
 	    import stdnet
 	    stdnet.runtests()
 
+
+Backends
+====================
+Backend data-stores provide the backbone of the library,
+while the Object Relational Mapper the syntactic sugar.
+Currently the list of back-ends is limited to
+
+* Redis_. Requires redis-py_.
+* Local memory (planned). For testing purposes.
+* CouchDB_ (planned). Requires couchdb-python_.
+
+**Only** Redis_ **is operational.**
+ 
+Object Relational Mapper
+================================
+The module ``stdnet.orm`` is a lightweight ORM::
+ 
+	from stdnet import orm
+ 		
+	class Base(orm.StdModel):
+	    name = orm.SymbolField(unique = True)
+	    ccy  = orm.SymbolField()
+	    
+	    def __str__(self):
+	        return str(self.name)
+	    
+	    class Meta:
+	        abstract = True
+	
+	class Instrument(Base):
+	    type = orm.SymbolField()
+	    
+	class Fund(Base):
+	    description = orm.CharField()
+	
+	class PositionDescriptor(orm.StdModel):
+	    dt    = orm.DateField()
+	    size  = orm.FloatField()
+	    price = orm.FloatField()
+	    position = orm.ForeignKey("Position")
+	
+	class Position(orm.StdModel):
+	    instrument = orm.ForeignKey(Instrument, related_name = 'positions')
+	    fund       = orm.ForeignKey(Fund)
+	    history    = orm.ListField(model = PositionDescriptor)
+	    
+	    def __str__(self):
+	        return '%s: %s @ %s' % (self.fund,self.instrument,self.dt)
+	
+	
+	    
+Register models with backend::
+
+	orm.register(Instrument,'redis://localhost/?db=1')
+	orm.register(Fund,'redis://localhost/?db=1')
+	orm.register(PositionDescriptor,'redis://localhost/?db=2')
+	orm.register(Position,'redis://localhost/?db=2')
+
+And play with the API::
+
+	>>> f = Fund(name="pluto,description="The super pluto fund",ccy="EUR").save()
+	Fund: pluto
 
 .. _Redis: http://code.google.com/p/redis/
 .. _Django: http://www.djangoproject.com/

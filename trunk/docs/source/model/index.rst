@@ -1,7 +1,7 @@
 .. _model-index:
 
 ============================
-Object Relational Mapping
+Object Relational Mapper
 ============================
 
 `Object Relational Mapping <http://en.wikipedia.org/wiki/Object-relational_mapping>`_ (ORM) in

@@ -1,4 +1,8 @@
-.. _intro-example:
+.. _timeseries-example:
+
+======================================
+Time Series
+======================================
 
 A very simple example on how to manage timeseries data.
 
