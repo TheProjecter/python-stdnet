@@ -1,11 +1,12 @@
 .. _twitter-example:
 
-
 ==============================
 Twitter Clone Example
 ==============================
 
-A very simple twitter clone implemented using ``stdnet`` library::
+A very simple twitter clone implemented using ``stdnet`` library.
+Illustrates the use of :class:`stdnet.orm.orm.ManyToManyField` and
+:class:`stdnet.orm.orm.ListField`::
 
 	from datetime import datetime
 	from stdnet import orm
@@ -36,7 +37,8 @@ A very simple twitter clone implemented using ``stdnet`` library::
 	        return p
 	    
 	    
-These models are available in the ``tests`` directory. We can import them by using::
+These models are available in the :mod:`stdnet.tests` module.
+We can import them by using::
 
 	from stdnet.tests.examples.models import Post, User
 	

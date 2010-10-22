@@ -19,10 +19,9 @@ docs_dir   = os.path.split(source_dir)[0]
 base_dir   = os.path.split(docs_dir)[0]
 sys.path.append(os.path.join(source_dir, "_ext"))
 sys.path.append(base_dir)
-
-#
-version = '0.3'
-release = '0.3.3'
+import stdnet
+version = stdnet.__version__
+release = version
 # -- General configuration -----------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be extensions

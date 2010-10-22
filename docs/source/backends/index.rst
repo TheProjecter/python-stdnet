@@ -1,7 +1,7 @@
 .. _db-index:
 
 ============================
-Database BackEnds
+Data Structure BackEnds
 ============================
 
 Contents:

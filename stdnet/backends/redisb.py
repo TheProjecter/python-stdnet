@@ -29,6 +29,9 @@ class BackendDataServer(stdnet.BackendDataServer):
         self.clear           = redispy.flushdb
         self.sinter          = redispy.sinter
     
+    def __repr__(self):
+        return '%s backend' % self.__name
+    
     def set_timeout(self, id, timeout):
         timeout = timeout or self.default_timeout
         if timeout:

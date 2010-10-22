@@ -3,6 +3,9 @@ from datetime import datetime, date
 
 from stdnet import orm
 
+class SimpleModel(orm.StdModel):
+    code = orm.AtomField(unique = True)
+    
 
 class Base(orm.StdModel):
     name = orm.SymbolField(unique = True)
@@ -13,10 +16,6 @@ class Base(orm.StdModel):
     
     class Meta:
         abstract = True
-
-
-class SimpleModel(orm.StdModel):
-    code = orm.AtomField(unique = True)
     
 
 class Instrument(Base):
@@ -31,14 +30,11 @@ class Position(orm.StdModel):
     instrument = orm.ForeignKey(Instrument, related_name = 'positions')
     fund       = orm.ForeignKey(Fund)
     dt         = orm.DateField()
+    size       = orm.FloatField()
+    price      = orm.FloatField()
     
     def __str__(self):
         return '%s: %s @ %s' % (self.fund,self.instrument,self.dt)
-    
-    def __init__(self, size = 1, price = 1, **kwargs):
-        self.size  = size
-        self.price = price
-        super(Position,self).__init__(**kwargs)
 
 
 class PortfolioView(orm.StdModel):
