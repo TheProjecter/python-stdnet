@@ -9,19 +9,24 @@ from stdnet.utils import populate
 from examples.models import TestDateModel
 
 NUM_DATES = 1000
+names = populate('string',NUM_DATES, min_len = 5, max_len = 20)
 dates = populate('date', NUM_DATES, start=datetime.date(2010,5,1), end=datetime.date(2010,6,1))
 
 
 
-class TestDateField(TestCase):
+class TestAtomFields(TestCase):
     
     def setUp(self):
         self.orm.register(TestDateModel)
-        for dt in dates:
-            TestDateModel(dt = dt).save(False)
+        
+    def create(self):
+        for na,dt in izip(names,dates):
+            m = TestDateModel(name = na, dt = dt)
+            m.save(False)
         TestDateModel.commit()
             
     def testFilter(self):
+        self.create()
         all = TestDateModel.objects.all()
         self.assertEqual(len(dates),all.count())
         N = 0
@@ -35,7 +40,7 @@ class TestDateField(TestCase):
                     self.assertEqual(elem.dt,dt)
         self.assertEqual(all.count(),N)
         
-    def testDelete(self):
+    def _testDelete(self):
         N = 0
         done_dates = set()
         for dt in dates:

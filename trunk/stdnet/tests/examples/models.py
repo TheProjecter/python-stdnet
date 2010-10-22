@@ -4,7 +4,7 @@ from datetime import datetime, date
 from stdnet import orm
 
 class SimpleModel(orm.StdModel):
-    code = orm.AtomField(unique = True)
+    code = orm.SymbolField(unique = True)
     
 
 class Base(orm.StdModel):
@@ -38,12 +38,12 @@ class Position(orm.StdModel):
 
 
 class PortfolioView(orm.StdModel):
-    name      = orm.AtomField()
+    name      = orm.SymbolField()
     portfolio = orm.ForeignKey(Fund)
     
     
 class UserDefaultView(orm.StdModel):
-    user = orm.AtomField()
+    user = orm.SymbolField()
     view = orm.ForeignKey(PortfolioView)
     
     
@@ -61,18 +61,46 @@ class DateValue(orm.StdModel):
     
     
 class Calendar(orm.StdModel):
-    name   = orm.AtomField(unique = True)
+    name   = orm.SymbolField(unique = True)
     data   = orm.SetField(model = DateValue, ordered = True)
     
     def add(self, dt, value):
         event = DateValue(dt,value).save()
         self.data.add(event)
 
+    
+class Dictionary(orm.StdModel):
+    name = orm.SymbolField(unique = True)
+    data = orm.HashField()
+    
+    
+class SimpleList(orm.StdModel):
+    names = orm.ListField()
+
+
+class TestDateModel(orm.StdModel):
+    name = orm.SymbolField()
+    dt = orm.DateField()
+    
+    
+# Create the model for testing.
+class Node(orm.StdModel):
+    parent = orm.ForeignKey('self', required = False, related_name = 'children')
+    def __init__(self, weight = 1.0, **kwargs):
+        super(Node,self).__init__(**kwargs)
+        self.weight = weight
+    
+    def __str__(self):
+        return '%s' % self.weight
+    
+
+#############################################################
+## TWITTER CLONE MODELS
 
 class Post(orm.StdModel):
-    dt   = orm.DateField(index = False)
+    dt   = orm.DateTimeField(index = False)
     data = orm.CharField()
-    #user = orm.ForeignKey("User")
+    user = orm.ForeignKey("User", index = False)
     
     def __init__(self, data = '', dt = None):
         dt   = dt or datetime.now()
@@ -95,26 +123,3 @@ class User(orm.StdModel):
         self.updates.push_front(p)
         return p
     
-    
-class Dictionary(orm.StdModel):
-    name = orm.AtomField(unique = True)
-    data = orm.HashField()
-    
-    
-class SimpleList(orm.StdModel):
-    names = orm.ListField()
-
-
-class TestDateModel(orm.StdModel):
-    dt = orm.DateField()
-    
-    
-# Create the model for testing.
-class Node(orm.StdModel):
-    parent = orm.ForeignKey('self', required = False, related_name = 'children')
-    def __init__(self, weight = 1.0, **kwargs):
-        super(Node,self).__init__(**kwargs)
-        self.weight = weight
-    
-    def __str__(self):
-        return '%s' % self.weight

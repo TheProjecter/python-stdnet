@@ -1,6 +1,7 @@
 Ver. 0.4 - Development
 ============================
 * Development status set to ``beta``.
+* **This version is incompatible with previous versions**.
 * Added several :class:`stdnet.orm.AtomField` subclasses. 
 * Before adding elements to a :class:`stdnet.orm.MultiField` the object needs to be saved, i.e. it needs to have a valid id.
 * Made clear that :class:`stdnet.orm.StdModel` classes are mapped to :class:`stdnet.HashTable`

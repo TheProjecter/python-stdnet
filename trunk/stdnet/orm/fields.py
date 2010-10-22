@@ -3,6 +3,7 @@ import time
 from datetime import date, datetime
 
 from query import RelatedManager
+from related import RelatedObject
 from stdnet.exceptions import *
 from stdnet.utils import timestamp2date, date2timestamp
 
@@ -15,8 +16,9 @@ __all__ = ['Field',
            'BooleanField',
            'FloatField',
            'DateField',
-           'CharField',
+           'DateTimeField',
            'SymbolField',
+           'CharField',
            'ForeignKey',
            '_novalue']
 
@@ -49,9 +51,7 @@ Each field is specified as a :class:`stdnet.orm.StdModel` class attribute.
 
 .. attribute:: ordered
 
-    If ``True``, the field is ordered (if :attr:`Field.unique` is ``True`` this has no effect).
-    Represented by a :class:`stdnet.OrderedSet`
-    in the :class:`stdnet.BackendDataServer`.
+    If ``True``, the field is ordered. if :attr:`Field.unique` is ``True`` this has no effect.
     
     Default ``False``.
     
@@ -67,9 +67,26 @@ Each field is specified as a :class:`stdnet.orm.StdModel` class attribute.
     If ``False``, the field is allowed to be null.
     
     Default ``True``.
+    
+.. attribute:: default
+
+    Default value for this field.
+    
+    Default :class:`NoValue`.
+    
+.. attribute:: name
+
+    Field name, created by the ``orm`` at runtime.
+    
+.. attribute:: model
+
+    The :class:`stdnet.orm.StdModel` holding the field.
+    Created by the ``orm`` at runtime. 
 '''
+    default=NoValue
+    
     def __init__(self, unique = False, ordered = False, primary_key = False,
-                 required = True, index = True):
+                 required = True, index = True, default=NoValue):
         self.primary_key = primary_key
         if primary_key:
             self.unique   = True
@@ -78,19 +95,41 @@ Each field is specified as a :class:`stdnet.orm.StdModel` class attribute.
         else:
             self.unique = unique
             self.required = required
-            if unique:
-                self.index = True
-            else:
-                self.index = index
+            self.index = True if unique else index
         self.ordered  = ordered
         self._value   = None
         self.obj      = None
         self.meta     = None
         self.name     = None
         self.model    = None
+        self.default  = default if default is not NoValue else self.default
         
-    def register_with_model(self, fieldname, model):
-        pass
+    def __str__(self):
+        return '%s.%s' % (self.meta,self.name)
+    
+    def __repr__(self):
+        return '%s: %s' % (self.__class__.__name__,self)
+        
+    def to_python(self, value):
+        """Converts the input value into the expected Python
+data type, raising :class:`stdnet.FieldValueError` if the data
+can't be converted.
+Returns the converted value. Subclasses should override this."""
+        return value
+    
+    def register_with_model(self, name, model):
+        '''Called during the creation of a the :class:`stdnet.orm.StdModel`
+class when :class:`stdnet.orm.base.Metaclass` is initialised. It fills
+:attr:`Field.name` and :attr:`Field.model`. This is an internal
+function users should never call.'''
+        if self.name:
+            raise FieldError('Field %s is already registered with a model' % self)
+        self.name  = name
+        self.model = model
+        self.meta  = model._meta
+        self.meta.dfields[name] = self
+        if name is not 'id':
+            self.meta.fields.append(self)
     
     def _set_value(self, name, obj, value):
         # Called by constructor in the model
@@ -103,21 +142,20 @@ Each field is specified as a :class:`stdnet.orm.StdModel` class attribute.
     
     def get_full_value(self):
         '''Return the expanded value of the field. For standard fields this is the
-same as the field value, while for more complex fields, such as ForeignKey, it
+same as the field value, while for more complex fields, such as :class:`ForeignKey`, it
 get extra data from the database. This function is called by the model when accessing
 fields values.'''
         return self._value
-    
-    def get_value(self, value):
-        ''''''
-        return value
     
     def hash(self, value):
         '''Internal function used to hash the value so it can be used as index'''
         return value
     
-    def serialize(self):
-        return self.get_value(self._value)
+    def serialize(self, value):
+        '''Called by the :func:'stdnet.orm.StdModel.save` method when saving
+an object to the remote data server. It return s a serializable representation of *value*.
+If an error occurs it raises :class:`stdnet.exceptions.FieldValueError`'''
+        return value
     
     def isvalid(self):
         '''Return ``True`` if Field is valid otherwise raise a ``FieldError`` exception.'''
@@ -136,93 +174,83 @@ fields values.'''
     def delete(self):
         pass
     
+    def has_default(self):
+        "Returns a boolean of whether this field has a default value."
+        return self.default is not NoValue
+    
+    def get_default(self):
+        "Returns the default value for this field."
+        if self.has_default():
+            if callable(self.default):
+                return self.default()
+            else:
+                return self.default
+        return None
+    
     def __deepcopy__(self, memodict):
         '''Nothing to deepcopy here'''
-        return copy(self)
+        field = copy(self)
+        field.name = None
+        field.model = None
+        field.meta = None
+        return field
             
 
 class AtomField(Field):
-    '''The simpliest field possible, it can be of four different types:
+    '''The base class for fields containing ``atoms``. An atom is an irreducible
+value with a specific data type. it can be of four different types:
 
-    * boolean
-    * integer
-    * floating point
-    * string
-    '''
+* boolean
+* integer
+* date
+* datetime
+* floating point
+* symbol
+'''
     type = 'text'
-    def hash(self, value):
-        if isinstance(value,basestring):
-            return hash(value)
-        else:
-            return value
-    
-    def set(self,obj,value):
-        pass
 
 
 class SymbolField(AtomField):
-    '''A text :class:`AtomField`.'''
-    def hash(self, value):
+    '''A :class:`AtomField` which contains a ``symbol``.
+A symbol holds a sequence of characters as a single unit.
+A symbol is irreducible, and are often used to hold names
+of other entities.'''
+    def serialize(self, value):
         return hash(value)
 
 
-class CharField(AtomField):
-    '''A text :class:`AtomField` which is never an index.
-It contains strings and by default :attr:`Field.required`
-is set to ``False``.'''
-    def __init__(self, *args, **kwargs):
-        kwargs['index'] = False
-        kwargs['unique'] = False
-        kwargs['primary_key'] = False
-        kwargs['ordered'] = False
-        required = kwargs.get('required',None)
-        if required is None:
-            kwargs['required'] = False
-        super(CharField,self).__init__(*args, **kwargs)
-        
-    def hash(self, value):
-        return hash(value)
-
-
-class IntegerField(Field):
-    '''An integer only :class:`AtomField`
-    '''
+class IntegerField(AtomField):
+    '''An integer :class:`AtomField`.'''
     type = 'integer'
-    def hash(self, value):
+    def serialise(self, value):
+        if value is not None:
+            try:
+                return int(value)
+            except:
+                raise FieldValueError('Field is not a valid integer')
         return value
     
-    def set(self,obj,value):
-        pass
     
-    
-class BooleanField(Field):
-    '''An boolean only :class:`AtomField`
-    '''
+class BooleanField(AtomField):
+    '''An boolean :class:`AtomField`'''
     type = 'bool'
-    def hash(self, value):
-        return 1 if value else 0
-    
-    def set(self,obj,value):
-        pass
-    
-    
+    def serialise(self, value):
+        return True if value else False
+        
     
 class AutoField(IntegerField):
-    '''An :class:`IntegerField` that automatically increments. You usually won't
-need to use this directly;
+    '''An :class:`IntegerField` that automatically increments.
+You usually won't need to use this directly;
 a primary key field will automatically be added to your model
 if you don't specify otherwise.
     '''            
-    def serialize(self):
-        v = self._value
-        if not v:
-            meta = self.meta
-            v = meta.cursor.incr(meta.basekey('ids'))
-            self._value = v
-        return v
+    def serialize(self, value):
+        if not value:
+            value = self.meta.cursor.incr(self.meta.basekey('ids'))
+        return super(AutoField,self).serialise(value)
 
 
-class FloatField(Field):
+class FloatField(AtomField):
     '''An floating point :class:`AtomField`. By default 
 its :attr:`Field.index` is set to ``False``.
     '''
@@ -233,63 +261,61 @@ its :attr:`Field.index` is set to ``False``.
             kwargs['index'] = False
         super(FloatField,self).__init__(*args,**kwargs)
         
-    def hash(self, value):
+    def serialize(self, value):
+        if value is not None:
+            try:
+                return float(value)
+            except:
+                raise FieldValueError('Field is not a valid float')
         return value
     
-    def set(self,obj,value):
-        pass    
     
-    
-class DateField(Field):
-    '''A date, represented in Python by a datetime.date instance.
-    '''
-    def hash(self, value):
-        if isinstance(value,date):
-            return date2timestamp(value)
-        else:
-            return value
+class DateField(AtomField):
+    '''An date :class:`AtomField` represented in Python by
+a :class:`datetime.date` instance.'''
+    type = 'date'
+    def serialize(self, value):
+        if value is not None:
+            if isinstance(value,date):
+                value = date2timestamp(value)
+            else:
+                raise FieldValueError('Field %s is not a valid date' % self)
+        return value
         
-    def serialize(self):
-        return self.hash(self._value)
-    
-    def _set_value(self, name, obj, value):
-        value = super(DateField,self)._set_value(name,obj,value)
-        if value and not isinstance(value,date):
-            value = timestamp2date(value).date()
-        self._value = value
+        
+class DateTimeField(AtomField):
+    '''An date :class:`AtomField` represented in Python by
+a :class:`datetime.datetime` instance.'''
+    type = 'datetime'
+    def serialize(self, value):
+        if value is not None:
+            if isinstance(value,date):
+                value = timestamp2date(value)
+            else:
+                raise FieldValueError('Field %s is not a valid datetime' % self)
+        return value
 
 
-class RelatedObject(object):
+class CharField(Field):
+    '''A text :class:`Field` which is never an index.
+It contains strings and by default :attr:`Field.required`
+is set to ``False``.'''
+    default = ''
+    def __init__(self, *args, **kwargs):
+        kwargs['index'] = False
+        kwargs['unique'] = False
+        kwargs['primary_key'] = False
+        kwargs['ordered'] = False
+        required = kwargs.get('required',None)
+        if required is None:
+            kwargs['required'] = False
+        super(CharField,self).__init__(*args, **kwargs)
+        
+    def serialize(self, value):
+        if value is not None:
+            value = str(value)
+        return value
     
-    def __init__(self,
-                 model,
-                 related_name = None,
-                 relmanager = None):
-        if not model:
-            raise ValueError('Model not specified')
-        self.model        = model
-        self.related_name = related_name
-        self.relmanager   = relmanager
-    
-    def register_related_model(self, name, related):
-        model = self.model
-        if not model:
-            return
-        if model == 'self':
-            model = related
-        if isinstance(model,basestring):
-            raise NotImplementedError
-        self.model = model
-        meta  = model._meta
-        related_name = self.related_name or '%s_set' % related._meta.name
-        if related_name not in meta.related and related_name not in meta.fields:
-            self.related_name = related_name
-            manager = self.relmanager(related,name)
-            meta.related[related_name] = manager
-            return manager
-        else:
-            raise FieldError("Duplicated related name %s in model %s and field %s" % (related_name,related,name))
-
 
 class ForeignKey(Field, RelatedObject):
     '''A field defining a one-to-many objects relationship.
@@ -318,9 +344,6 @@ back to self. For example::
                                related_name = related_name)
         self.__value_obj = _novalue
         self.index = True
-        
-    def register_with_model(self, name, related):
-        self.register_related_model(name, related)
     
     def set_value(self, name, obj, value):
         value = super(ForeignKey,self).set_value(name,obj,value)
@@ -349,11 +372,3 @@ back to self. For example::
     def hash(self, value):
         return self.get_value(value)
     
-    #def save_index(self, commit, value):
-    #    meta    = self.meta
-    #    name    = self.name
-    #    obj     = self.obj
-    #    key     = meta.basekey(name,value)
-    #    return meta.cursor.add_index(key, obj.id, commit, timeout = meta.timeout)
-    
-        
