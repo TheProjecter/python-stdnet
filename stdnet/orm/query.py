@@ -92,6 +92,7 @@ fetching objects.'''
         '''Aggregate lookup parameters.'''
         unique  = False
         meta    = self._meta
+        fields  = meta.dfields
         result  = {}
         # Loop over 
         for name,value in kwargs.items():
@@ -99,7 +100,7 @@ fetching objects.'''
             N = len(names)
             # simple lookup for example filter(name = 'pippo')
             if N == 1:
-                field = meta.fields.get(name,None)
+                field = fields.get(name,None)
                 if not field:
                     raise QuerySetError("Could not filter. Field %s not defined." % name)
                 value = field.hash(value)

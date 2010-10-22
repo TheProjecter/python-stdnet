@@ -93,7 +93,7 @@ and :ref:`ObjectNotFund <utility-exceptions>` exception.
             cache[id] = cvalue
         return cvalue
             
-    def add_object(self, obj, commit = True):
+    def add_object(self, obj, data, indexes, commit = True):
         '''Add a model object to the database:
         
         * *obj* instance of :ref:`StdModel <model-model>` to add to database
@@ -104,27 +104,19 @@ and :ref:`ObjectNotFund <utility-exceptions>` exception.
         cache = self._cachepipe
         hash  = meta.table()
         objid = obj.id
-        hash.add(objid, obj)
+        hash.add(objid, data)
         
         # Create indexes if possible
-        for name,field in meta.fields.items():
-            if name is 'id':
-                continue
-            if field.index:
-                value   = field.hash(field.serialize())
-                key     = meta.basekey(field.name,value)
-                if field.unique:
-                    index = self.index_keys(key, timeout)
+        for field,value in indexes:
+            key     = meta.basekey(field.name,value)
+            if field.unique:
+                index = self.index_keys(key, timeout)
+            else:
+                if field.ordered:
+                    index = self.ordered_set(key, timeout, pickler = nopickle)
                 else:
-                    if field.ordered:
-                        index = self.ordered_set(key, timeout, pickler = nopickle)
-                    else:
-                        index = self.unordered_set(key, timeout, pickler = nopickle)
-                index.add(objid)
-            
-            #savefield = getattr(field,'save',None)
-            #if savefield:
-            #    self.fields.append(savefield)
+                    index = self.unordered_set(key, timeout, pickler = nopickle)
+            index.add(objid)
                 
         if commit:
             self.commit()

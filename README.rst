@@ -143,6 +143,11 @@ And play with the API::
 
 	>>> f = Fund(name="pluto,description="The super pluto fund",ccy="EUR").save()
 	Fund: pluto
+	
+Licence
+=============
+This software is licensed under the New BSD_ License. See the LICENSE
+file in the top distribution directory for the full license text.
 
 .. _Redis: http://code.google.com/p/redis/
 .. _Django: http://www.djangoproject.com/
@@ -151,3 +156,4 @@ And play with the API::
 .. _CouchDB: http://couchdb.apache.org/
 .. _couchdb-python: http://code.google.com/p/couchdb-python/
 .. _Memcached: http://memcached.org/
+.. _BSD: http://www.opensource.org/licenses/bsd-license.php

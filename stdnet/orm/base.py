@@ -8,7 +8,7 @@ def get_fields(bases, attrs):
     fields = {}
     for base in bases:
         if hasattr(base, '_meta'):
-            fields.update(base._meta.fields)
+            fields.update(copy.deepcopy(base._meta.fields))
     
     for name,field in attrs.items():
         if isinstance(field,Field):
@@ -22,8 +22,7 @@ class Metaclass(object):
     '''Utility class used for storing all information
 which maps a :class:`stdnet.orm.StdModel` model
 into a :class:`stdnet.HashTable` structure in a :class:`stdnet.BackendDataServer`.
-An instance is initiated when registering a model with a
-:class:`stdnet.BackendDataServer`:
+An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
 
 .. attribute:: model
 
@@ -43,46 +42,54 @@ An instance is initiated when registering a model with a
     where ``settings`` is obtained by::
     
         from dynts.conf import settings
+    
+.. attribute:: pk
+
+    primary key ::class:`stdnet.orm.Field`
 
 '''
-    def __init__(self, model, fields, abstract = False, keyprefix = None):
+    def __init__(self, model, fields,
+                 abstract = False, keyprefix = None,
+                 app_label = None, **kwargs):
         self.abstract  = abstract
         self.keyprefix = keyprefix
         self.model     = model
+        self.app_label = app_label
         self.name      = model.__name__.lower()
-        self.fields    = fields
+        self.fields    = []
+        self.dfields   = {}
         self.timeout   = 0
         self.related   = {}
         model._meta    = self
+        
         if not abstract:
             try:
-                pk = self.pk
+                pk = fields['id']
             except:
-                fields['id'] = AutoField(primary_key = True)
+                pk = AutoField(primary_key = True)
+            pk.register_with_model('id',model)
+            self.pk = pk
             if not self.pk.primary_key:
                 raise FieldError("Primary key must be named id")
             
-        for name,field in self.fields.items():
-            if not abstract:
+            for name,field in fields.iteritems():
+                if name == 'id':
+                    continue
                 field.register_with_model(name,model)
-            if name == 'id':
-                continue
-            if field.primary_key:
-                raise FieldError("Primary key already available %s." % name)
+                if field.primary_key:
+                    raise FieldError("Primary key already available %s." % name)
             
         self.cursor = None
         self.keys  = None
         
     def __repr__(self):
-        return '%s.%s' % (self.app_label,self.name)
+        if self.app_label:
+            return '%s.%s' % (self.app_label,self.name)
+        else:
+            return self.name
     
     def __str__(self):
         return self.__repr__()
-    
-    @property
-    def pk(self):
-        '''primary key field'''
-        return self.fields['id']
     
     @property
     def id(self):
@@ -116,15 +123,17 @@ An instance is initiated when registering a model with a
 the model table'''
         return self.cursor.hash(self.basekey(),self.timeout)
     
-    def isvalid(self):
+    def isvalid(self, obj):
         validation_errors = {}
         valid = True
-        for field in self.fields.itervalues():
+        for field in self.fields:
+            name = field.name
+            value = getattr(obj,name,None)
             try:
                 valid = valid & field.isvalid()
             except FieldError, e:
                 valid = False
-                validation_errors[field.name] = str(e)
+                validation_errors[name] = str(e)
         self.validation_errors = validation_errors 
         return valid
     
@@ -133,14 +142,15 @@ the model table'''
         for rel in self.related.itervalues():
             objs.extend(rel.all())
         return objs
-                            
-    def __deepcopy__(self, memodict):
-        # We deep copy on fields and create the keys list
-        obj = copy.copy(self)
-        obj.fields = copy.deepcopy(self.fields, memodict)
-        obj.related = copy.deepcopy(self.related, memodict)
-        memodict[id(self)] = obj
-        return obj
+    
+    # OBSOLETE. TO REMOVE                        
+    #def __deepcopy__(self, memodict):
+    #    # We deep copy on fields and create the keys list
+    #    obj = copy.copy(self)
+    #    obj.fields = copy.deepcopy(self.fields, memodict)
+    #    obj.related = copy.deepcopy(self.related, memodict)
+    #    memodict[id(self)] = obj
+    #    return obj
 
 
 class StdNetType(type):

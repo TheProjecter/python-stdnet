@@ -1,4 +1,6 @@
 import copy
+from itertools import izip
+
 from base import StdNetType
 from fields import _novalue
 from stdnet.exceptions import *
@@ -19,7 +21,15 @@ the :attr:`StdModel._meta` attribute.
     __metaclass__ = StdNetType
     
     def __init__(self, **kwargs):
-        self._load(kwargs)
+        for field in self._meta.fields:
+            name = field.name
+            value = kwargs.pop(name,None)
+            if value is None:
+                value = field.get_default()
+            setattr(self,name,value)
+        setattr(self,'id',kwargs.pop('id',None))
+        if kwargs:
+            raise ValueError("'%s' is an invalid keyword argument for this function" % kwargs.keys()[0])
         
     def __repr__(self):
         return '%s: %s' % (self.__class__.__name__,self)
@@ -41,11 +51,11 @@ the :attr:`StdModel._meta` attribute.
             related.obj = self
             #setattr(self,name,related)
         
-    def __setattr__(self,name,value):
+    def a__setattr__(self, name, value):
         field = self._meta.fields.get(name,None)
         self.__set_field(name, field, value)
         
-    def __getattr__(self, name):
+    def a__getattr__(self, name):
         field = self._meta.fields.get(name,None)
         if field:
             return field.get_full_value()
@@ -75,10 +85,19 @@ otherwise a ``ModelNotRegistered`` exception will be raised.'''
         meta = self._meta
         if not meta.cursor:
             raise ModelNotRegistered('Model %s is not registered with a backend database. Cannot save any instance.' % meta.name)
-        if meta.isvalid():
-            meta.cursor.add_object(self, commit = commit)
-        else:
-            raise ObjectNotValidated('Object %s did not validate. Cannot save to database.' % self)
+        data = []
+        indexes = []
+        for field in meta.fields:
+            name = field.name
+            value = getattr(self,name,None)
+            serializable = field.serialize(value)
+            if serializable is None and field.required:
+                raise FieldError('Field %s has no value for %s' % (field,self))
+            data.append(serializable)
+            if field.index:
+                indexes.append((field,serializable))
+        self.id = meta.pk.serialize(self.id)
+        meta.cursor.add_object(self, data, indexes, commit = commit)
         return self
     
     def isvalid(self):

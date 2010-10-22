@@ -177,9 +177,9 @@ This field is implemented as a double Set field.
                                related_name = related_name)
         self.index = False
         
-    def register_with_model(self, name, related):
-        related_manager = self.register_related_model(name, related)
-        related_manager.name = self.related_name
+    #def register_with_model(self, name, related):
+    #    related_manager = self.register_related_model(name, related)
+    #    related_manager.name = self.related_name
         
     def _set_value(self, name, obj, value):
         v = SetField._set_value(self, name, obj, value)
