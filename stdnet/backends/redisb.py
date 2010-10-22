@@ -28,6 +28,8 @@ class BackendDataServer(stdnet.BackendDataServer):
         self.incr            = redispy.incr
         self.clear           = redispy.flushdb
         self.sinter          = redispy.sinter
+        self.delete          = redispy.delete
+        self.keys            = redispy.keys
     
     def __repr__(self):
         return '%s backend' % self.__name
@@ -48,25 +50,6 @@ class BackendDataServer(stdnet.BackendDataServer):
     
     def _get(self, id):
         return self.execute_command('GET', id)
-            
-    def delete_indexes(self, obj):
-        '''Delete an object from the database'''
-        meta  = obj._meta
-        objid = obj.id
-        for field in meta.fields.itervalues():
-            if field.primary_key:
-                continue
-            if field.index:
-                value = field.hash(field.serialize())
-                fid   = meta.basekey(field.name,value)
-                if field.unique:
-                    if not self.execute_command('DEL', fid):
-                        raise Exception('could not delete unique index at %s' % fid)
-                else:
-                    if not self.execute_command('SREM', fid, objid):
-                        raise Exception('could not delete index at set %s' % fid)
-            field.delete()
-        return 1
             
     def query(self, meta, fargs, eargs):
         '''Query a model table'''

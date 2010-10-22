@@ -1,4 +1,6 @@
 from copy import copy
+from itertools import izip
+
 from stdnet.exceptions import *
 
 
@@ -66,7 +68,7 @@ fetching objects.'''
         self.buildquery()
         if self.qset == 'all':
             meta = self._meta
-            return meta.cursor.hash(meta.basekey()).size()
+            return meta.table().size()
         else:
             return len(self.qset)
         
@@ -103,7 +105,7 @@ fetching objects.'''
                 field = fields.get(name,None)
                 if not field:
                     raise QuerySetError("Could not filter. Field %s not defined." % name)
-                value = field.hash(value)
+                value = field.serialize(value)
                 unique = field.unique
             # group lookup filter(name_in ['pippo','luca'])
             elif N == 2 and names[1] == 'in':
@@ -114,21 +116,7 @@ fetching objects.'''
             else: 
                 # Nested lookup. Not available yet!
                 raise NotImplementedError("Nested lookup is not yet available")
-                fields = []
-                metf = meta
-                for subname in names:
-                    if not metf:
-                        raise QuerySetError("Could not filter. Nested queryset %s has no model %s." % (name,subname))
-                    field = metf.fields.get(subname,None)
-                    if self.model:
-                        metf = field.model._meta
-                    else:
-                        metf = None
-                    if not field:
-                        raise QuerySetError("Could not filter. Field %s not defined." % name)
-                    fields.append((model,subname))
-                value = field.hash(value)
-                    
+                      
             if unique:
                 result[name] = value
                 if filter:
@@ -158,19 +146,19 @@ fetching objects.'''
     def items(self):
         '''Generator of instances in queryset.'''
         self.buildquery()
-        meta = self._meta
-        ids  = self.qset
+        meta  = self._meta
+        model = meta.make
+        ids   = self.qset
         if isinstance(ids,svset):
             yield ids.result
         else:
-            hash = meta.cursor.hash(meta.basekey())
+            hash = meta.table()
             if ids == 'all':
-                for val in hash.values():
-                    yield val
+                for id,val in hash.items():
+                    yield model(id,val)
             else:
-                objs = hash.mget(ids)
-                for obj in objs:
-                    yield obj
+                for id,val in izip(ids,hash.mget(ids)):
+                    yield model(id,val)
     
     def __iter__(self):
         if self._seq is None:

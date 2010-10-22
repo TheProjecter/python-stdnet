@@ -9,6 +9,9 @@ class TestManager(TestCase):
 
     def setUp(self):
         self.orm.register(SimpleModel)
+    
+    def unregister(self):
+        self.orm.unregister(SimpleModel)
         
     def testGetOrCreate(self):
         v,created = SimpleModel.objects.get_or_create(code = 'test')

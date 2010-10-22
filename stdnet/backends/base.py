@@ -52,7 +52,6 @@ class BackendDataServer(object):
         self.default_timeout = timeout
         self._cachepipe = {}
         self._keys      = {}
-        self.fields     = []
         self.params     = params
         self.pickler    = pickler or default_pickler
 
@@ -69,21 +68,27 @@ class BackendDataServer(object):
     def createdb(self, name):
         pass
     
+    def delete(self, *key):
+        "Delete one or more keys specified by ``keys``"
+        raise NotImplementedError
+    
     def get_object(self, meta, name, value):
-        '''Retrive an object from the database. If object is not available, it raise
-and :ref:`ObjectNotFund <utility-exceptions>` exception.
+        '''Retrive an object from the database. If object is not available, it raises
+an :class:`stdnet.exceptions.ObjectNotFund` exception.
 
     * *meta* :ref:`database metaclass <database-metaclass>` or model
     * *name* name of field (must be unique)
     * *value* value of field to search.'''
         if name != 'id':
-            value = self._get(meta.basekey(name,value))
+            id = self._get(meta.basekey(name,value))
+        else:
+            id = value
+        if id is None:
+            raise ObjectNotFund
+        data = self.hash(meta.basekey()).get(id)
         if value is None:
             raise ObjectNotFund
-        value = self.hash(meta.basekey()).get(value)
-        if value is None:
-            raise ObjectNotFund
-        return value
+        return meta.make(id,data)
     
     def _get_pipe(self, id, typ, timeout):
         cache  = self._cachepipe
@@ -125,33 +130,43 @@ and :ref:`ObjectNotFund <utility-exceptions>` exception.
         '''Commit cache objects to database'''
         cache = self._cachepipe
         keys = self._keys
-        fields = self.fields
         # flush cache
         self._cachepipe = {}
         self._keys = {}
-        self.fields = []
         # commit
         for id,pipe in cache.iteritems():
             el = getattr(self,pipe.method)(id, pipeline = pipe)
             el.save()
         if keys: 
             self._set_keys(keys)
-        #for save in fields:
-        #    save()
             
-    def delete_object(self, obj):
-        '''Delete an object from the database'''
-        meta   = obj._meta
-        id     = meta.basekey()
-        hash   = self.hash(id)
-        if not hash.delete(obj.id):
+    def delete_object(self, obj, deleted = None):
+        '''Delete an object from the data server and clean up indices.'''
+        deleted = deleted if deleted is not None else []
+        meta    = obj._meta
+        timeout = meta.timeout
+        hash    = meta.table()
+        bkey    = meta.basekey
+        objid   = obj.id
+        if not hash.delete(objid):
             return 0
-        self.delete_indexes(obj)
+        for field in meta.fields:
+            name = field.name
+            if field.index:
+                key   = bkey(name,field.serialize(getattr(obj,name,None)))
+                if field.unique:
+                    deleted.append(self.delete(key))
+                else:
+                    if field.ordered:
+                        idx = self.ordered_set(key, timeout, pickler = nopickle)
+                    else:
+                        idx = self.unordered_set(key, timeout, pickler = nopickle)
+                    deleted.append(idx.discard(objid))
+            fid = field.id(obj)
+            if fid:
+                deleted.append(self.delete(fid))
         return 1
-    
-    def delete_indexes(self, obj):
-        pass
-    
+        
     def set(self, id, value, timeout = None):
         value = self.pickler.dumps(value)
         return self._set(id,value,timeout)
@@ -226,6 +241,9 @@ and :ref:`ObjectNotFund <utility-exceptions>` exception.
 
     # VIRTUAL METHODS
     
+    def keys(self, pattern = '*'):
+        raise NotImplementedError
+        
     def _set(self, id, value, timeout):
         raise NotImplementedError
     

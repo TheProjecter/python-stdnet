@@ -8,5 +8,9 @@ class TestCase(unittest.TestCase):
         self.orm = orm
         super(TestCase,self).__init__(*args, **kwargs)
         
+    def unregister(self):
+        pass
+    
     def tearDown(self):
         orm.clearall()
+        self.unregister()

@@ -41,6 +41,9 @@ class Set(structures.Set):
     def delete(self):
         return self.cursor.execute_command('DEL', self.id)
     
+    def discard(self, elem):
+        return self.cursor.execute_command('SREM', self.id, elem)
+    
     def _save(self):
         id = self.id
         s  = 0
@@ -60,6 +63,9 @@ class OrderedSet(structures.OrderedSet):
     def _size(self):
         '''Size of set'''
         return self.cursor.execute_command('ZCARD', self.id)
+    
+    def discard(self, elem):
+        return self.cursor.execute_command('ZREM', self.id, elem)
     
     def _contains(self):
         return self.cursor.execute_command('ZSCORE', self.id, value) is not None

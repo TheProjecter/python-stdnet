@@ -83,8 +83,9 @@ class MultiField(Field):
                     related.add(self.obj)
                     related.save(commit)
     
-    #def save(self):
-    #    return self.get_full_value().save()
+    def id(self, obj):
+        '''Delete field.'''
+        return meta.basekey('id',obj.id,self.name)
 
 
 class SetField(MultiField):
