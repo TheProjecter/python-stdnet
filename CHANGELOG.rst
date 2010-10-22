@@ -2,14 +2,14 @@ Ver. 0.4 - Development
 ============================
 * Development status set to ``beta``.
 * **This version is incompatible with previous versions**.
-* Added several :class:`stdnet.orm.AtomField` subclasses. 
+* Added :class:`stdnet.orm.AtomField` subclasses. 
 * Before adding elements to a :class:`stdnet.orm.MultiField` the object needs to be saved, i.e. it needs to have a valid id.
 * Made clear that :class:`stdnet.orm.StdModel` classes are mapped to :class:`stdnet.HashTable`
   structures in a :class:`stdnet.BackendDataServer`. 
 * Moved ``structures`` module into ``backends`` directory. Internal reorganisation of several modules.
 * Added ``app_label`` attribute to :class:`stdnet.orm.DataMetaClass`.
 * Added a new module ``stdnet.contrib.monitor`` for monitoring objects on the web. The module requires djpcms_.
-* **30 tests**
+* **31 tests**
 
 Ver. 0.3.3 - 2010 Sep 13
 ========================================
@@ -18,7 +18,6 @@ Ver. 0.3.3 - 2010 Sep 13
 * ``redis`` set as requirements
 * **29 tests**
 
-
 Ver. 0.3.2 - 2010 Aug 24
 ========================================
 * Bug fixes
@@ -26,12 +25,10 @@ Ver. 0.3.2 - 2010 Aug 24
 * ``Changelog`` included in documentation
 * **27 tests**
 
-
 Ver. 0.3.1 - 2010 Jul 19
 ========================================
 * Bug fixes
 * **27 tests**
-
 
 Ver. 0.3.0 - 2010 Jul 15
 ========================================
@@ -41,12 +38,10 @@ Ver. 0.3.0 - 2010 Jul 15
 * ``StdModel`` raise ``ModelNotRegistered`` when trying to save an instance of a non-registered model
 * **24 tests**
 
-
 Ver. 0.2.2 - 2010 Jul 7
 ========================================
 * ``RelatedManager`` is derived by ``Manager`` and therefore implements both all and filter methods
 * **10 tests**
-
 
 Ver. 0.2.0  - 2010 Jun 21
 ========================================
