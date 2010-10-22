@@ -1,5 +1,6 @@
 import sys
 import copy
+from itertools import izip
 from fields import Field, AutoField
 from stdnet.exceptions import *
 from query import UnregisteredManager 
@@ -60,6 +61,7 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
         self.dfields   = {}
         self.timeout   = 0
         self.related   = {}
+        self.maker     = lambda : model.__new__(model)
         model._meta    = self
         
         if not abstract:
@@ -90,15 +92,6 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
     
     def __str__(self):
         return self.__repr__()
-    
-    @property
-    def id(self):
-        '''primary key value'''
-        return self.pk.get_value()
-    
-    def has_pk(self):
-        '''``True`` if :attr:`pk` has a value'''
-        return self.pk._value
         
     def basekey(self, *args):
         '''Calculate the key to access model hash-table, and model filters in the database.
@@ -113,6 +106,9 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
             key = '%s:%s' % (key,arg)
         return key
     
+    def autoid(self):
+        return self.basekey('ids')
+    
     @property
     def uniqueid(self):
         '''Unique id for an instance. This is unique across multiple model types.'''
@@ -121,21 +117,9 @@ An instance is initiated when :class:`stdnet.orm.StdModel` class is created:
     def table(self):
         '''Return an instance of :class:`stdnet.HashTable` holding
 the model table'''
+        if not self.cursor:
+            raise ModelNotRegistered('%s not registered. Call orm.register(model_class) to solve the problem.' % self)
         return self.cursor.hash(self.basekey(),self.timeout)
-    
-    def isvalid(self, obj):
-        validation_errors = {}
-        valid = True
-        for field in self.fields:
-            name = field.name
-            value = getattr(obj,name,None)
-            try:
-                valid = valid & field.isvalid()
-            except FieldError, e:
-                valid = False
-                validation_errors[name] = str(e)
-        self.validation_errors = validation_errors 
-        return valid
     
     def related_objects(self):
         objs = []
@@ -143,14 +127,13 @@ the model table'''
             objs.extend(rel.all())
         return objs
     
-    # OBSOLETE. TO REMOVE                        
-    #def __deepcopy__(self, memodict):
-    #    # We deep copy on fields and create the keys list
-    #    obj = copy.copy(self)
-    #    obj.fields = copy.deepcopy(self.fields, memodict)
-    #    obj.related = copy.deepcopy(self.related, memodict)
-    #    memodict[id(self)] = obj
-    #    return obj
+    def make(self, id, data):
+        '''Create a model instance from server data'''
+        obj = self.maker()
+        setattr(obj,'id',id)
+        for field,value in izip(self.fields,data):
+            setattr(obj,field.name,field.to_python(value))
+        return obj
 
 
 class StdNetType(type):

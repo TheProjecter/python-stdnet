@@ -1,4 +1,5 @@
 from copy import copy
+from hashlib import sha1
 import time
 from datetime import date, datetime
 
@@ -7,6 +8,8 @@ from related import RelatedObject
 from stdnet.exceptions import *
 from stdnet.utils import timestamp2date, date2timestamp
 
+
+hashfun = lambda x : sha1(x).hexdigest()
 
 
 __all__ = ['Field',
@@ -97,8 +100,6 @@ Each field is specified as a :class:`stdnet.orm.StdModel` class attribute.
             self.required = required
             self.index = True if unique else index
         self.ordered  = ordered
-        self._value   = None
-        self.obj      = None
         self.meta     = None
         self.name     = None
         self.model    = None
@@ -131,25 +132,12 @@ function users should never call.'''
         if name is not 'id':
             self.meta.fields.append(self)
     
-    def _set_value(self, name, obj, value):
-        # Called by constructor in the model
-        self.obj  = obj
-        self.name = name
-        self.meta = obj._meta
-        if value is not _novalue:
-            self._value = value
-        return self._value
-    
     def get_full_value(self):
         '''Return the expanded value of the field. For standard fields this is the
 same as the field value, while for more complex fields, such as :class:`ForeignKey`, it
 get extra data from the database. This function is called by the model when accessing
 fields values.'''
         return self._value
-    
-    def hash(self, value):
-        '''Internal function used to hash the value so it can be used as index'''
-        return value
     
     def serialize(self, value):
         '''Called by the :func:'stdnet.orm.StdModel.save` method when saving
@@ -171,8 +159,9 @@ If an error occurs it raises :class:`stdnet.exceptions.FieldValueError`'''
     def add(self, *args, **kwargs):
         raise NotImplementedError("Cannot add to field")
     
-    def delete(self):
-        pass
+    def id(self, obj):
+        '''Field id for object *obj*, if applicable. Default is ``None``.'''
+        return None
     
     def has_default(self):
         "Returns a boolean of whether this field has a default value."
@@ -216,7 +205,9 @@ A symbol holds a sequence of characters as a single unit.
 A symbol is irreducible, and are often used to hold names
 of other entities.'''
     def serialize(self, value):
-        return hash(value)
+        if value is not None:
+            value = str(value)
+        return value
 
 
 class IntegerField(AtomField):
@@ -246,7 +237,7 @@ if you don't specify otherwise.
     '''            
     def serialize(self, value):
         if not value:
-            value = self.meta.cursor.incr(self.meta.basekey('ids'))
+            value = self.meta.cursor.incr(self.meta.autoid())
         return super(AutoField,self).serialise(value)
 
 
@@ -281,6 +272,11 @@ a :class:`datetime.date` instance.'''
             else:
                 raise FieldValueError('Field %s is not a valid date' % self)
         return value
+    
+    def to_python(self, value):
+        if value:
+            value = timestamp2date(value).date()
+        return value
         
         
 class DateTimeField(AtomField):
@@ -293,6 +289,11 @@ a :class:`datetime.datetime` instance.'''
                 value = timestamp2date(value)
             else:
                 raise FieldValueError('Field %s is not a valid datetime' % self)
+        return value
+    
+    def to_python(self, value):
+        if value:
+            value = timestamp2date(value)
         return value
 
 

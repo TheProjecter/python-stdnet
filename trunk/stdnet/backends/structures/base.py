@@ -215,6 +215,10 @@ class Set(Structure):
     
     def _contains(self, value):
         raise NotImplementedError
+    
+    def discard(self, elem):
+        '''Remove an element from a set if it is a member'''
+        raise NotImplementedError
 
 
 class OrderedSet(Set):

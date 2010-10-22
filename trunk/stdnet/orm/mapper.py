@@ -9,6 +9,7 @@ def clearall():
 
 def register(model, backend = None, keyprefix = None, timeout = 0):
     '''Register a :class:`stdnet.rom.StdNet` model with a backend data server.'''
+    global _registry
     from stdnet.conf import settings
     backend = backend or settings.DEFAULT_BACKEND
     prefix  = keyprefix or model._meta.keyprefix or settings.DEFAULT_KEYPREFIX or ''
@@ -30,5 +31,10 @@ def register(model, backend = None, keyprefix = None, timeout = 0):
     _registry[model] = meta
     return meta.cursor.name
 
+
+def unregister(model):
+    global _registry 
+    _registry.pop(model,None)
+    model._meta.cursor = None
 
 _registry = {}

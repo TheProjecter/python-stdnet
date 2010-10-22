@@ -9,7 +9,7 @@ from examples.models import Node
 STEPS   = 10
 
 class TestSelfForeignKey(TestCase):
-    
+        
     def create(self, N, root):
         for n in range(N):
             node = Node(parent = root, weight = random.uniform(0,1)).save()
@@ -20,6 +20,9 @@ class TestSelfForeignKey(TestCase):
         for n in range(STEPS):
             node = Node(parent = root, weight = random.uniform(0,1)).save()
             self.create(random.randint(0,9), node)
+            
+    def unregister(self):
+        self.orm.unregister(Node)
     
     def testSelfRelated(self):
         root = Node.objects.filter(parent = None)

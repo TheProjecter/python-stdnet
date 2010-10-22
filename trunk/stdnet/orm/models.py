@@ -111,7 +111,7 @@ otherwise a ``ModelNotRegistered`` exception will be raised.'''
         
     def __eq__(self, other):
         if other.__class__ == self.__class__:
-            return self.id == other.id
+            return str(self.id) == str(other.id)
         else:
             return False
         
@@ -119,7 +119,7 @@ otherwise a ``ModelNotRegistered`` exception will be raised.'''
         '''Delete an instance from database. If the instance is not available (it does not have an id) and
 ``StdNetException`` exception will raise.'''
         meta = self._meta
-        if not meta.has_pk():
+        if not self.id:
             raise StdNetException('Cannot delete object. It was never saved.')
         # Gather related objects to delete
         objs = meta.related_objects()
